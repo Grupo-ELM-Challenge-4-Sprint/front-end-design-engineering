@@ -1,149 +1,153 @@
-import { useState, useCallback, useMemo } from "react";
-import { useFormValidation, validators, useInputMasks, useFormState } from "../../hooks";
-import type { ValidationRules } from "../../hooks";
+import { useState, useCallback } from "react";
+import { loginSchema, cadastroSchema } from "../../schemas/validationSchemas";
+import type { LoginFormData, CadastroFormData } from "../../schemas/validationSchemas";
+import { useInputMasks, useApiUsuarios, useZodForm } from "../../hooks";
 import { LoginForm, CadastroForm } from "../../components/forms";
-import { addPaciente, getPacientePorCpf } from "../../data/dados";
 
 
 export default function Entrar() {
     // Estados principais
-    const [formAtual, setFormAtual] = useState('login');
+    const [formAtual, setFormAtual] = useState<'login' | 'cadastro'>('login');
     const [cadastroSucesso, setCadastroSucesso] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     // Hooks customizados
-    const { formData, statusMessage, showPasswords, updateField, resetForm, setStatus, clearStatus, togglePasswordVisibility } = useFormState();
     const { applyMask, getMaskType } = useInputMasks();
+    const { criarUsuario, getUsuarioPorCpf } = useApiUsuarios();
 
-    // Regras de validação simplificadas
-    const validationRules = useMemo((): ValidationRules => ({
-        // Login
-        loginCpf: { required: true, custom: validators.cpf },
-        loginSenha: { required: true },
-        
-        // Cadastro
-        cadastroNomeCompleto: { required: true, custom: validators.name },
-        cadastroCpf: { required: true, custom: validators.cpf },
-        dataNascimento: { required: true, custom: validators.date },
-        cadastroEmail: { required: true, custom: validators.email },
-        cadastroSenha: { required: true, custom: validators.password },
-        confirmarSenha: { 
-            required: true, 
-            custom: (value: string) => value !== formData.cadastroSenha ? 'As senhas não coincidem.' : null 
-        }
-    }), [formData.cadastroSenha]);
+    // Hooks Zod para formulários
+    const loginZod = useZodForm(loginSchema);
+    const cadastroZod = useZodForm(cadastroSchema);
 
-    // Hook de validação
-    const { errors, validateForm, clearError, clearAllErrors } = useFormValidation(validationRules);
+    // Estados para senhas visíveis
+    const [showPasswords, setShowPasswords] = useState<{[key: string]: boolean}>({
+        loginSenha: false,
+        cadastroSenha: false,
+        confirmarSenha: false,
+    });
 
     // Handlers otimizados
-    const handleInputChange = useCallback((field: string, value: string) => {
+    const handleInputChange = useCallback((field: string, value: string, form: 'login' | 'cadastro') => {
         const maskType = getMaskType(field);
         const maskedValue = maskType ? applyMask(value, maskType) : value;
-        
-        updateField(field as keyof typeof formData, maskedValue);
-        
-        if (errors[field]) {
-            clearError(field);
-        }
-    }, [getMaskType, applyMask, updateField, errors, clearError]);
 
-    const handleFormChange = useCallback((newForm: string) => {
+        if (form === 'login') {
+            loginZod.setValue(field as keyof LoginFormData, maskedValue as any);
+        } else {
+            cadastroZod.setValue(field as keyof CadastroFormData, maskedValue as any);
+        }
+    }, [applyMask, getMaskType, loginZod, cadastroZod]);
+
+    const togglePasswordVisibility = useCallback((field: string) => {
+        setShowPasswords(prev => ({
+            ...prev,
+            [field]: !prev[field],
+        }));
+    }, []);
+
+    const setStatus = useCallback((type: 'success' | 'error' | 'info', message: string) => {
+        setStatusMessage({ type, message });
+    }, []);
+
+    const clearStatus = useCallback(() => {
+        setStatusMessage(null);
+    }, []);
+
+    const handleFormChange = useCallback((newForm: 'login' | 'cadastro') => {
         setFormAtual(newForm);
-        clearAllErrors();
         clearStatus();
         if (newForm === 'cadastro') {
             setCadastroSucesso(false);
+            cadastroZod.reset();
+        } else {
+            loginZod.reset();
         }
-    }, [clearAllErrors, clearStatus]);
+    }, [clearStatus, loginZod, cadastroZod]);
 
     // Handlers de submissão
-    const handleLoginSubmit = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-        const loginData = {
-            loginCpf: formData.loginCpf,
-            loginSenha: formData.loginSenha
-        };
-
-        if (validateForm(loginData)) {
-            const paciente = getPacientePorCpf(loginData.loginCpf);
-            if (paciente && paciente.senha === loginData.loginSenha) {
-                localStorage.setItem('cpfLogado', loginData.loginCpf); // Salva o CPF do usuário logado
-                setStatus('success', 'Login bem-sucedido! Redirecionando...');
-                setTimeout(() => {
-                    window.location.href = '/perfil';
-                }, 1500);
-            } else {
-                setStatus('error', 'CPF ou senha inválidos.');
-            }
+    const handleLoginSubmit = useCallback(async (data: LoginFormData) => {
+        setStatus('info', 'Verificando credenciais...');
+        const usuario = await getUsuarioPorCpf(data.loginCpf);
+        if (usuario && usuario.senha === data.loginSenha) {
+            localStorage.setItem('cpfLogado', data.loginCpf);
+            setStatus('success', 'Login bem-sucedido! Redirecionando...');
+            setTimeout(() => {
+                window.location.href = '/perfil';
+            }, 1500);
         } else {
             setStatus('error', 'CPF ou senha inválidos.');
         }
-    }, [formData, validateForm, setStatus]);
+    }, [setStatus, getUsuarioPorCpf]);
 
-    const handleCadastroSubmit = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-        const cadastroData = {
-            cadastroNomeCompleto: formData.cadastroNomeCompleto,
-            cadastroCpf: formData.cadastroCpf,
-            dataNascimento: formData.dataNascimento,
-            cadastroEmail: formData.cadastroEmail,
-            cadastroTelefone: formData.cadastroTelefone,
-            cadastroSenha: formData.cadastroSenha,
-            confirmarSenha: formData.confirmarSenha
+    const handleCadastroSubmit = useCallback(async (data: CadastroFormData) => {
+        setStatus('info', 'Verificando disponibilidade...');
+        const jaExiste = await getUsuarioPorCpf(data.cadastroCpf);
+        if (jaExiste) {
+            setStatus('error', 'Já existe um cadastro com este CPF.');
+            return;
+        }
+
+        const novoUsuario = {
+            nomeCompleto: data.cadastroNomeCompleto,
+            cpf: data.cadastroCpf,
+            dataNascimento: data.dataNascimento,
+            email: data.cadastroEmail,
+            telefone: data.cadastroTelefone || '',
+            senha: data.cadastroSenha,
+            lembretesConsulta: [],
+            lembretesReceita: [],
         };
 
-        if (validateForm(cadastroData)) {
-            // Verifica se já existe paciente com esse CPF
-            const jaExiste = getPacientePorCpf(cadastroData.cadastroCpf);
-            if (jaExiste) {
-                setStatus('error', 'Já existe um cadastro com este CPF.');
-                return;
-            }
-            // Monta novo paciente
-            const novoPaciente = {
-                nomeCompleto: cadastroData.cadastroNomeCompleto,
-                cpf: cadastroData.cadastroCpf,
-                dataNascimento: cadastroData.dataNascimento,
-                email: cadastroData.cadastroEmail,
-                telefone: formData.cadastroTelefone,
-                senha: cadastroData.cadastroSenha,
-                lembretesConsulta: [],
-                lembretesReceita: [],
-            };
-            addPaciente(novoPaciente);
+        setStatus('info', 'Criando conta...');
+        const usuarioCriado = await criarUsuario(novoUsuario);
+        if (usuarioCriado) {
             setCadastroSucesso(true);
-            resetForm();
+            cadastroZod.reset();
         } else {
-            setStatus('error', 'Por favor, corrija os erros no formulário.');
+            setStatus('error', 'Erro ao criar conta. Tente novamente.');
         }
-    }, [formData, validateForm, resetForm, setStatus]);
+    }, [setStatus, getUsuarioPorCpf, criarUsuario, cadastroZod]);
 
     return (
         <main className="flex justify-center items-start min-h-screen bg-slate-100 p-4 sm:p-6">
             <div className="w-full max-w-md">
                 {formAtual === 'login' && (
                     <LoginForm
-                        formData={formData}
-                        errors={errors}
+                        formData={loginZod.data}
+                        errors={loginZod.errors}
                         statusMessage={statusMessage}
                         showPasswords={showPasswords}
-                        onInputChange={handleInputChange}
+                        onInputChange={(field, value) => handleInputChange(field, value, 'login')}
                         onTogglePassword={togglePasswordVisibility}
-                        onSubmit={handleLoginSubmit}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            loginZod.handleSubmit(handleLoginSubmit);
+                        }}
                         onFormChange={handleFormChange}
                     />
                 )}
 
                 {formAtual === 'cadastro' && (
                     <CadastroForm
-                        formData={formData}
-                        errors={errors}
+                        formData={{
+                            cadastroNomeCompleto: cadastroZod.data.cadastroNomeCompleto || '',
+                            cadastroCpf: cadastroZod.data.cadastroCpf || '',
+                            dataNascimento: cadastroZod.data.dataNascimento || '',
+                            cadastroEmail: cadastroZod.data.cadastroEmail || '',
+                            cadastroTelefone: cadastroZod.data.cadastroTelefone || '',
+                            cadastroSenha: cadastroZod.data.cadastroSenha || '',
+                            confirmarSenha: cadastroZod.data.confirmarSenha || '',
+                        }}
+                        errors={cadastroZod.errors}
                         statusMessage={statusMessage}
                         showPasswords={showPasswords}
                         cadastroSucesso={cadastroSucesso}
-                        onInputChange={handleInputChange}
+                        onInputChange={(field, value) => handleInputChange(field, value, 'cadastro')}
                         onTogglePassword={togglePasswordVisibility}
-                        onSubmit={handleCadastroSubmit}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            cadastroZod.handleSubmit(handleCadastroSubmit);
+                        }}
                         onFormChange={handleFormChange}
                     />
                 )}
