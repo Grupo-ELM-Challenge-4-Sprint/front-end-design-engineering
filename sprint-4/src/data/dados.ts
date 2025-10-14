@@ -15,7 +15,12 @@ export interface LembreteConsulta {
 export interface LembreteReceita {
     id: number;
     nome: string;
-    instrucao: string;
+    frequencia: string; // Ex: "A cada 6 horas", "A cada 8 horas", "1x ao dia"
+    dias: string[]; // Ex: ["Segunda", "Terça", "Quarta"]
+    horaPrimeiraDose: string; // Ex: "08:00"
+    numeroDias: number; // Ex: 7 (dias de tratamento)
+    observacoes: string;
+    status: 'Ativo' | 'Inativo';
 };
 
 export interface Paciente {
@@ -66,12 +71,22 @@ export const dadosPacientes: Record<string, Paciente> = {
       {
         id: 1,
         nome: "Losartana Potássica 50mg",
-        instrucao: "1 comprimido, 1x ao dia",
+        frequencia: "A cada 24 horas",
+        dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+        horaPrimeiraDose: "08:00",
+        numeroDias: 30,
+        observacoes: "1 comprimido, 1x ao dia",
+        status: 'Ativo',
       },
       {
         id: 2,
         nome: "Metformina 500mg",
-        instrucao: "1 comprimido, 2x ao dia após as refeições",
+        frequencia: "A cada 12 horas",
+        dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+        horaPrimeiraDose: "08:00",
+        numeroDias: 30,
+        observacoes: "1 comprimido, 2x ao dia após as refeições",
+        status: 'Ativo',
       },
     ],
   },
@@ -100,7 +115,12 @@ export const dadosPacientes: Record<string, Paciente> = {
       {
         id: 3,
         nome: "Isotretinoína 20mg",
-        instrucao: "1 cápsula ao dia, após o almoço",
+        frequencia: "A cada 24 horas",
+        dias: ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"],
+        horaPrimeiraDose: "08:00",
+        numeroDias: 30,
+        observacoes: "1 cápsula ao dia, após o almoço",
+        status: 'Ativo',
       },
     ],
   },

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
+import type { LembreteReceita } from '../../data/dados';
 import { getPacientePorCpf, getPacientes, setPacientes } from '../../data/dados';
 
 export default function Receitas() {
@@ -14,32 +15,65 @@ export default function Receitas() {
     const cpfUsuarioLogado = localStorage.getItem('cpfLogado') || '';
     const pacienteLogado = cpfUsuarioLogado ? getPacientePorCpf(cpfUsuarioLogado) : undefined;
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [lembretes, setLembretes] = useState(
+    const [lembretes, setLembretes] = useState<LembreteReceita[]>(
         pacienteLogado?.lembretesReceita || []
     );
-    const [editingLembrete, setEditingLembrete] = useState<any | null>(null);
-    const [formData, setFormData] = useState({
+    const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
+    const [formData, setFormData] = useState<{
+        nome: string;
+        frequencia: string;
+        dias: string[];
+        horaPrimeiraDose: string;
+        numeroDias: number;
+        observacoes: string;
+    }>({
         nome: '',
-        instrucao: '',
+        frequencia: 'A cada 24 horas',
+        dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+        horaPrimeiraDose: '08:00',
+        numeroDias: 7,
+        observacoes: '',
     });
 
     useEffect(() => {
         if (editingLembrete) {
             setFormData({
                 nome: editingLembrete.nome,
-                instrucao: editingLembrete.instrucao,
+                frequencia: editingLembrete.frequencia,
+                dias: editingLembrete.dias,
+                horaPrimeiraDose: editingLembrete.horaPrimeiraDose,
+                numeroDias: editingLembrete.numeroDias,
+                observacoes: editingLembrete.observacoes,
             });
         } else {
             setFormData({
                 nome: '',
-                instrucao: '',
+                frequencia: 'A cada 24 horas',
+                dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+                horaPrimeiraDose: '08:00',
+                numeroDias: 7,
+                observacoes: '',
             });
         }
     }, [editingLembrete]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prevState => ({ ...prevState, [name]: value }));
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked;
+            const day = value;
+            setFormData(prevState => ({
+                ...prevState,
+                dias: checked
+                    ? [...prevState.dias, day]
+                    : prevState.dias.filter(d => d !== day)
+            }));
+        } else {
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: type === 'number' ? parseInt(value) || 0 : value
+            }));
+        }
     };
 
     // Atualiza os lembretes de receita do paciente logado no localStorage
@@ -56,16 +90,17 @@ export default function Receitas() {
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.nome || !formData.instrucao) return;
+        if (!formData.nome) return;
 
         if (editingLembrete) {
             const novos = lembretes.map(l => l.id === editingLembrete.id ? { ...l, ...formData } : l);
             setLembretes(novos);
             persistLembretes(novos);
         } else {
-            const novoLembrete = {
+            const novoLembrete: LembreteReceita = {
                 id: Date.now(),
                 ...formData,
+                status: 'Ativo',
             };
             const novos = [...lembretes, novoLembrete];
             setLembretes(novos);
@@ -82,6 +117,18 @@ export default function Receitas() {
         persistLembretes(novos);
     };
 
+    const handleConcluirLembrete = (id: number) => {
+        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Inativo' as 'Inativo' } : l);
+        setLembretes(novos);
+        persistLembretes(novos);
+    };
+
+    const handleReativarLembrete = (id: number) => {
+        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Ativo' as 'Ativo' } : l);
+        setLembretes(novos);
+        persistLembretes(novos);
+    };
+
     const handleOpenAddModal = () => {
         setEditingLembrete(null);
         setIsModalOpen(true);
@@ -90,6 +137,45 @@ export default function Receitas() {
     const handleOpenEditModal = (lembrete: any) => {
         setEditingLembrete(lembrete);
         setIsModalOpen(true);
+    };
+
+    const getNextDose = (lembrete: LembreteReceita) => {
+        const now = new Date();
+        const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+        const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
+
+        // Find next day
+        let nextDayIndex = now.getDay();
+        let daysAhead = 0;
+        while (!selectedDays.includes(nextDayIndex)) {
+            nextDayIndex = (nextDayIndex + 1) % 7;
+            daysAhead++;
+            if (daysAhead > 7) break; // Prevent infinite loop
+        }
+
+        const nextDate = new Date(now);
+        nextDate.setDate(now.getDate() + daysAhead);
+
+        // Parse first dose time
+        const [hours, minutes] = lembrete.horaPrimeiraDose.split(':').map(Number);
+        let doseTime = new Date(nextDate);
+        doseTime.setHours(hours, minutes, 0, 0);
+
+        // If today and time has passed, find next interval
+        if (daysAhead === 0 && doseTime <= now) {
+            const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
+            if (freqMatch) {
+                const freqHours = parseInt(freqMatch[1]);
+                const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
+                const intervalsPassed = Math.ceil(diffHours / freqHours);
+                doseTime.setHours(hours + intervalsPassed * freqHours, minutes);
+            }
+        }
+
+        return {
+            date: nextDate.toLocaleDateString('pt-BR'),
+            time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
     };
 
     return (
@@ -121,17 +207,52 @@ export default function Receitas() {
                     {lembretes.length > 0 ? (
                         lembretes.map((lembrete) => (
                             <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                <div className="p-4 md:p-5">
-                                    <h3 className="text-lg font-bold text-indigo-800 mb-2">{lembrete.nome}</h3>
-                                    <p className="text-slate-700">{lembrete.instrucao}</p>
+                                {/* Card Header */}
+                                <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
+                                    <h3 className="text-lg font-bold text-indigo-800">
+                                        {lembrete.nome}
+                                    </h3>
+                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${lembrete.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
+                                        {lembrete.status}
+                                    </span>
                                 </div>
+
+                                {/* Card Body */}
+                                <div className="p-4 md:p-5 space-y-3 text-slate-700">
+                                    <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
+                                    <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
+                                    <p><strong className="card-body">Primeira Dose:</strong> {lembrete.horaPrimeiraDose}</p>
+                                    <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
+                                    {lembrete.observacoes && (
+                                        <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
+                                    )}
+                                    {(() => {
+                                        const nextDose = getNextDose(lembrete);
+                                        return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date} às {nextDose.time}</p>;
+                                    })()}
+                                </div>
+
+                                {/* Card Footer */}
                                 <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
-                                    <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                        Alterar
-                                    </button>
-                                    <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-                                        Remover
-                                    </button>
+                                    {lembrete.status === 'Ativo' ? (
+                                        <>
+                                            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+                                                Alterar
+                                            </button>
+                                            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+                                                Desativar
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button onClick={() => handleReativarLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+                                                Reativar
+                                            </button>
+                                            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
+                                                Remover Lembrete
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -148,7 +269,7 @@ export default function Receitas() {
             </section>
 
             {isModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-50 overflow-y-auto py-8">
+                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-60 overflow-y-auto py-8">
                     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg relative m-4">
                         <button type="button" className="absolute top-4 right-4 text-2xl font-semibold text-slate-500 hover:text-slate-800" aria-label="Fechar modal" onClick={() => setIsModalOpen(false)}>
                             &times;
@@ -162,8 +283,48 @@ export default function Receitas() {
                                 <input type="text" id="nome" name="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Paracetamol 750mg" required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
                             <div>
-                                <label htmlFor="instrucao" className="block text-sm font-medium text-slate-700 mb-1">Instruções (Dosagem, Frequência)*</label>
-                                <textarea id="instrucao" name="instrucao" value={formData.instrucao} onChange={handleInputChange} rows={3} placeholder="Ex: 1 comprimido a cada 8 horas" required className="w-full p-2 border border-slate-300 rounded-md"></textarea>
+                                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência*</label>
+                                <select id="frequencia" name="frequencia" value={formData.frequencia} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
+                                    <option value="A cada 4 horas">A cada 4 horas</option>
+                                    <option value="A cada 6 horas">A cada 6 horas</option>
+                                    <option value="A cada 8 horas">A cada 8 horas</option>
+                                    <option value="A cada 12 horas">A cada 12 horas</option>
+                                    <option value="A cada 24 horas">A cada 24 horas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Dias da Semana*</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map(dia => (
+                                        <label key={dia} className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.dias.includes(dia)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setFormData(prev => ({ ...prev, dias: [...prev.dias, dia] }));
+                                                    } else {
+                                                        setFormData(prev => ({ ...prev, dias: prev.dias.filter(d => d !== dia) }));
+                                                    }
+                                                }}
+                                                className="mr-2"
+                                            />
+                                            {dia}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="horaPrimeiraDose" className="block text-sm font-medium text-slate-700 mb-1">Horário da Primeira Dose*</label>
+                                <input type="time" id="horaPrimeiraDose" name="horaPrimeiraDose" value={formData.horaPrimeiraDose} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                            </div>
+                            <div>
+                                <label htmlFor="numeroDias" className="block text-sm font-medium text-slate-700 mb-1">Número de Dias de Tratamento*</label>
+                                <input type="number" id="numeroDias" name="numeroDias" value={formData.numeroDias} onChange={handleInputChange} min="1" required className="w-full p-2 border border-slate-300 rounded-md" />
+                            </div>
+                            <div>
+                                <label htmlFor="observacoes" className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
+                                <textarea id="observacoes" name="observacoes" value={formData.observacoes} onChange={handleInputChange} rows={3} placeholder="Ex: Tomar após as refeições, 1 comprimido" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
                             </div>
                             <div className="flex justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">

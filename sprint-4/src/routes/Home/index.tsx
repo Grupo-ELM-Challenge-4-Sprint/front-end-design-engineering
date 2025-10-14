@@ -60,7 +60,7 @@ export default function Home(){
                     <img src="https://static.vecteezy.com/ti/vetor-gratis/p1/37895316-masculino-segurando-seringa-e-chamando-para-paciente-em-video-ligar-vetor.jpg" alt="Guia interativo" className='w-full max-w-[400px] md:max-w-[500px] md:mx-5 rounded-lg shadow-lg ' />
                 </div>
                 <div className="guide-text md:mx-auto">
-                    <h2 className='text-3xl mb-5 text-center mt-5 md:text-left'>Guia Interativo</h2>
+                    <h2 className='text-3xl mb-5 ml-5 text-center mt-5 md:text-left'>Guia Interativo</h2>
                     <p className='text-[0.9em] mb-7 mx-5'>Nossa plataforma conta com um assistente que ajuda você a navegar pelo sistema, explicando cada função e recurso disponível.</p>
                     <div className="bg-white p-3 rounded-md border border-gray-300 mx-auto mb-5 text-left max-w-[90%] accessibility-features">
                         <h4 className='text-neutral-800 mb-2 font-bold text-lg'>Recursos de Acessibilidade</h4>
