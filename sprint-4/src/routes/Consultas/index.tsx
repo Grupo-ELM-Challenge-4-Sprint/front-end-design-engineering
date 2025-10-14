@@ -40,11 +40,14 @@ export default function Consultas() {
 
     useEffect(() => {
         if (editingLembrete) {
+            // Convert date from DD/MM/YYYY to YYYY-MM-DD for datetime-local input
+            const [day, month, year] = editingLembrete.data.split('/');
+            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
             setFormData({
                 tipoConsulta: editingLembrete.tipo,
                 especialidadeConsulta: editingLembrete.especialidade,
                 medicoConsulta: editingLembrete.medico,
-                dataConsulta: `${editingLembrete.data}T${editingLembrete.hora}`,
+                dataConsulta: `${formattedDate}T${editingLembrete.hora}`,
                 localConsulta: editingLembrete.local,
                 observacoesConsulta: editingLembrete.observacoes,
             });
@@ -129,6 +132,12 @@ export default function Consultas() {
         persistLembretes(novos);
     };
 
+    const handleReverterLembrete = (id: number) => {
+        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Agendada' as 'Agendada' } : l);
+        setLembretes(novos);
+        persistLembretes(novos);
+    };
+
     const handleOpenAddModal = () => {
         setEditingLembrete(null);
         setIsModalOpen(true);
@@ -203,9 +212,14 @@ export default function Consultas() {
                                             </button>
                                         </>
                                     ) : (
-                                        <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-                                            Remover Lembrete
-                                        </button>
+                                        <>
+                                            <button onClick={() => handleReverterLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+                                                Reverter
+                                            </button>
+                                            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
+                                                Remover Lembrete
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                             </div>
