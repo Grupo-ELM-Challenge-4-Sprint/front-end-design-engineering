@@ -84,13 +84,16 @@ export default function Consultas() {
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const [data, hora] = formData.dataConsulta.split('T');
+        // Convert YYYY-MM-DD to DD/MM/YYYY for consistent storage
+        const [year, month, day] = data.split('-');
+        const formattedData = `${day}/${month}/${year}`;
 
         if (editingLembrete) {
             const novos = lembretes.map(l => l.id === editingLembrete.id ? {
                 ...l,
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
-                data,
+                data: formattedData,
                 hora,
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
@@ -104,7 +107,7 @@ export default function Consultas() {
                 id: Date.now(),
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
-                data,
+                data: formattedData,
                 hora,
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
