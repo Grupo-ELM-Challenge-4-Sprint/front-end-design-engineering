@@ -2,23 +2,37 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteReceita } from '../../data/dados';
-import { getPacientePorCpf, getPacientes, setPacientes } from '../../data/dados';
+import { useApiUsuarios } from '../../hooks/useApiUsuarios';
+import type { Usuario } from '../../hooks/useApiUsuarios';
 
 export default function Receitas() {
     const navigate = useNavigate();
+    const { getUsuarioPorCpf, atualizarUsuario, loading, error } = useApiUsuarios();
+
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
         if (!cpfLogado) {
             navigate('/entrar');
         }
     }, [navigate]);
-    const cpfUsuarioLogado = localStorage.getItem('cpfLogado') || '';
-    const pacienteLogado = cpfUsuarioLogado ? getPacientePorCpf(cpfUsuarioLogado) : undefined;
+
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [lembretes, setLembretes] = useState<LembreteReceita[]>(
-        pacienteLogado?.lembretesReceita || []
-    );
+    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
+
+    // Buscar usuário da API ao carregar
+    useEffect(() => {
+        const cpfLogado = localStorage.getItem('cpfLogado');
+        if (cpfLogado) {
+            getUsuarioPorCpf(cpfLogado).then((usuario) => {
+                if (usuario) {
+                    setUsuarioApi(usuario);
+                    setLembretes(usuario.lembretesReceita || []);
+                }
+            });
+        }
+    }, [getUsuarioPorCpf]);
     const [formData, setFormData] = useState<{
         nome: string;
         frequencia: string;
@@ -76,16 +90,15 @@ export default function Receitas() {
         }
     };
 
-    // Atualiza os lembretes de receita do paciente logado no localStorage
-    const persistLembretes = (novosLembretes: any[]) => {
-        if (!pacienteLogado) return;
-        const pacientes = getPacientes();
-        const cpfKey = pacienteLogado.cpf.replace(/\D/g, '');
-        pacientes[cpfKey] = {
-            ...pacienteLogado,
+    // Atualiza os lembretes do usuário na API
+    const persistLembretes = async (novosLembretes: LembreteReceita[]) => {
+        if (!usuarioApi) return;
+        const sucesso = await atualizarUsuario(usuarioApi.id, {
             lembretesReceita: novosLembretes
-        };
-        setPacientes(pacientes);
+        });
+        if (sucesso) {
+            setUsuarioApi({ ...usuarioApi, lembretesReceita: novosLembretes });
+        }
     };
 
     const handleFormSubmit = (e: React.FormEvent) => {
@@ -199,12 +212,14 @@ export default function Receitas() {
                     </button>
                 </div>
 
-                <div className="space-y-6"
+                <div id="lembretes-receitas-content" className="space-y-6"
                      data-guide-step="3"
                      data-guide-title="Seus Lembretes"
                      data-guide-text="Aqui você vê todos os seus lembretes de medicamentos. Cada card mostra o nome do medicamento e suas instruções."
                      data-guide-arrow="up">
-                    {lembretes.length > 0 ? (
+                    {loading && <p className="text-center text-slate-600">Carregando lembretes...</p>}
+                    {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
+                    {!loading && !error && lembretes.length > 0 ? (
                         lembretes.map((lembrete) => (
                             <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
                                 {/* Card Header */}
