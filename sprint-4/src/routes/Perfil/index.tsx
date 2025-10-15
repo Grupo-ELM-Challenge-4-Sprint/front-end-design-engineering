@@ -92,8 +92,8 @@ export default function Perfil() {
                     )}
                     {editMode && (
                         <>
-                            <button id="saveProfileButton" className="btn btn-primary" type="submit" form="formInformacoesPessoais">Salvar</button>
-                            <button id="cancelEditButton" className="btn btn-tertiary" type="button" onClick={handleCancel}>Cancelar</button>
+                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais">Salvar</button>
+                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel}>Cancelar</button>
                         </>
                     )}
                 </div>
