@@ -561,13 +561,7 @@
   }
 
   .meus-dados-grid {
-    @apply max-w-[600px] justify-center mx-auto;
-  }
-
-  .info-section,
-  .saude-resumo-section,
-  .notificacoes-section {
-    @apply p-5 bg-[#f9fafb] rounded-lg border border-[#eef2f7];
+    @apply xl:w-[400px] mt-8 mr-8 lg:mt-0;
   }
 
   .info-section h3,

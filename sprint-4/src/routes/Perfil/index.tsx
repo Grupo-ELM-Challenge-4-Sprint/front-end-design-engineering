@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import PacientePage from "../../components/Painel/PacientePage";
 import { getPacientePorCpf, getPacientes, setPacientes } from "../../data/dados";
+import { CardConsulta, CardReceita } from "../../components/LembreteCard/LembreteCard";
 
 export default function Perfil() {
     const navigate = useNavigate();
@@ -98,37 +99,74 @@ export default function Perfil() {
                     )}
                 </div>
             </div>
-            <form id="formInformacoesPessoais" onSubmit={handleSave}>
-                <div className="meus-dados-grid">
-                    <div className="info-section"
-                        data-guide-step="1"
-                        data-guide-title="Suas Informações Pessoais"
-                        data-guide-text="Confira seus dados cadastrais. Alguns campos como nome e CPF não podem ser alterados por aqui."
-                        data-guide-arrow="down">
-                        <h3>Informações Pessoais</h3>
-                        <div className="info-item">
-                            <strong>Nome Completo:</strong>
-                            <input type="text" id="userName" name="nomeCompleto" value={form.nomeCompleto} disabled title="Nome Completo" placeholder="Nome usuário" />
-                        </div>
-                        <div className="info-item">
-                            <strong>CPF:</strong>
-                            <input type="text" id="userCpf" name="cpf" value={form.cpf} disabled title="CPF" placeholder="CPF usuário" />
-                        </div>
-                        <div className="info-item">
-                            <strong>Data de Nascimento:</strong>
-                            <input type="text" id="userDob" name="dataNascimento" value={form.dataNascimento} disabled title="Data de Nascimento" placeholder="DD/MM/AAAA" />
-                        </div>
-                        <div className="info-item">
-                            <strong>Email:</strong>
-                            <input type="email" id="userEmail" name="email" value={form.email} onChange={handleChange} disabled={!editMode} title="Email" placeholder="Email usuário" />
-                        </div>
-                        <div className="info-item">
-                            <strong>Telefone:</strong>
-                            <input type="tel" id="userTelefone" name="telefone" value={form.telefone} onChange={handleChange} disabled={!editMode} title="Telefone" placeholder="(XX) XXXXX-XXXX" />
+
+            <div className="flex flex-col lg:flex-row">
+
+                <form id="formInformacoesPessoais" onSubmit={handleSave}>
+                    <div className="meus-dados-grid">
+                        <div className="info-section"
+                            data-guide-step="1"
+                            data-guide-title="Suas Informações Pessoais"
+                            data-guide-text="Confira seus dados cadastrais. Alguns campos como nome e CPF não podem ser alterados por aqui."
+                            data-guide-arrow="down">
+                            <h3 className="text-xl font-semibold">Informações Pessoais</h3>
+                            <div className="info-item">
+                                <strong>Nome Completo:</strong>
+                                <input type="text" id="userName" name="nomeCompleto" value={form.nomeCompleto} disabled title="Nome Completo" placeholder="Nome usuário" />
+                            </div>
+                            <div className="info-item">
+                                <strong>CPF:</strong>
+                                <input type="text" id="userCpf" name="cpf" value={form.cpf} disabled title="CPF" placeholder="CPF usuário" />
+                            </div>
+                            <div className="info-item">
+                                <strong>Data de Nascimento:</strong>
+                                <input type="text" id="userDob" name="dataNascimento" value={form.dataNascimento} disabled title="Data de Nascimento" placeholder="DD/MM/AAAA" />
+                            </div>
+                            <div className="info-item">
+                                <strong>Email:</strong>
+                                <input type="email" id="userEmail" name="email" value={form.email} onChange={handleChange} disabled={!editMode} title="Email" placeholder="Email usuário" />
+                            </div>
+                            <div className="info-item">
+                                <strong>Telefone:</strong>
+                                <input type="tel" id="userTelefone" name="telefone" value={form.telefone} onChange={handleChange} disabled={!editMode} title="Telefone" placeholder="(XX) XXXXX-XXXX" />
+                            </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+
+                {/* Cards exibindo Consultas e Receitas que vão acontecer */}
+                <div className="justify-center lg:mr-5 flex-1 notificacoes-section">
+                    <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8">Próximos Lembretes</h3>
+                    <div className="grid grid-cols-1  gap-4">
+                        {/* Consultas Agendadas */}
+                        {pacienteLogado?.lembretesConsulta
+                            .filter(lembrete => lembrete.status === 'Agendada')
+                            .sort((a, b) => {
+                                const dateA = new Date(`${a.data.split('/').reverse().join('-')}T${a.hora}`);
+                                const dateB = new Date(`${b.data.split('/').reverse().join('-')}T${b.hora}`);
+                                return dateA.getTime() - dateB.getTime();
+                            })
+                            .slice(0, 3)
+                            .map(lembrete => (
+                                <CardConsulta key={lembrete.id} lembrete={lembrete} />
+                            ))}
+
+                        {/* Receitas Ativas */}
+                        {pacienteLogado?.lembretesReceita
+                            .filter(lembrete => lembrete.status === 'Ativo')
+                            .slice(0, 3)
+                            .map(lembrete => (
+                                <CardReceita key={lembrete.id} lembrete={lembrete} />
+                            ))}
+                    </div>
+                    {(pacienteLogado?.lembretesConsulta.filter(l => l.status === 'Agendada').length === 0 &&
+                    pacienteLogado?.lembretesReceita.filter(l => l.status === 'Ativo').length === 0) && (
+                        <div className="text-center py-8 text-slate-500">
+                            <p>Você não possui lembretes ativos no momento.</p>
+                        </div>
+                    )}
+                </div>                
+            </div>
         </PacientePage>
     );
 }
