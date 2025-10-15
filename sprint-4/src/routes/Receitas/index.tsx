@@ -157,24 +157,24 @@ export default function Receitas() {
         const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
         const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
 
-        // Find next day
+        // Encontrar próximo dia
         let nextDayIndex = now.getDay();
         let daysAhead = 0;
         while (!selectedDays.includes(nextDayIndex)) {
             nextDayIndex = (nextDayIndex + 1) % 7;
             daysAhead++;
-            if (daysAhead > 7) break; // Prevent infinite loop
+            if (daysAhead > 7) break; // Prevenir loop infinito
         }
 
         const nextDate = new Date(now);
         nextDate.setDate(now.getDate() + daysAhead);
 
-        // Parse first dose time
+        // Analisar horário da primeira dose
         const [hours, minutes] = lembrete.horaPrimeiraDose.split(':').map(Number);
         let doseTime = new Date(nextDate);
         doseTime.setHours(hours, minutes, 0, 0);
 
-        // If today and time has passed, find next interval
+        // Se hoje e horário já passou, encontrar próximo intervalo
         if (daysAhead === 0 && doseTime <= now) {
             const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
             if (freqMatch) {
@@ -222,7 +222,7 @@ export default function Receitas() {
                     {!loading && !error && lembretes.length > 0 ? (
                         lembretes.map((lembrete) => (
                             <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                {/* Card Header */}
+                                {/* Cabeçalho do Card */}
                                 <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
                                     <h3 className="text-lg font-bold text-indigo-800">
                                         {lembrete.nome}
@@ -232,7 +232,7 @@ export default function Receitas() {
                                     </span>
                                 </div>
 
-                                {/* Card Body */}
+                                {/* Corpo do Card */}
                                 <div className="p-4 md:p-5 space-y-3 text-slate-700">
                                     <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
                                     <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
@@ -247,7 +247,7 @@ export default function Receitas() {
                                     })()}
                                 </div>
 
-                                {/* Card Footer */}
+                                {/* Rodapé do Card */}
                                 <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
                                     {lembrete.status === 'Ativo' ? (
                                         <>

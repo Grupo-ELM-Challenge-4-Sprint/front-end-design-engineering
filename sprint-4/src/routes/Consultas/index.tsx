@@ -52,7 +52,7 @@ export default function Consultas() {
 
     useEffect(() => {
         if (editingLembrete) {
-            // Convert date from DD/MM/YYYY to YYYY-MM-DD for datetime-local input
+            // Converter data de DD/MM/YYYY para YYYY-MM-DD para input datetime-local
             const [day, month, year] = editingLembrete.data.split('/');
             const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
             setFormData({
@@ -95,7 +95,7 @@ export default function Consultas() {
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const [data, hora] = formData.dataConsulta.split('T');
-        // Convert YYYY-MM-DD to DD/MM/YYYY for consistent storage
+        // Converter YYYY-MM-DD para DD/MM/YYYY para armazenamento consistente
         const [year, month, day] = data.split('-');
         const formattedData = `${day}/${month}/${year}`;
 
@@ -196,7 +196,7 @@ export default function Consultas() {
                     {!loading && !error && lembretes.length > 0 ? (
                         lembretes.map(lembrete => (
                             <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                {/* Card Header */}
+                                {/* Cabeçalho do Card */}
                                 <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
                                     <h3 className="text-lg font-bold text-indigo-800">
                                         {lembrete.especialidade} {lembrete.tipo === 'Teleconsulta' && '(Teleconsulta)'}
@@ -206,7 +206,7 @@ export default function Consultas() {
                                     </span>
                                 </div>
 
-                                {/* Card Body */}
+                                {/* Corpo do Card */}
                                 <div className="p-4 md:p-5 space-y-3 text-slate-700">
                                     <p><strong className="card-body">Médico:</strong> {lembrete.medico}</p>
                                     <p><strong className="card-body">Data e Horário:</strong> {formatarDataHora(lembrete.data, lembrete.hora)}</p>
@@ -216,7 +216,7 @@ export default function Consultas() {
                                     )}
                                 </div>
 
-                                {/* Card Footer */}
+                                {/* Rodapé do Card */}
                                 <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
                                     {lembrete.status === 'Agendada' ? (
                                         <>
