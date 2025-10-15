@@ -1,23 +1,13 @@
-import { useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import PacientePage from '../Painel/PacientePage';
+import { useParams, Link } from 'react-router-dom';
 import { tutorialDetails } from '../../data/tutoriais';
 
 export default function TutorialContent() {
-  const navigate = useNavigate();
-  useEffect(() => {
-      const cpfLogado = localStorage.getItem('cpfLogado');
-      if (!cpfLogado) {
-          navigate('/entrar');
-      }
-  }, [navigate]);
 
   const { id } = useParams();
   const data = tutorialDetails.find(t => t.id === id)!;
 
   return (
-    <PacientePage>
-      <article className="py-2 space-y-8">
+      <article className="py-2 space-y-8 w-[95%] md:w-[75%] lg:w-[60%] mx-auto my-10">
         <div>
           <Link to="/tutoriais" className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50">← Voltar para a lista</Link>
         </div>
@@ -26,7 +16,7 @@ export default function TutorialContent() {
           {data.intro && <p className="text-slate-600">{data.intro}</p>}
 
         {data.videoUrl && (
-          <section className="bg-white border border-slate-200 rounded-xl p-4 md:p-6 shadow-sm">
+          <section className="bg-white border border-slate-200 rounded-xl p-4 md:p-6 shadow-sm ">
             {data.videoTitle && <h2 className="text-slate-800 font-semibold mb-4 text-sm">{data.videoTitle}</h2>}
             <div className="aspect-video w-full overflow-hidden rounded-lg">
               <iframe className="w-full h-full" src={data.videoUrl} title={data.videoTitle || data.heading} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
@@ -54,7 +44,6 @@ export default function TutorialContent() {
           <Link to="/tutoriais" className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50">← Voltar para a lista</Link>
         </div>
       </article>
-    </PacientePage>
   );
 }
 

@@ -237,7 +237,7 @@ export default function Consultas() {
 
             {/* Modal de Adicionar/Editar Lembrete */}
             {isModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-50 overflow-y-auto py-8" aria-labelledby="modalAgendarTitle">
+                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-60 overflow-y-auto py-8" aria-labelledby="modalAgendarTitle">
                     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg relative m-4">
                         <button type="button" className="absolute top-4 right-4 text-2xl font-semibold text-slate-500 hover:text-slate-800" aria-label="Fechar modal" onClick={() => setIsModalOpen(false)} >
                             &times;

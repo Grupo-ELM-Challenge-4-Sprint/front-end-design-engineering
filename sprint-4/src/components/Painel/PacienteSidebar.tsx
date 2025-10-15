@@ -24,7 +24,6 @@ export default function PacienteSidebar() {
       <nav className="paciente-nav" aria-label="Navegação Área do Usuário">
         <ul>
           <li><NavLink to="/perfil"><span className="nav-icon">👤</span> Meus Dados </NavLink></li>
-          <li><NavLink to="/tutoriais"><span className="nav-icon">📄</span> Tutoriais </NavLink></li>
           <li><NavLink to="/receitas"><span className="nav-icon">💊</span> Receitas </NavLink></li>
           <li><NavLink to="/consultas"><span className="nav-icon">📅</span> Consultas </NavLink></li>
           <li><button onClick={handleLogout} className="botao-logout"><span className="nav-icon">🚪</span>Sair</button></li>

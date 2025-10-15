@@ -28,10 +28,10 @@ export default function Home(){
             </div>
         </section>
 
-        {/* Seção de apresentação dos principais serviços oferecidos */}
+        {/* Seção de apresentação dos principais tutoriais oferecidos */}
         <section>
             <div className="container">
-                <h2 className='text-center mt-3'>Nossos Serviços</h2>
+                <h2 className='text-center mt-3'>Nossos Tutoriais</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-[25px] gap-6">
                     <div className="service-card">
                         <img src="https://www.svgrepo.com/show/527687/document-add.svg" alt="ícone exames" />
@@ -49,7 +49,7 @@ export default function Home(){
                         <p>Descubra como agendar e participar de uma teleconsulta pelo App HC, sem sair de casa.</p>
                     </div>
                 </div>
-                <Link to="/servicos" className="block text-center mt-[15px] font-bold text-[#007bff] text-[18px] hover:underline mb-5">Ver todos os serviços →</Link>
+                <Link to="/tutoriais" className="block text-center mt-[15px] font-bold text-[#007bff] text-[18px] hover:underline mb-5">Ver todos os Tutoriais →</Link>
             </div>
         </section>
 
