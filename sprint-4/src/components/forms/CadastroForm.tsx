@@ -95,14 +95,7 @@ export const CadastroForm = ({
           </div>
           <div className="form-group-auth">
             <label htmlFor="cadastroTelefone">Telefone</label>
-            <input
-              className="form-input"
-              type="tel"
-              id="cadastroTelefone"
-              placeholder="(11) 99999-9999"
-              value={formData.cadastroTelefone}
-              onChange={(e) => onInputChange('cadastroTelefone', e.target.value)}
-            />
+            <input className="form-input" type="tel" id="cadastroTelefone" placeholder="(11) 99999-9999" value={formData.cadastroTelefone} onChange={(e) => onInputChange('cadastroTelefone', e.target.value)} />
           </div>
 
           <h3 className="form-step-title mt-6">Definir Senha</h3>
