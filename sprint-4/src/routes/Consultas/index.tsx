@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
-import type { LembreteConsulta } from '../../data/dados';
+import type { LembreteConsulta } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 

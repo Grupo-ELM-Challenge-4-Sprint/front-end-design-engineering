@@ -1,15 +1,6 @@
-import React from 'react';
-import type { LembreteConsulta, LembreteReceita } from '../../data/dados';
+import type { LembreteConsulta, LembreteReceita } from '../../hooks/useApiUsuarios';
 
-interface CardConsultaProps {
-  lembrete: LembreteConsulta;
-}
-
-interface CardReceitaProps {
-  lembrete: LembreteReceita;
-}
-
-export const CardConsulta = ({ lembrete }: CardConsultaProps) => {
+export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center mb-3">
@@ -29,7 +20,7 @@ export const CardConsulta = ({ lembrete }: CardConsultaProps) => {
   );
 };
 
-export const CardReceita = ({ lembrete }: CardReceitaProps) => {
+export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
   const getNextDose = () => {
     const now = new Date();
     const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];

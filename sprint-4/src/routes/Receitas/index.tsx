@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
-import type { LembreteReceita } from '../../data/dados';
+import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 
@@ -15,6 +15,8 @@ export default function Receitas() {
             navigate('/entrar');
         }
     }, [navigate]);
+
+    
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);

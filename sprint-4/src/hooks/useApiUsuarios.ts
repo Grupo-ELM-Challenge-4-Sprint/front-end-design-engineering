@@ -1,5 +1,29 @@
 import { useState, useCallback } from 'react';
 
+// Definições de tipos para nossos lembretes
+export interface LembreteConsulta {
+    id: number;
+    especialidade: string;
+    medico: string;
+    data: string; // Formato: DD/MM/AAAA
+    hora: string; // Formato: HH:mm
+    tipo: 'Presencial' | 'Teleconsulta';
+    local: string;
+    observacoes: string;
+    status: 'Agendada' | 'Concluída';
+};
+
+export interface LembreteReceita {
+    id: number;
+    nome: string;
+    frequencia: string; 
+    dias: string[];
+    horaPrimeiraDose: string;
+    numeroDias: number;
+    observacoes: string;
+    status: 'Ativo' | 'Inativo';
+};
+
 export interface Usuario {
   id: number;
   nomeCompleto: string;
@@ -8,8 +32,8 @@ export interface Usuario {
   email: string;
   telefone: string;
   senha: string;
-  lembretesConsulta: any[];
-  lembretesReceita: any[];
+  lembretesConsulta: LembreteConsulta[];
+  lembretesReceita: LembreteReceita[];
 }
 
 const API_URL = import.meta.env.VITE_API_URL_USUARIOS;

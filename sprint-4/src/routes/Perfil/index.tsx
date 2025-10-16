@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import PacientePage from "../../components/Painel/PacientePage";
-import { getPacientePorCpf, getPacientes, setPacientes } from "../../data/dados";
+import { useApiUsuarios } from "../../hooks/useApiUsuarios";
+import type { Usuario } from "../../hooks/useApiUsuarios";
 import { CardConsulta, CardReceita } from "../../components/LembreteCard/LembreteCard";
 
 export default function Perfil() {
     const navigate = useNavigate();
+    const { getUsuarioPorCpf, atualizarUsuario } = useApiUsuarios();
+
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
         if (!cpfLogado) {
@@ -13,44 +16,55 @@ export default function Perfil() {
         }
     }, [navigate]);
 
-    const cpfUsuarioLogado = localStorage.getItem('cpfLogado') || '';
-    const pacienteLogado = cpfUsuarioLogado ? getPacientePorCpf(cpfUsuarioLogado) : undefined;
+    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+
+    // Buscar usuário da API ao carregar
+    useEffect(() => {
+        const cpfLogado = localStorage.getItem('cpfLogado');
+        if (cpfLogado) {
+            getUsuarioPorCpf(cpfLogado).then((usuario) => {
+                if (usuario) {
+                    setUsuarioApi(usuario);
+                }
+            });
+        }
+    }, [getUsuarioPorCpf]);
 
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(() => ({
-        nomeCompleto: pacienteLogado?.nomeCompleto || '',
-        cpf: pacienteLogado?.cpf || '',
-        dataNascimento: pacienteLogado?.dataNascimento || '',
-        email: pacienteLogado?.email || '',
-        telefone: pacienteLogado?.telefone || ''
+        nomeCompleto: usuarioApi?.nomeCompleto || '',
+        cpf: usuarioApi?.cpf || '',
+        dataNascimento: usuarioApi?.dataNascimento || '',
+        email: usuarioApi?.email || '',
+        telefone: usuarioApi?.telefone || ''
     }));
     const [original, setOriginal] = useState(() => ({
-        nomeCompleto: pacienteLogado?.nomeCompleto || '',
-        cpf: pacienteLogado?.cpf || '',
-        dataNascimento: pacienteLogado?.dataNascimento || '',
-        email: pacienteLogado?.email || '',
-        telefone: pacienteLogado?.telefone || ''
+        nomeCompleto: usuarioApi?.nomeCompleto || '',
+        cpf: usuarioApi?.cpf || '',
+        dataNascimento: usuarioApi?.dataNascimento || '',
+        email: usuarioApi?.email || '',
+        telefone: usuarioApi?.telefone || ''
     }));
 
     // Só atualiza se trocar de usuário logado
     useEffect(() => {
-        if (pacienteLogado) {
+        if (usuarioApi) {
             setForm({
-                nomeCompleto: pacienteLogado.nomeCompleto,
-                cpf: pacienteLogado.cpf,
-                dataNascimento: pacienteLogado.dataNascimento,
-                email: pacienteLogado.email,
-                telefone: pacienteLogado.telefone
+                nomeCompleto: usuarioApi.nomeCompleto,
+                cpf: usuarioApi.cpf,
+                dataNascimento: usuarioApi.dataNascimento,
+                email: usuarioApi.email,
+                telefone: usuarioApi.telefone
             });
             setOriginal({
-                nomeCompleto: pacienteLogado.nomeCompleto,
-                cpf: pacienteLogado.cpf,
-                dataNascimento: pacienteLogado.dataNascimento,
-                email: pacienteLogado.email,
-                telefone: pacienteLogado.telefone
+                nomeCompleto: usuarioApi.nomeCompleto,
+                cpf: usuarioApi.cpf,
+                dataNascimento: usuarioApi.dataNascimento,
+                email: usuarioApi.email,
+                telefone: usuarioApi.telefone
             });
         }
-    }, [cpfUsuarioLogado]);
+    }, [usuarioApi]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -66,17 +80,17 @@ export default function Perfil() {
     };
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!pacienteLogado) return;
-        const pacientes = getPacientes();
-        const cpfKey = pacienteLogado.cpf.replace(/\D/g, '');
-        pacientes[cpfKey] = {
-            ...pacienteLogado,
+        if (!usuarioApi) return;
+        atualizarUsuario(usuarioApi.id, {
             email: form.email,
             telefone: form.telefone
-        };
-        setPacientes(pacientes);
-        setOriginal(form);
-        setEditMode(false);
+        }).then((sucesso) => {
+            if (sucesso) {
+                setUsuarioApi({ ...usuarioApi, email: form.email, telefone: form.telefone });
+                setOriginal(form);
+                setEditMode(false);
+            }
+        });
     };
 
     return (
@@ -139,7 +153,7 @@ export default function Perfil() {
                     <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8">Próximos Lembretes</h3>
                     <div className="grid grid-cols-1  gap-4">
                         {/* Consultas Agendadas */}
-                        {pacienteLogado?.lembretesConsulta
+                        {usuarioApi?.lembretesConsulta
                             .filter(lembrete => lembrete.status === 'Agendada')
                             .sort((a, b) => {
                                 const dateA = new Date(`${a.data.split('/').reverse().join('-')}T${a.hora}`);
@@ -152,20 +166,20 @@ export default function Perfil() {
                             ))}
 
                         {/* Receitas Ativas */}
-                        {pacienteLogado?.lembretesReceita
+                        {usuarioApi?.lembretesReceita
                             .filter(lembrete => lembrete.status === 'Ativo')
                             .slice(0, 3)
                             .map(lembrete => (
                                 <CardReceita key={lembrete.id} lembrete={lembrete} />
                             ))}
                     </div>
-                    {(pacienteLogado?.lembretesConsulta.filter(l => l.status === 'Agendada').length === 0 &&
-                    pacienteLogado?.lembretesReceita.filter(l => l.status === 'Ativo').length === 0) && (
+                    {(usuarioApi?.lembretesConsulta.filter(l => l.status === 'Agendada').length === 0 &&
+                    usuarioApi?.lembretesReceita.filter(l => l.status === 'Ativo').length === 0) && (
                         <div className="text-center py-8 text-slate-500">
                             <p>Você não possui lembretes ativos no momento.</p>
                         </div>
                     )}
-                </div>                
+                </div>
             </div>
         </PacientePage>
     );
