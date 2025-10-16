@@ -237,7 +237,7 @@ export default function Receitas() {
                                 <div className="grid grid-cols-2 gap-2">
                                     {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map(dia => (
                                         <label key={dia} className="flex items-center">
-                                            <input
+                                            <input className="mr-2"
                                                 type="checkbox"
                                                 checked={formData.dias.includes(dia)}
                                                 onChange={(e) => {
@@ -247,7 +247,6 @@ export default function Receitas() {
                                                         setFormData(prev => ({ ...prev, dias: prev.dias.filter(d => d !== dia) }));
                                                     }
                                                 }}
-                                                className="mr-2"
                                             />
                                             {dia}
                                         </label>

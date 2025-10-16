@@ -4,6 +4,7 @@ import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteConsulta } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
+import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
 
 export default function Consultas() {
     const navigate = useNavigate();
@@ -162,20 +163,16 @@ export default function Consultas() {
         setIsModalOpen(true);
     };
 
-    const formatarDataHora = (dataStr: string, horaStr: string) => {
-        if (!dataStr || !horaStr) return '';
-        return `${dataStr} às ${horaStr}`;
-    }
+
 
     return (
         <PacientePage>
-            <section
-                className="py-2"
+            <section className="py-2"
                 data-guide-step="1"
                 data-guide-title="Seus Lembretes de Consulta"
                 data-guide-text="Adicione e gerencie seus lembretes de consulta para não esquecer de nenhum agendamento."
-                data-guide-arrow="down"
-            >
+                data-guide-arrow="down">
+
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left">
                         Meus Lembretes de Consulta
@@ -194,51 +191,15 @@ export default function Consultas() {
                     {loading && <p className="text-center text-slate-600">Carregando lembretes...</p>}
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
                     {!loading && !error && lembretes.length > 0 ? (
-                        lembretes.map(lembrete => (
-                            <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                {/* Cabeçalho do Card */}
-                                <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
-                                    <h3 className="text-lg font-bold text-indigo-800">
-                                        {lembrete.especialidade} {lembrete.tipo === 'Teleconsulta' && '(Teleconsulta)'}
-                                    </h3>
-                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${lembrete.status === 'Agendada' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-                                        {lembrete.status}
-                                    </span>
-                                </div>
-
-                                {/* Corpo do Card */}
-                                <div className="p-4 md:p-5 space-y-3 text-slate-700">
-                                    <p><strong className="card-body">Médico:</strong> {lembrete.medico}</p>
-                                    <p><strong className="card-body">Data e Horário:</strong> {formatarDataHora(lembrete.data, lembrete.hora)}</p>
-                                    <p><strong className="card-body">Local:</strong> {lembrete.local}</p>
-                                    {lembrete.observacoes && (
-                                        <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
-                                    )}
-                                </div>
-
-                                {/* Rodapé do Card */}
-                                <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
-                                    {lembrete.status === 'Agendada' ? (
-                                        <>
-                                            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Alterar
-                                            </button>
-                                            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Marcar como Concluída
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <button onClick={() => handleReverterLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Reverter
-                                            </button>
-                                            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-                                                Remover Lembrete
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                        lembretes.map((lembrete) => (
+                            <ConsultaCard
+                                key={lembrete.id}
+                                lembrete={lembrete}
+                                handleOpenEditModal={handleOpenEditModal}
+                                handleConcluirLembrete={handleConcluirLembrete}
+                                handleReverterLembrete={handleReverterLembrete}
+                                handleRemoveLembrete={handleRemoveLembrete}
+                            />
                         ))
                     ) : (
                         <div className=" border border-slate-200 rounded-xl p-6 shadow-sm text-center">
