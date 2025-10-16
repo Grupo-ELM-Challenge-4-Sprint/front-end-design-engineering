@@ -91,7 +91,7 @@
   }
 
   .guia-elemento-destacado {
-    @apply relative z-50 rounded-md transition-shadow duration-300;
+    @apply rounded-[8px] transition-shadow duration-300 border-4 border-blue-500 shadow-[0_0_0_4px_rgba(0,123,255,0.5)];
   }
 
   body.guia-ativo-no-scroll {

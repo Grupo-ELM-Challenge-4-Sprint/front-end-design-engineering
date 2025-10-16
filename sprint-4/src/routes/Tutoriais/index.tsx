@@ -19,23 +19,21 @@ export default function Tutoriais(){
         </section>
 
         {/* Grid de Tutoriais principais usando componente ServiceCard */}
-        <section className="py-5">
-            <div className="py-2 mx-10 my-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                         data-guide-step="2"
-                         data-guide-title="Lista de Tutoriais"
-                         data-guide-text="Aqui estão todos os tutoriais disponíveis. Clique em um card para acessar o tutorial desejado."
-                         data-guide-arrow="up">
-                      {tutorials.map(item => (
-                        <TutorialCard key={item.id} title={item.title} to={item.to} />
-                      ))}
-                    </div>
-                  </div>
+        <section className="py-5"
+            data-guide-step="2"
+            data-guide-title="Lista de Tutoriais"
+            data-guide-text="Aqui estão todos os tutoriais disponíveis. Clique em um card para acessar o tutorial desejado."
+            data-guide-arrow="up">
+                <div className="py-2 mx-10 my-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {tutorials.map(item => (
+                    <TutorialCard key={item.id} title={item.title} to={item.to} />
+                    ))}
+                </div>
         </section>
 
         {/* botão para Acessar minha conta ou Contato  */}
         <section className="py-10 bg-indigo-100 text-center md:text-lg"
-            data-guide-step="2"
+            data-guide-step="3"
             data-guide-title="Entre em contato"
             data-guide-text="Precisa de ajuda? Acesse sua conta ou fale conosco para mais informações."
             data-guide-arrow="up">
