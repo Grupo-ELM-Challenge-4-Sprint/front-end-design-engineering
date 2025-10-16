@@ -4,6 +4,7 @@ import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
+import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
 
 export default function Receitas() {
     const navigate = useNavigate();
@@ -154,44 +155,7 @@ export default function Receitas() {
         setIsModalOpen(true);
     };
 
-    const getNextDose = (lembrete: LembreteReceita) => {
-        const now = new Date();
-        const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-        const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
 
-        // Encontrar próximo dia
-        let nextDayIndex = now.getDay();
-        let daysAhead = 0;
-        while (!selectedDays.includes(nextDayIndex)) {
-            nextDayIndex = (nextDayIndex + 1) % 7;
-            daysAhead++;
-            if (daysAhead > 7) break; // Prevenir loop infinito
-        }
-
-        const nextDate = new Date(now);
-        nextDate.setDate(now.getDate() + daysAhead);
-
-        // Analisar horário da primeira dose
-        const [hours, minutes] = lembrete.horaPrimeiraDose.split(':').map(Number);
-        let doseTime = new Date(nextDate);
-        doseTime.setHours(hours, minutes, 0, 0);
-
-        // Se hoje e horário já passou, encontrar próximo intervalo
-        if (daysAhead === 0 && doseTime <= now) {
-            const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
-            if (freqMatch) {
-                const freqHours = parseInt(freqMatch[1]);
-                const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
-                const intervalsPassed = Math.ceil(diffHours / freqHours);
-                doseTime.setHours(hours + intervalsPassed * freqHours, minutes);
-            }
-        }
-
-        return {
-            date: nextDate.toLocaleDateString('pt-BR'),
-            time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        };
-    };
 
     return (
         <PacientePage>
@@ -223,55 +187,14 @@ export default function Receitas() {
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
                     {!loading && !error && lembretes.length > 0 ? (
                         lembretes.map((lembrete) => (
-                            <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                {/* Cabeçalho do Card */}
-                                <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
-                                    <h3 className="text-lg font-bold text-indigo-800">
-                                        {lembrete.nome}
-                                    </h3>
-                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${lembrete.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-                                        {lembrete.status}
-                                    </span>
-                                </div>
-
-                                {/* Corpo do Card */}
-                                <div className="p-4 md:p-5 space-y-3 text-slate-700">
-                                    <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
-                                    <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
-                                    <p><strong className="card-body">Primeira Dose:</strong> {lembrete.horaPrimeiraDose}</p>
-                                    <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
-                                    {lembrete.observacoes && (
-                                        <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
-                                    )}
-                                    {(() => {
-                                        const nextDose = getNextDose(lembrete);
-                                        return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date} às {nextDose.time}</p>;
-                                    })()}
-                                </div>
-
-                                {/* Rodapé do Card */}
-                                <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
-                                    {lembrete.status === 'Ativo' ? (
-                                        <>
-                                            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Alterar
-                                            </button>
-                                            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Desativar
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <button onClick={() => handleReativarLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Reativar
-                                            </button>
-                                            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-                                                Remover Lembrete
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                            <ReceitaCard
+                                key={lembrete.id}
+                                lembrete={lembrete}
+                                handleOpenEditModal={handleOpenEditModal}
+                                handleConcluirLembrete={handleConcluirLembrete}
+                                handleReativarLembrete={handleReativarLembrete}
+                                handleRemoveLembrete={handleRemoveLembrete}
+                            />
                         ))
                     ) : (
                         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm text-center"
