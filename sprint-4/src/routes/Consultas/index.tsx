@@ -19,6 +19,7 @@ export default function Consultas() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
     const [lembretes, setLembretes] = useState<LembreteConsulta[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
 
@@ -29,7 +30,17 @@ export default function Consultas() {
             getUsuarioPorCpf(cpfLogado).then((usuario) => {
                 if (usuario) {
                     setUsuarioApi(usuario);
-                    setLembretes(usuario.lembretesConsulta || []);
+                    // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+                    if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
+                        getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
+                            if (paciente) {
+                                setPaciente(paciente);
+                                setLembretes(paciente.lembretesConsulta || []);
+                            }
+                        });
+                    } else {
+                        setLembretes(usuario.lembretesConsulta || []);
+                    }
                 }
             });
         }
@@ -85,11 +96,17 @@ export default function Consultas() {
     // Atualiza os lembretes do usuário na API
     const persistLembretes = async (novosLembretes: LembreteConsulta[]) => {
         if (!usuarioApi) return;
-        const sucesso = await atualizarUsuario(usuarioApi.id, {
+        // Se for cuidador com paciente vinculado, atualizar o paciente
+        const usuarioParaAtualizar = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente : usuarioApi;
+        const sucesso = await atualizarUsuario(usuarioParaAtualizar.id, {
             lembretesConsulta: novosLembretes
         });
         if (sucesso) {
-            setUsuarioApi({ ...usuarioApi, lembretesConsulta: novosLembretes });
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) {
+                setPaciente({ ...paciente, lembretesConsulta: novosLembretes });
+            } else {
+                setUsuarioApi({ ...usuarioApi, lembretesConsulta: novosLembretes });
+            }
         }
     };
 

@@ -21,8 +21,10 @@ export default function Receitas() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
     const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     // Buscar usuário da API ao carregar
     useEffect(() => {
@@ -31,7 +33,17 @@ export default function Receitas() {
             getUsuarioPorCpf(cpfLogado).then((usuario) => {
                 if (usuario) {
                     setUsuarioApi(usuario);
-                    setLembretes(usuario.lembretesReceita || []);
+                    // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+                    if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
+                        getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
+                            if (paciente) {
+                                setPaciente(paciente);
+                                setLembretes(paciente.lembretesReceita || []);
+                            }
+                        });
+                    } else {
+                        setLembretes(usuario.lembretesReceita || []);
+                    }
                 }
             });
         }
@@ -52,12 +64,14 @@ export default function Receitas() {
         observacoes: '',
     });
 
+    const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
     useEffect(() => {
         if (editingLembrete) {
             setFormData({
                 nome: editingLembrete.nome,
                 frequencia: editingLembrete.frequencia,
-                dias: editingLembrete.dias,
+                dias: editingLembrete.dias.sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
                 horaPrimeiraDose: editingLembrete.horaPrimeiraDose,
                 numeroDias: editingLembrete.numeroDias,
                 observacoes: editingLembrete.observacoes,
@@ -96,17 +110,28 @@ export default function Receitas() {
     // Atualiza os lembretes do usuário na API
     const persistLembretes = async (novosLembretes: LembreteReceita[]) => {
         if (!usuarioApi) return;
-        const sucesso = await atualizarUsuario(usuarioApi.id, {
+        // Se for cuidador com paciente vinculado, atualizar o paciente
+        const usuarioParaAtualizar = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente : usuarioApi;
+        const sucesso = await atualizarUsuario(usuarioParaAtualizar.id, {
             lembretesReceita: novosLembretes
         });
         if (sucesso) {
-            setUsuarioApi({ ...usuarioApi, lembretesReceita: novosLembretes });
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) {
+                setPaciente({ ...paciente, lembretesReceita: novosLembretes });
+            } else {
+                setUsuarioApi({ ...usuarioApi, lembretesReceita: novosLembretes });
+            }
         }
     };
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMessage('');
         if (!formData.nome) return;
+        if (formData.dias.length === 0) {
+            setErrorMessage('Selecione pelo menos um dia da semana.');
+            return;
+        }
 
         if (editingLembrete) {
             const novos = lembretes.map(l => l.id === editingLembrete.id ? { ...l, ...formData } : l);
@@ -242,7 +267,7 @@ export default function Receitas() {
                                                 checked={formData.dias.includes(dia)}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        setFormData(prev => ({ ...prev, dias: [...prev.dias, dia] }));
+                                                        setFormData(prev => ({ ...prev, dias: [...prev.dias, dia].sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)) }));
                                                     } else {
                                                         setFormData(prev => ({ ...prev, dias: prev.dias.filter(d => d !== dia) }));
                                                     }
@@ -265,6 +290,11 @@ export default function Receitas() {
                                 <label htmlFor="observacoes" className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
                                 <textarea id="observacoes" name="observacoes" value={formData.observacoes} onChange={handleInputChange} rows={3} placeholder="Ex: Tomar após as refeições, 1 comprimido" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
                             </div>
+                            {errorMessage && (
+                                <div className="text-red-600 text-sm">
+                                    {errorMessage}
+                                </div>
+                            )}
                             <div className="flex justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => { setIsModalOpen(false); setEditingLembrete(null); }} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
                                     Cancelar

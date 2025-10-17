@@ -70,7 +70,8 @@
           "observacoes": "1 comprimido, 2x ao dia após as refeições",
           "status": "Ativo"
         }
-      ]
+      ],
+      "cpfCuidador": "893.993.700-70"
     },
     {
       "id": "2",
@@ -120,12 +121,11 @@
       "nomeCompleto": "Enzo Okuizumi Miranda de Souza",
       "cpf": "893.993.700-70",
       "dataNascimento": "30/10/2006",
-      "tipoUsuario": "PACIENTE",
+      "tipoUsuario": "CUIDADOR",
       "email": "enzo.okuizumi@gmai.com",
       "telefone": "(11) 94900-7573",
       "senha": "123@Mudar",
-      "lembretesConsulta": [],
-      "lembretesReceita": []
+      "cpfPaciente": "392.942.080-52"
     }
   ]
 }

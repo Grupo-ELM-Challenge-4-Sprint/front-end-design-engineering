@@ -29,11 +29,14 @@ export interface Usuario {
   nomeCompleto: string;
   cpf: string;
   dataNascimento: string;
+  tipoUsuario: 'PACIENTE' | 'CUIDADOR';
   email: string;
   telefone: string;
   senha: string;
-  lembretesConsulta: LembreteConsulta[];
-  lembretesReceita: LembreteReceita[];
+  lembretesConsulta?: LembreteConsulta[]; // Opcional para cuidadores
+  lembretesReceita?: LembreteReceita[]; // Opcional para cuidadores
+  cpfPaciente?: string | null; // Para cuidadores: CPF do paciente vinculado
+  cpfCuidador?: string | null; // Para pacientes: CPF do cuidador vinculado
 }
 
 const API_URL = import.meta.env.VITE_API_URL_USUARIOS;
@@ -115,7 +118,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       if (success) {
-        setTimeout(() => setLoading(false), 350);
+        setTimeout(() => setLoading(false), 100);
       } else {
         setLoading(false);
       }

@@ -4,10 +4,12 @@ import PacientePage from "../../components/Painel/PacientePage";
 import { useApiUsuarios } from "../../hooks/useApiUsuarios";
 import type { Usuario } from "../../hooks/useApiUsuarios";
 import { CardConsulta, CardReceita } from "../../components/LembreteCard/LembreteCard";
+import { useInputMasks } from "../../hooks/useInputMasks";
 
 export default function Perfil() {
     const navigate = useNavigate();
     const { getUsuarioPorCpf, atualizarUsuario } = useApiUsuarios();
+    const { applyMask } = useInputMasks();
 
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
@@ -17,6 +19,8 @@ export default function Perfil() {
     }, [navigate]);
 
     const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const [pacienteVinculado, setPacienteVinculado] = useState<Usuario | null>(null);
+    const [linkMessage, setLinkMessage] = useState<string>('');
 
     // Buscar usuário da API ao carregar
     useEffect(() => {
@@ -25,6 +29,12 @@ export default function Perfil() {
             getUsuarioPorCpf(cpfLogado).then((usuario) => {
                 if (usuario) {
                     setUsuarioApi(usuario);
+                    // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
+                    if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
+                        getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
+                            setPacienteVinculado(paciente);
+                        });
+                    }
                 }
             });
         }
@@ -148,17 +158,113 @@ export default function Perfil() {
                                 <strong>Telefone:</strong>
                                 <input type="tel" id="userTelefone" name="telefone" value={form.telefone} onChange={handleChange} disabled={!editMode} title="Telefone" placeholder="(XX) XXXXX-XXXX" />
                             </div>
+
+                            {/* Seção de Vinculação para Cuidadores */}
+                            {usuarioApi?.tipoUsuario === 'CUIDADOR' && (
+                                <div className="info-section mt-6">
+                                    <h4 className="text-lg font-semibold mb-4 pb-2 border-b border-[#e0e0e0]">Vinculação com Paciente</h4>
+
+                                    {pacienteVinculado ? (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                            <p className="text-green-800 font-medium">✅ Vinculado com: {pacienteVinculado.nomeCompleto}</p>
+                                            <p className="text-green-600 text-sm mt-1">CPF: {pacienteVinculado.cpf}</p>
+                                            <button type="button" className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer"
+                                                onClick={async () => {
+                                                    if (usuarioApi && pacienteVinculado) {
+                                                        try {
+                                                            // Desvincular: remover cpfPaciente do cuidador e cpfCuidador do paciente
+                                                            await atualizarUsuario(usuarioApi.id, { cpfPaciente: null });
+                                                            await atualizarUsuario(pacienteVinculado.id, { cpfCuidador: null });
+                                                            setPacienteVinculado(null);
+                                                            setUsuarioApi({ ...usuarioApi, cpfPaciente: null });
+                                                        } catch (error) {
+                                                            console.error('Erro ao desvincular:', error);
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                Desvincular
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <p className="text-gray-700 mb-3">Você não está vinculado a nenhum paciente.</p>
+                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                <input type="text" placeholder="Digite o CPF do paciente" className="flex-1 px-3 py-2 border border-gray-300 rounded-md" id="cpfPacienteInput"
+                                                    onChange={(e) => {
+                                                        const value = applyMask(e.target.value, 'cpf');
+                                                        e.target.value = value;
+                                                    }}
+                                                />
+                                                <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer"
+                                                    onClick={async () => {
+                                                        const cpfInput = document.getElementById('cpfPacienteInput') as HTMLInputElement;
+                                                        const cpfPaciente = cpfInput.value;
+                                                        setLinkMessage('');
+
+                                                        if (!cpfPaciente || cpfPaciente.length !== 14) {
+                                                            setLinkMessage('Por favor, digite um CPF válido.');
+                                                            return;
+                                                        }
+
+                                                        try {
+                                                            const paciente = await getUsuarioPorCpf(cpfPaciente);
+                                                            if (!paciente) {
+                                                                setLinkMessage('Paciente não encontrado.');
+                                                                return;
+                                                            }
+
+                                                            if (paciente.tipoUsuario !== 'PACIENTE') {
+                                                                setLinkMessage('Este usuário não é um paciente.');
+                                                                return;
+                                                            }
+
+                                                            if (paciente.cpfCuidador) {
+                                                                setLinkMessage('Este paciente já está vinculado a outro cuidador.');
+                                                                return;
+                                                            }
+
+                                                            // Vincular: adicionar cpfPaciente ao cuidador e cpfCuidador ao paciente
+                                                            await atualizarUsuario(usuarioApi!.id, { cpfPaciente });
+                                                            await atualizarUsuario(paciente.id, { cpfCuidador: usuarioApi!.cpf });
+
+                                                            setPacienteVinculado(paciente);
+                                                            setUsuarioApi({ ...usuarioApi!, cpfPaciente });
+
+                                                            setLinkMessage('Vinculação realizada com sucesso!');
+                                                        } catch (error) {
+                                                            setLinkMessage('Erro ao vincular paciente.');
+                                                        }
+                                                    }}
+                                                >
+                                                    Vincular
+                                                </button>
+                                            </div>
+                                            {linkMessage && (
+                                                <p className={`mt-3 text-sm ${linkMessage.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {linkMessage}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </form>
 
                 {/* Cards exibindo Consultas e Receitas que vão acontecer */}
                 <div className="w-full justify-center lg:mr-5 notificacoes-section">
-                    <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8 pb-2.5 border-b">Próximos Lembretes</h3>
+                    <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8 pb-2.5 border-b">
+                        {usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado
+                            ? `Próximos Lembretes de ${pacienteVinculado.nomeCompleto}`
+                            : 'Próximos Lembretes'
+                        }
+                    </h3>
                     <div className="grid grid-cols-1 gap-4">
                         {/* Consultas Agendadas */}
-                        {usuarioApi?.lembretesConsulta
-                            .filter(lembrete => lembrete.status === 'Agendada')
+                        {(usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesConsulta
+                            ?.filter(lembrete => lembrete.status === 'Agendada')
                             .sort((a, b) => {
                                 const dateA = new Date(`${a.data.split('/').reverse().join('-')}T${a.hora}`);
                                 const dateB = new Date(`${b.data.split('/').reverse().join('-')}T${b.hora}`);
@@ -170,17 +276,22 @@ export default function Perfil() {
                             ))}
 
                         {/* Receitas Ativas */}
-                        {usuarioApi?.lembretesReceita
-                            .filter(lembrete => lembrete.status === 'Ativo')
+                        {(usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesReceita
+                            ?.filter(lembrete => lembrete.status === 'Ativo')
                             .slice(0, 3)
                             .map(lembrete => (
                                 <CardReceita key={lembrete.id} lembrete={lembrete} />
                             ))}
                     </div>
-                    {(usuarioApi?.lembretesConsulta.filter(l => l.status === 'Agendada').length === 0 &&
-                    usuarioApi?.lembretesReceita.filter(l => l.status === 'Ativo').length === 0) && (
+                    {((usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesConsulta?.filter(l => l.status === 'Agendada').length === 0 &&
+                    (usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesReceita?.filter(l => l.status === 'Ativo').length === 0) && (
                         <div className="text-center py-8 text-slate-500">
-                            <p>Você não possui lembretes ativos no momento.</p>
+                            <p>
+                                {usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado
+                                    ? `${pacienteVinculado.nomeCompleto} não há nenhuma consulta agendada ou receita ativa no momento.`
+                                    : 'Você não há nenhuma consulta agendada ou receita ativa no momento.'
+                                }
+                            </p>
                         </div>
                     )}
                 </div>
