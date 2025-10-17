@@ -153,7 +153,7 @@ export default function Perfil() {
                 </form>
 
                 {/* Cards exibindo Consultas e Receitas que vão acontecer */}
-                <div className="justify-center lg:mr-5 notificacoes-section">
+                <div className="w-full justify-center lg:mr-5 notificacoes-section">
                     <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8 pb-2.5 border-b">Próximos Lembretes</h3>
                     <div className="grid grid-cols-1 gap-4">
                         {/* Consultas Agendadas */}
