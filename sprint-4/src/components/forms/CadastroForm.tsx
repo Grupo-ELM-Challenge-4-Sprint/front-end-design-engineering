@@ -7,6 +7,7 @@ interface CadastroFormProps {
     cadastroNomeCompleto: string;
     cadastroCpf: string;
     dataNascimento: string;
+    tipoUsuario: string;
     cadastroEmail: string;
     cadastroTelefone: string;
     cadastroSenha: string;
@@ -42,11 +43,7 @@ export const CadastroForm = ({
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Cadastro realizado!</h2>
           <p className="auth-subtitle">Sua conta foi criada. Agora você já pode acessar a plataforma.</p>
           <div className="mt-6 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => onFormChange('login')}
-              className="btn btn-primary w-full"
-            >
+            <button type="button" onClick={() => onFormChange('login')} className="btn btn-primary w-full">
               Fazer login
             </button>
             <Link to="/" className="btn btn-secondary w-full">Voltar à página inicial</Link>
@@ -84,6 +81,16 @@ export const CadastroForm = ({
             <input id="dataNascimento" className={`form-input ${errors.dataNascimento ? 'border-red-500' : ''}`} type="text" placeholder="dd/mm/aaaa" value={formData.dataNascimento}
               onChange={(e) => onInputChange('dataNascimento', e.target.value)} required />
             {errors.dataNascimento && <small className="error-message text-red-500">{errors.dataNascimento}</small>}
+          </div>
+          <div className="form-group-auth">
+            <label htmlFor="tipoUsuario">Tipo de usuário*</label>
+            <select id="tipoUsuario" className={`form-input ${errors.tipoUsuario ? 'border-red-500' : ''}`} value={formData.tipoUsuario}
+              onChange={(e) => onInputChange('tipoUsuario', e.target.value)} required>
+              <option value="">Selecione</option>
+              <option value="PACIENTE">PACIENTE</option>
+              <option value="CUIDADOR">CUIDADOR</option>
+            </select>
+            {errors.tipoUsuario && <small className="error-message text-red-500">{errors.tipoUsuario}</small>}
           </div>
 
           <h3 className="form-step-title mt-6">Informações de Contato</h3>
