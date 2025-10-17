@@ -97,6 +97,7 @@ export const useApiUsuarios = () => {
   const atualizarUsuario = useCallback(async (id: number, usuario: Partial<Usuario>): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
+    let success = false;
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'PATCH',
@@ -106,12 +107,18 @@ export const useApiUsuarios = () => {
         body: JSON.stringify(usuario),
       });
       if (!response.ok) throw new Error('Erro ao atualizar usuário');
-      return await response.json();
+      const result = await response.json();
+      success = true;
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       return null;
     } finally {
-      setLoading(false);
+      if (success) {
+        setTimeout(() => setLoading(false), 350);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
