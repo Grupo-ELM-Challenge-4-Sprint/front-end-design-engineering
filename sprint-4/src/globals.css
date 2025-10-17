@@ -484,7 +484,7 @@
 
   /* Perfil */
   .paciente-main-container {
-    @apply flex flex-col min-h-[calc(100vh-160px)] pt-5 pb-[30px] md:flex-row md:items-start md:gap-6;
+    @apply flex flex-col min-h-[calc(100vh-160px)] pt-5 pb-[30px] md:flex-row md:items-start md:gap-5;
   }
 
   .paciente-sidebar {
@@ -536,7 +536,7 @@
   }
 
   .content-header {
-    @apply flex flex-col items-start mb-6 pb-4 border-b border-[#e0e0e0] md:flex-row md:items-center md:justify-between;
+    @apply flex flex-col items-start mb-5 border-b border-[#e0e0e0] md:flex-row md:items-center md:justify-between;
   }
 
   .content-header h2 {
@@ -567,7 +567,7 @@
   .info-section h3,
   .saude-resumo-section h3,
   .notificacoes-section h3 {
-    @apply text-base text-[#3f51b5] mt-0 mb-[18px] pb-2.5 border-b border-[#e0e0e0];
+    @apply text-base text-[#3f51b5] mt-0 border-[#e0e0e0];
   }
 
   .info-item {

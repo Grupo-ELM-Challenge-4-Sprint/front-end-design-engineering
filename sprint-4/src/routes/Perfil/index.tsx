@@ -97,21 +97,6 @@ export default function Perfil() {
         <PacientePage>
             <div className="content-header">
                 <h2>Meus Dados</h2>
-                <div className="form-actions-header"
-                    data-guide-step="2"
-                    data-guide-title="Editar Informações"
-                    data-guide-text="Clique em 'Editar' para modificar seus dados de contato e preferências. Lembre-se de 'Salvar' as alterações."
-                    data-guide-arrow="up">
-                    {!editMode && (
-                        <button id="editProfileButton" className="btn btn-secondary" type="button" onClick={handleEdit}>Editar</button>
-                    )}
-                    {editMode && (
-                        <>
-                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais">Salvar</button>
-                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel}>Cancelar</button>
-                        </>
-                    )}
-                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row">
@@ -123,7 +108,26 @@ export default function Perfil() {
                             data-guide-title="Suas Informações Pessoais"
                             data-guide-text="Confira seus dados cadastrais. Alguns campos como nome e CPF não podem ser alterados por aqui."
                             data-guide-arrow="down">
-                            <h3 className="text-xl font-semibold">Informações Pessoais</h3>
+
+                            <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#e0e0e0] flex-col sm:flex-row">
+                                <h3 className="text-xl font-semibold">Informações Pessoais</h3>
+                                <div className="form-actions-header pl-2"
+                                    data-guide-step="2"
+                                    data-guide-title="Editar Informações"
+                                    data-guide-text="Clique em 'Editar' para modificar seus dados de contato e preferências. Lembre-se de 'Salvar' as alterações."
+                                    data-guide-arrow="up">
+                                    {!editMode && (
+                                        <button id="editProfileButton" className="btn btn-secondary" type="button" onClick={handleEdit}>Editar</button>
+                                    )}
+                                    {editMode && (
+                                        <>
+                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais">Salvar</button>
+                                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel}>Cancelar</button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            
                             <div className="info-item">
                                 <strong>Nome Completo:</strong>
                                 <input type="text" id="userName" name="nomeCompleto" value={form.nomeCompleto} disabled title="Nome Completo" placeholder="Nome usuário" />
@@ -149,9 +153,9 @@ export default function Perfil() {
                 </form>
 
                 {/* Cards exibindo Consultas e Receitas que vão acontecer */}
-                <div className="justify-center lg:mr-5 flex-1 notificacoes-section">
-                    <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8">Próximos Lembretes</h3>
-                    <div className="grid grid-cols-1  gap-4">
+                <div className="justify-center lg:mr-5 notificacoes-section">
+                    <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8 pb-2.5 border-b">Próximos Lembretes</h3>
+                    <div className="grid grid-cols-1 gap-4">
                         {/* Consultas Agendadas */}
                         {usuarioApi?.lembretesConsulta
                             .filter(lembrete => lembrete.status === 'Agendada')
