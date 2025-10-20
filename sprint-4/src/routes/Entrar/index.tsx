@@ -32,9 +32,9 @@ export default function Entrar() {
         const maskedValue = maskType ? applyMask(value, maskType) : value;
 
         if (form === 'login') {
-            loginZod.setValue(field as keyof LoginFormData, maskedValue as any);
+            loginZod.setValue(field as keyof LoginFormData, maskedValue as unknown as LoginFormData[keyof LoginFormData]);
         } else {
-            cadastroZod.setValue(field as keyof CadastroFormData, maskedValue as any);
+            cadastroZod.setValue(field as keyof CadastroFormData, maskedValue as unknown as CadastroFormData[keyof CadastroFormData]);
         }
     }, [applyMask, getMaskType, loginZod, cadastroZod]);
 

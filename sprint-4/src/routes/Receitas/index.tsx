@@ -175,7 +175,7 @@ export default function Receitas() {
         setIsModalOpen(true);
     };
 
-    const handleOpenEditModal = (lembrete: any) => {
+    const handleOpenEditModal = (lembrete: LembreteReceita) => {
         setEditingLembrete(lembrete);
         setIsModalOpen(true);
     };
