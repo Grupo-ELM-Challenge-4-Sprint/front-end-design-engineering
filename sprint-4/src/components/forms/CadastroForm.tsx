@@ -7,6 +7,7 @@ interface CadastroFormProps {
     cadastroNomeCompleto: string;
     cadastroCpf: string;
     dataNascimento: string;
+    tipoUsuario: string;
     cadastroEmail: string;
     cadastroTelefone: string;
     cadastroSenha: string;
