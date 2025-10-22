@@ -64,10 +64,9 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}?cpf=${cpf}`);
+      const response = await fetch(`${API_URL}/usuarios/cpf/${cpf}`);
       if (!response.ok) throw new Error('Erro ao buscar usuário');
-      const usuarios = await response.json();
-      return usuarios.length > 0 ? usuarios[0] : null;
+      return await response.json();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       return null;
@@ -80,7 +79,7 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/usuarios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +101,7 @@ export const useApiUsuarios = () => {
     setError(null);
     let success = false;
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/usuarios/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -125,6 +124,156 @@ export const useApiUsuarios = () => {
     }
   }, []);
 
+  // Funções para Consultas
+  const listarConsultas = useCallback(async (usuarioId: number): Promise<LembreteConsulta[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/consultas`);
+      if (!response.ok) throw new Error('Erro ao listar consultas');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const adicionarConsulta = useCallback(async (usuarioId: number, novaConsulta: Omit<LembreteConsulta, 'id'>): Promise<LembreteConsulta | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/consultas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(novaConsulta),
+      });
+      if (!response.ok) throw new Error('Erro ao adicionar consulta');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const atualizarConsulta = useCallback(async (consultaId: number, dadosAtualizados: Partial<LembreteConsulta>): Promise<LembreteConsulta | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/consultas/${consultaId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dadosAtualizados),
+      });
+      if (!response.ok) throw new Error('Erro ao atualizar consulta');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const removerConsulta = useCallback(async (consultaId: number): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/consultas/${consultaId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Erro ao remover consulta');
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Funções para Receitas
+  const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/receitas`);
+      if (!response.ok) throw new Error('Erro ao listar receitas');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const adicionarReceita = useCallback(async (usuarioId: number, novaReceita: Omit<LembreteReceita, 'id'>): Promise<LembreteReceita | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/receitas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(novaReceita),
+      });
+      if (!response.ok) throw new Error('Erro ao adicionar receita');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const atualizarReceita = useCallback(async (receitaId: number, dadosAtualizados: Partial<LembreteReceita>): Promise<LembreteReceita | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/receitas/${receitaId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dadosAtualizados),
+      });
+      if (!response.ok) throw new Error('Erro ao atualizar receita');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const removerReceita = useCallback(async (receitaId: number): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_URL}/receitas/${receitaId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Erro ao remover receita');
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -132,5 +281,13 @@ export const useApiUsuarios = () => {
     getUsuarioPorCpf,
     criarUsuario,
     atualizarUsuario,
+    listarConsultas,
+    adicionarConsulta,
+    atualizarConsulta,
+    removerConsulta,
+    listarReceitas,
+    adicionarReceita,
+    atualizarReceita,
+    removerReceita,
   };
 };

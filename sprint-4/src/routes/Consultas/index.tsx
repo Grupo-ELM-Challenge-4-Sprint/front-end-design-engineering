@@ -8,7 +8,7 @@ import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
 
 export default function Consultas() {
     const navigate = useNavigate();
-    const { getUsuarioPorCpf, atualizarUsuario, loading, error } = useApiUsuarios();
+    const { getUsuarioPorCpf, listarConsultas, adicionarConsulta, atualizarConsulta, removerConsulta, loading, error } = useApiUsuarios();
 
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
@@ -35,16 +35,16 @@ export default function Consultas() {
                         getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
                             if (paciente) {
                                 setPaciente(paciente);
-                                setLembretes(paciente.lembretesConsulta || []);
+                                listarConsultas(paciente.id).then(setLembretes);
                             }
                         });
                     } else {
-                        setLembretes(usuario.lembretesConsulta || []);
+                        listarConsultas(usuario.id).then(setLembretes);
                     }
                 }
             });
         }
-    }, [getUsuarioPorCpf]);
+    }, [getUsuarioPorCpf, listarConsultas]);
 
     const [formData, setFormData] = useState<{
         tipoConsulta: 'Presencial' | 'Teleconsulta';
@@ -93,33 +93,20 @@ export default function Consultas() {
         setFormData((prevState) => ({ ...prevState, [name]: value }));
     };
 
-    // Atualiza os lembretes do usuário na API
-    const persistLembretes = async (novosLembretes: LembreteConsulta[]) => {
-        if (!usuarioApi) return;
-        // Se for cuidador com paciente vinculado, atualizar o paciente
-        const usuarioParaAtualizar = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente : usuarioApi;
-        const sucesso = await atualizarUsuario(usuarioParaAtualizar.id, {
-            lembretesConsulta: novosLembretes
-        });
-        if (sucesso) {
-            if (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) {
-                setPaciente({ ...paciente, lembretesConsulta: novosLembretes });
-            } else {
-                setUsuarioApi({ ...usuarioApi, lembretesConsulta: novosLembretes });
-            }
-        }
-    };
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!usuarioApi) return;
         const [data, hora] = formData.dataConsulta.split('T');
         // Converter YYYY-MM-DD para DD/MM/YYYY para armazenamento consistente
         const [year, month, day] = data.split('-');
         const formattedData = `${day}/${month}/${year}`;
 
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+
         if (editingLembrete) {
-            const novos = lembretes.map(l => l.id === editingLembrete.id ? {
-                ...l,
+            await atualizarConsulta(editingLembrete.id, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
                 data: formattedData,
@@ -127,13 +114,10 @@ export default function Consultas() {
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
                 observacoes: formData.observacoesConsulta,
-                status: l.status as 'Agendada' | 'Concluída',
-            } : l);
-            setLembretes(novos);
-            persistLembretes(novos);
+                status: editingLembrete.status,
+            });
         } else {
-            const novoLembrete: LembreteConsulta = {
-                id: Date.now(),
+            await adicionarConsulta(usuarioId, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
                 data: formattedData,
@@ -142,32 +126,38 @@ export default function Consultas() {
                 local: formData.localConsulta,
                 observacoes: formData.observacoesConsulta,
                 status: 'Agendada',
-            };
-            const novos = [...lembretes, novoLembrete];
-            setLembretes(novos);
-            persistLembretes(novos);
+            });
         }
+
+        // Recarregar lembretes
+        listarConsultas(usuarioId).then(setLembretes);
 
         setIsModalOpen(false);
         setEditingLembrete(null);
     };
 
-    const handleRemoveLembrete = (id: number) => {
-        const novos = lembretes.filter(lembrete => lembrete.id !== id);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleRemoveLembrete = async (id: number) => {
+        await removerConsulta(id);
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleConcluirLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Concluída' as 'Concluída' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleConcluirLembrete = async (id: number) => {
+        await atualizarConsulta(id, { status: 'Concluída' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleReverterLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Agendada' as 'Agendada' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleReverterLembrete = async (id: number) => {
+        await atualizarConsulta(id, { status: 'Agendada' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
     const handleOpenAddModal = () => {
