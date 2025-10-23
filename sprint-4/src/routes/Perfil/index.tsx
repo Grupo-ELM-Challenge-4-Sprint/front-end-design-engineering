@@ -8,7 +8,7 @@ import { useInputMasks } from "../../hooks/useInputMasks";
 
 export default function Perfil() {
     const navigate = useNavigate();
-    const { getUsuarioPorCpf, atualizarUsuario } = useApiUsuarios();
+    const { getUsuarioPorCpf, atualizarUsuario, listarConsultas, listarReceitas } = useApiUsuarios();
     const { applyMask } = useInputMasks();
 
     useEffect(() => {
@@ -26,19 +26,36 @@ export default function Perfil() {
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
         if (cpfLogado) {
-            getUsuarioPorCpf(cpfLogado).then((usuario) => {
+            getUsuarioPorCpf(cpfLogado).then(async (usuario) => {
                 if (usuario) {
-                    setUsuarioApi(usuario);
+                    // Buscar lembretes do usuário
+                    const consultas = await listarConsultas(usuario.id);
+                    const receitas = await listarReceitas(usuario.id);
+                    const usuarioComLembretes = {
+                        ...usuario,
+                        lembretesConsulta: consultas,
+                        lembretesReceita: receitas,
+                    };
+                    setUsuarioApi(usuarioComLembretes);
+
                     // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
                     if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
-                        getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
-                            setPacienteVinculado(paciente);
-                        });
+                        const paciente = await getUsuarioPorCpf(usuario.cpfPaciente);
+                        if (paciente) {
+                            const consultasPaciente = await listarConsultas(paciente.id);
+                            const receitasPaciente = await listarReceitas(paciente.id);
+                            const pacienteComLembretes = {
+                                ...paciente,
+                                lembretesConsulta: consultasPaciente,
+                                lembretesReceita: receitasPaciente,
+                            };
+                            setPacienteVinculado(pacienteComLembretes);
+                        }
                     }
                 }
             });
         }
-    }, [getUsuarioPorCpf]);
+    }, [getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(() => ({
