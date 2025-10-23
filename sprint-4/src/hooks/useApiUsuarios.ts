@@ -16,7 +16,7 @@ export interface LembreteConsulta {
 export interface LembreteReceita {
     id: number;
     nome: string;
-    frequencia: string;
+    frequencia: number;
     dias: string[];
     dataHoraInicio: string; // Formato: DD/MM/YYYY HH:mm
     numeroDias: number;

@@ -17,6 +17,7 @@ export default function Receitas() {
     const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
+    const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
     // Buscar lembretes ao carregar
     useEffect(() => {
@@ -36,36 +37,38 @@ export default function Receitas() {
     }, [usuarioApi, getUsuarioPorCpf, listarReceitas]);
     const [formData, setFormData] = useState<{
         nome: string;
-        frequencia: string;
+        frequencia: number;
         dias: string[];
         numeroDias: number;
         dataHoraInicio: string;
         observacoes: string;
     }>({
         nome: '',
-        frequencia: 'A cada 24 horas',
-        dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+        frequencia: 24,
+        dias: diasDaSemana,
         numeroDias: 7,
         dataHoraInicio: new Date().toISOString().slice(0, 16),
         observacoes: '',
     });
 
-    const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    
 
     useEffect(() => {
         if (editingLembrete) {
             setFormData({
                 nome: editingLembrete.nome,
-                frequencia: editingLembrete.frequencia,
+                frequencia: editingLembrete.frequencia, // Usa o número diretamente
                 dias: editingLembrete.dias.sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
                 numeroDias: editingLembrete.numeroDias,
-                dataHoraInicio: editingLembrete.dataHoraInicio,
+                // Mantém o formato YYYY-MM-DDTHH:mm para o input datetime-local
+                dataHoraInicio: editingLembrete.dataHoraInicio.slice(0, 16),
                 observacoes: editingLembrete.observacoes,
             });
         } else {
+            // Reset form...
             setFormData({
                 nome: '',
-                frequencia: 'A cada 24 horas',
+                frequencia: 24, // Valor padrão numérico
                 dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
                 numeroDias: 7,
                 dataHoraInicio: new Date().toISOString().slice(0, 16),
@@ -107,14 +110,24 @@ export default function Receitas() {
         if (!usuarioApi) return;
         const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
 
-        if (editingLembrete) {
-            await atualizarReceita(editingLembrete.id, formData);
-        } else {
-            await adicionarReceita(usuarioId, {
-                ...formData,
-                status: 'Ativo',
-            });
-        }
+        const dadosParaSalvar = {
+            ...formData,
+             frequencia: Number(formData.frequencia), // Garante que é número
+             // Certifique-se que a data/hora está no formato esperado pela API/db
+             dataHoraInicio: formData.dataHoraInicio
+        };
+
+         if (editingLembrete) {
+             await atualizarReceita(editingLembrete.id, {
+                 ...dadosParaSalvar, // Passa os dados com frequência numérica
+                 status: editingLembrete.status // Preserva o status ao editar
+             });
+         } else {
+             await adicionarReceita(usuarioId, {
+                 ...dadosParaSalvar, // Passa os dados com frequência numérica
+                 status: 'Ativo',
+             });
+         }
 
         // Recarregar lembretes
         listarReceitas(usuarioId).then(setLembretes);
@@ -225,13 +238,13 @@ export default function Receitas() {
                                 <input type="text" id="nome" name="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Paracetamol 750mg" required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
                             <div>
-                                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência*</label>
+                                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência (em horas)*</label>
                                 <select id="frequencia" name="frequencia" value={formData.frequencia} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
-                                    <option value="A cada 4 horas">A cada 4 horas</option>
-                                    <option value="A cada 6 horas">A cada 6 horas</option>
-                                    <option value="A cada 8 horas">A cada 8 horas</option>
-                                    <option value="A cada 12 horas">A cada 12 horas</option>
-                                    <option value="A cada 24 horas">A cada 24 horas</option>
+                                    <option value={4}>4</option>
+                                    <option value={6}>6</option>
+                                    <option value={8}>8</option>
+                                    <option value={12}>12</option>
+                                    <option value={24}>24</option>
                                 </select>
                             </div>
                             <div>

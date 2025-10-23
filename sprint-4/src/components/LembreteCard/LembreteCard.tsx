@@ -42,13 +42,10 @@ export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
     doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
 
     if (daysAhead === 0 && doseTime <= now) {
-      const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
-      if (freqMatch) {
-        const freqHours = parseInt(freqMatch[1]);
-        const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
-        const intervalsPassed = Math.ceil(diffHours / freqHours);
-        doseTime.setHours(startDateTime.getHours() + intervalsPassed * freqHours, startDateTime.getMinutes());
-      }
+      const freqHours = lembrete.frequencia;
+      const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
+      const intervalsPassed = Math.ceil(diffHours / freqHours);
+      doseTime.setHours(startDateTime.getHours() + intervalsPassed * freqHours, startDateTime.getMinutes());
     }
 
     return {
@@ -87,55 +84,70 @@ export const ReceitaCard = ({
   handleReativarLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
 }) => {
-  const getNextDose = (lembrete: LembreteReceita) => {
-    const now = new Date();
+  const getNextDose = (lembrete: LembreteReceita): { date: string; time: string } => {
+    const now = new Date(); // Hora local atual
+    // Assume que a string armazenada representa a hora local de início correta
     const startDateTime = new Date(lembrete.dataHoraInicio);
 
-    // If treatment hasn't started yet, next dose is the start date and time
+    // Calcula a data/hora final do tratamento
+    const endDateTime = new Date(startDateTime);
+    endDateTime.setDate(endDateTime.getDate() + lembrete.numeroDias);
+
+    // 1. Verifica se o tratamento já foi concluído
+    if (now >= endDateTime) {
+        return { date: 'Concluído', time: '' };
+    }
+
+    // 2. Verifica se o tratamento ainda não começou
     if (now < startDateTime) {
-      return {
-        date: startDateTime.toLocaleDateString('pt-BR'),
-        time: startDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      };
-    }
-
-    // Treatment has started, calculate next dose based on selected days and frequency
-    const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
-
-    let currentDate = new Date(startDateTime);
-    let attempts = 0;
-    while (attempts < 14) { // max 2 weeks to prevent infinite loop
-      const dayOfWeek = currentDate.getDay();
-      if (selectedDays.includes(dayOfWeek) && currentDate >= now) {
-        // Found the next dose date
-        let doseTime = new Date(currentDate);
-        doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
-        // Handle multiple doses per day if needed
-        if (doseTime <= now) {
-          const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
-          if (freqMatch) {
-            const freqHours = parseInt(freqMatch[1]);
-            const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
-            const intervalsPassed = Math.ceil(diffHours / freqHours);
-            doseTime.setHours(startDateTime.getHours() + intervalsPassed * freqHours, startDateTime.getMinutes());
-          }
-        }
         return {
-          date: currentDate.toLocaleDateString('pt-BR'),
-          time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            date: startDateTime.toLocaleDateString('pt-BR'),
+            time: startDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         };
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
-      attempts++;
     }
 
-    // Fallback if no date found
+    // 3. Calcula a próxima dose válida a partir de agora
+    const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const selectedDayIndices = lembrete.dias.map(d => daysOfWeek.indexOf(d));
+    const freqHours = lembrete.frequencia; // Usa o número diretamente
+
+    // Começa o cálculo a partir da hora de início
+    let nextDoseTime = new Date(startDateTime);
+
+    // Adiciona a frequência em horas até encontrar uma dose que:
+    // a) Seja no futuro (posterior a 'agora')
+    // b) Caia em um dia da semana selecionado
+    let iterations = 0;
+    // Limite de segurança para evitar loops infinitos (ex: 1 ano de doses)
+    const maxIterations = Math.ceil((365 * 24) / (freqHours > 0 ? freqHours : 24));
+
+    while ( (nextDoseTime <= now || !selectedDayIndices.includes(nextDoseTime.getDay())) && iterations < maxIterations ) {
+        // Se a frequência for 0 ou inválida, quebra o loop para evitar erro
+        if (freqHours <= 0) {
+           console.error("Frequência inválida (<= 0) para o lembrete:", lembrete.id);
+           return { date: 'Erro Freq.', time: '' };
+        }
+        nextDoseTime.setHours(nextDoseTime.getHours() + freqHours);
+
+        // Se ao adicionar a frequência, passamos do fim do tratamento, marca como concluído
+        if (nextDoseTime >= endDateTime) {
+            return { date: 'Concluído', time: '' };
+        }
+        iterations++;
+    }
+
+    // Se atingir o limite de iterações, algo deu errado
+    if (iterations >= maxIterations) {
+         console.error("Não foi possível encontrar a próxima dose dentro do limite para o lembrete:", lembrete.id);
+         return { date: 'Erro Calc.', time: '' };
+    }
+
+    // Encontrou a próxima dose válida
     return {
-      date: now.toLocaleDateString('pt-BR'),
-      time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        date: nextDoseTime.toLocaleDateString('pt-BR'),
+        time: nextDoseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     };
-  };
+};
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">

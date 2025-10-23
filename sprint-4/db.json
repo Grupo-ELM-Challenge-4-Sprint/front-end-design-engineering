@@ -113,7 +113,7 @@
     {
       "id": "1",
       "nome": "Losartana Potássica 50mg",
-      "frequencia": "A cada 24 horas",
+      "frequencia": 24,
       "dias": [
         "Segunda",
         "Terça",
@@ -126,6 +126,7 @@
       "horaPrimeiraDose": "08:00",
       "numeroDias": 30,
       "dataInicio": "01/10/2024",
+      "dataHoraInicio": "2024-10-01T08:00",
       "observacoes": "1 comprimido, 1x ao dia",
       "status": "Ativo",
       "usuarioId": "1"
@@ -133,7 +134,7 @@
     {
       "id": "2",
       "nome": "Metformina 500mg",
-      "frequencia": "A cada 12 horas",
+      "frequencia": 12,
       "dias": [
         "Segunda",
         "Terça",
@@ -146,6 +147,7 @@
       "horaPrimeiraDose": "08:00",
       "numeroDias": 30,
       "dataInicio": "01/10/2024",
+      "dataHoraInicio": "2024-10-01T08:00",
       "observacoes": "1 comprimido, 2x ao dia após as refeições",
       "status": "Ativo",
       "usuarioId": "1"
@@ -153,7 +155,7 @@
     {
       "id": "3",
       "nome": "Isotretinoína 20mg",
-      "frequencia": "A cada 24 horas",
+      "frequencia": 24,
       "dias": [
         "Segunda",
         "Terça",
@@ -166,35 +168,15 @@
       "horaPrimeiraDose": "08:00",
       "numeroDias": 30,
       "dataInicio": "01/10/2024",
+      "dataHoraInicio": "2024-10-01T08:00",
       "observacoes": "1 cápsula ao dia, após o almoço",
       "status": "Ativo",
       "usuarioId": "2"
     },
     {
-      "id": "fb61",
-      "nome": "dwadadaw",
-      "frequencia": "A cada 4 horas",
-      "dias": [
-        "Segunda",
-        "Terça",
-        "Quarta",
-        "Quinta",
-        "Sexta",
-        "Sábado",
-        "Domingo"
-      ],
-      "horaPrimeiraDose": "12:00",
-      "numeroDias": 7,
-      "dataInicio": "21/10/2025",
-      "observacoes": "dwadaw",
-      "status": "Ativo",
-      "usuarioId": "ed13",
-      "dataHoraInicio": "2025-10-23T10:00"
-    },
-    {
       "id": "0a40",
       "nome": "dipirona 2",
-      "frequencia": "A cada 4 horas",
+      "frequencia": 4,
       "dias": [
         "Segunda",
         "Terça",
@@ -207,6 +189,7 @@
       "horaPrimeiraDose": "12:00",
       "numeroDias": 2,
       "dataInicio": "01/10/2024",
+      "dataHoraInicio": "2024-10-01T12:00",
       "observacoes": "123",
       "status": "Ativo",
       "usuarioId": "1"
@@ -214,7 +197,7 @@
     {
       "id": "66a5",
       "nome": "dwadawdwa",
-      "frequencia": "A cada 6 horas",
+      "frequencia": 6,
       "dias": [
         "Segunda",
         "Terça",
@@ -227,9 +210,29 @@
       "horaPrimeiraDose": "20:00",
       "numeroDias": 7,
       "dataInicio": "01/10/2024",
+      "dataHoraInicio": "2024-10-01T20:00",
       "observacoes": "dawdwa",
       "status": "Ativo",
       "usuarioId": "d944"
+    },
+    {
+      "id": "21d5",
+      "nome": "teste",
+      "frequencia": 4,
+      "dias": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado",
+        "Domingo"
+      ],
+      "numeroDias": 8,
+      "dataHoraInicio": "2025-10-23T17:47",
+      "observacoes": "tomar",
+      "status": "Ativo",
+      "usuarioId": "ed13"
     }
   ]
 }
