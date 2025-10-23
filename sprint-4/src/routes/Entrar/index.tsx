@@ -95,8 +95,6 @@ export default function Entrar() {
             email: data.cadastroEmail,
             telefone: data.cadastroTelefone || '',
             senha: data.cadastroSenha,
-            lembretesConsulta: [],
-            lembretesReceita: [],
         };
 
         setStatus('info', 'Criando conta...');
