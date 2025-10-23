@@ -64,9 +64,10 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios/cpf/${cpf}`);
+      const response = await fetch(`${API_URL}/usuarios?cpf=${cpf}`);
       if (!response.ok) throw new Error('Erro ao buscar usuário');
-      return await response.json();
+      const usuarios = await response.json();
+      return usuarios.length > 0 ? usuarios[0] : null;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       return null;
@@ -129,7 +130,7 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/consultas`);
+      const response = await fetch(`${API_URL}/consultas?usuarioId=${usuarioId}`);
       if (!response.ok) throw new Error('Erro ao listar consultas');
       return await response.json();
     } catch (err) {
@@ -204,7 +205,7 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/receitas`);
+      const response = await fetch(`${API_URL}/receitas?usuarioId=${usuarioId}`);
       if (!response.ok) throw new Error('Erro ao listar receitas');
       return await response.json();
     } catch (err) {

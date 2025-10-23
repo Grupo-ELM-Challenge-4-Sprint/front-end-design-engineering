@@ -1,7 +1,7 @@
 {
   "usuarios": [
     {
-      "id": 1,
+      "id": "1",
       "nomeCompleto": "Enzo Okuizumi",
       "cpf": "392.942.080-52",
       "dataNascimento": "30/10/2006",
@@ -13,7 +13,7 @@
       "cpfCuidador": "893.993.700-70"
     },
     {
-      "id": 2,
+      "id": "2",
       "nomeCompleto": "Lucas Barros Gouveia",
       "cpf": "769.139.958-81",
       "dataNascimento": "22/09/1992",
@@ -25,13 +25,13 @@
       "cpfCuidador": null
     },
     {
-      "id": 3,
-      "nomeCompleto": "Enzo Okuizumi Miranda de Souza",
+      "id": "3",
+      "nomeCompleto": "Milton Marcelino",
       "cpf": "893.993.700-70",
       "dataNascimento": "30/10/2006",
       "tipoUsuario": "CUIDADOR",
-      "email": "enzo.okuizumi@gmai.com",
-      "telefone": "(11) 94900-7573",
+      "email": "milton.marcelino@gmail.com",
+      "telefone": "(11) 12345-6789",
       "senha": "123@Mudar",
       "cpfPaciente": "392.942.080-52",
       "cpfCuidador": null
@@ -39,7 +39,7 @@
   ],
   "consultas": [
     {
-      "id": 1,
+      "id": "1",
       "especialidade": "Cardiologia",
       "medico": "Dr. Ricardo Alves",
       "data": "28/06/2025",
@@ -51,7 +51,7 @@
       "usuarioId": 1
     },
     {
-      "id": 2,
+      "id": "2",
       "especialidade": "Clínica Geral",
       "medico": "Dra. Ana Martins",
       "data": "25/06/2025",
@@ -63,7 +63,7 @@
       "usuarioId": 1
     },
     {
-      "id": 3,
+      "id": "3",
       "especialidade": "Dermatologia",
       "medico": "Dra. Sofia Pereira",
       "data": "25/03/2025",
@@ -77,7 +77,7 @@
   ],
   "receitas": [
     {
-      "id": 1,
+      "id": "1",
       "nome": "Losartana Potássica 50mg",
       "frequencia": "A cada 24 horas",
       "dias": [
@@ -96,7 +96,7 @@
       "usuarioId": 1
     },
     {
-      "id": 2,
+      "id": "2",
       "nome": "Metformina 500mg",
       "frequencia": "A cada 12 horas",
       "dias": [
@@ -115,7 +115,7 @@
       "usuarioId": 1
     },
     {
-      "id": 3,
+      "id": "3",
       "nome": "Isotretinoína 20mg",
       "frequencia": "A cada 24 horas",
       "dias": [

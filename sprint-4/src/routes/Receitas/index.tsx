@@ -8,7 +8,7 @@ import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
 
 export default function Receitas() {
     const navigate = useNavigate();
-    const { getUsuarioPorCpf, atualizarUsuario, loading, error } = useApiUsuarios();
+    const { getUsuarioPorCpf, listarReceitas, adicionarReceita, atualizarReceita, removerReceita, loading, error } = useApiUsuarios();
 
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
@@ -38,16 +38,16 @@ export default function Receitas() {
                         getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
                             if (paciente) {
                                 setPaciente(paciente);
-                                setLembretes(paciente.lembretesReceita || []);
+                                listarReceitas(paciente.id).then(setLembretes);
                             }
                         });
                     } else {
-                        setLembretes(usuario.lembretesReceita || []);
+                        listarReceitas(usuario.id).then(setLembretes);
                     }
                 }
             });
         }
-    }, [getUsuarioPorCpf]);
+    }, [getUsuarioPorCpf, listarReceitas]);
     const [formData, setFormData] = useState<{
         nome: string;
         frequencia: string;
@@ -107,24 +107,9 @@ export default function Receitas() {
         }
     };
 
-    // Atualiza os lembretes do usuário na API
-    const persistLembretes = async (novosLembretes: LembreteReceita[]) => {
-        if (!usuarioApi) return;
-        // Se for cuidador com paciente vinculado, atualizar o paciente
-        const usuarioParaAtualizar = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente : usuarioApi;
-        const sucesso = await atualizarUsuario(usuarioParaAtualizar.id, {
-            lembretesReceita: novosLembretes
-        });
-        if (sucesso) {
-            if (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) {
-                setPaciente({ ...paciente, lembretesReceita: novosLembretes });
-            } else {
-                setUsuarioApi({ ...usuarioApi, lembretesReceita: novosLembretes });
-            }
-        }
-    };
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMessage('');
         if (!formData.nome) return;
@@ -133,41 +118,47 @@ export default function Receitas() {
             return;
         }
 
+        if (!usuarioApi) return;
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+
         if (editingLembrete) {
-            const novos = lembretes.map(l => l.id === editingLembrete.id ? { ...l, ...formData } : l);
-            setLembretes(novos);
-            persistLembretes(novos);
+            await atualizarReceita(editingLembrete.id, formData);
         } else {
-            const novoLembrete: LembreteReceita = {
-                id: Date.now(),
+            await adicionarReceita(usuarioId, {
                 ...formData,
                 status: 'Ativo',
-            };
-            const novos = [...lembretes, novoLembrete];
-            setLembretes(novos);
-            persistLembretes(novos);
+            });
         }
+
+        // Recarregar lembretes
+        listarReceitas(usuarioId).then(setLembretes);
 
         setIsModalOpen(false);
         setEditingLembrete(null);
     };
 
-    const handleRemoveLembrete = (id: number) => {
-        const novos = lembretes.filter(lembrete => lembrete.id !== id);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleRemoveLembrete = async (id: number) => {
+        await removerReceita(id);
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarReceitas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleConcluirLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Inativo' as 'Inativo' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleConcluirLembrete = async (id: number) => {
+        await atualizarReceita(id, { status: 'Inativo' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarReceitas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleReativarLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Ativo' as 'Ativo' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleReativarLembrete = async (id: number) => {
+        await atualizarReceita(id, { status: 'Ativo' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarReceitas(usuarioId).then(setLembretes);
+        }
     };
 
     const handleOpenAddModal = () => {
