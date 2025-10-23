@@ -23,6 +23,7 @@ export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
 export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
   const getNextDose = () => {
     const now = new Date();
+    const startDateTime = new Date(lembrete.dataHoraInicio);
     const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
 
@@ -37,9 +38,8 @@ export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
     const nextDate = new Date(now);
     nextDate.setDate(now.getDate() + daysAhead);
 
-    const [hours, minutes] = lembrete.horaPrimeiraDose.split(':').map(Number);
     let doseTime = new Date(nextDate);
-    doseTime.setHours(hours, minutes, 0, 0);
+    doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
 
     if (daysAhead === 0 && doseTime <= now) {
       const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
@@ -47,7 +47,7 @@ export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
         const freqHours = parseInt(freqMatch[1]);
         const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
         const intervalsPassed = Math.ceil(diffHours / freqHours);
-        doseTime.setHours(hours + intervalsPassed * freqHours, minutes);
+        doseTime.setHours(startDateTime.getHours() + intervalsPassed * freqHours, startDateTime.getMinutes());
       }
     }
 
@@ -89,40 +89,51 @@ export const ReceitaCard = ({
 }) => {
   const getNextDose = (lembrete: LembreteReceita) => {
     const now = new Date();
+    const startDateTime = new Date(lembrete.dataHoraInicio);
+
+    // If treatment hasn't started yet, next dose is the start date and time
+    if (now < startDateTime) {
+      return {
+        date: startDateTime.toLocaleDateString('pt-BR'),
+        time: startDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      };
+    }
+
+    // Treatment has started, calculate next dose based on selected days and frequency
     const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
 
-    // Encontrar próximo dia
-    let nextDayIndex = now.getDay();
-    let daysAhead = 0;
-    while (!selectedDays.includes(nextDayIndex)) {
-      nextDayIndex = (nextDayIndex + 1) % 7;
-      daysAhead++;
-      if (daysAhead > 7) break; // Prevenir loop infinito
-    }
-
-    const nextDate = new Date(now);
-    nextDate.setDate(now.getDate() + daysAhead);
-
-    // Analisar horário da primeira dose
-    const [hours, minutes] = lembrete.horaPrimeiraDose.split(':').map(Number);
-    let doseTime = new Date(nextDate);
-    doseTime.setHours(hours, minutes, 0, 0);
-
-    // Se hoje e horário já passou, encontrar próximo intervalo
-    if (daysAhead === 0 && doseTime <= now) {
-      const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
-      if (freqMatch) {
-        const freqHours = parseInt(freqMatch[1]);
-        const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
-        const intervalsPassed = Math.ceil(diffHours / freqHours);
-        doseTime.setHours(hours + intervalsPassed * freqHours, minutes);
+    let currentDate = new Date(startDateTime);
+    let attempts = 0;
+    while (attempts < 14) { // max 2 weeks to prevent infinite loop
+      const dayOfWeek = currentDate.getDay();
+      if (selectedDays.includes(dayOfWeek) && currentDate >= now) {
+        // Found the next dose date
+        let doseTime = new Date(currentDate);
+        doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
+        // Handle multiple doses per day if needed
+        if (doseTime <= now) {
+          const freqMatch = lembrete.frequencia.match(/A cada (\d+) horas/);
+          if (freqMatch) {
+            const freqHours = parseInt(freqMatch[1]);
+            const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
+            const intervalsPassed = Math.ceil(diffHours / freqHours);
+            doseTime.setHours(startDateTime.getHours() + intervalsPassed * freqHours, startDateTime.getMinutes());
+          }
+        }
+        return {
+          date: currentDate.toLocaleDateString('pt-BR'),
+          time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
       }
+      currentDate.setDate(currentDate.getDate() + 1);
+      attempts++;
     }
 
+    // Fallback if no date found
     return {
-      date: nextDate.toLocaleDateString('pt-BR'),
-      time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      date: now.toLocaleDateString('pt-BR'),
+      time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     };
   };
 
@@ -142,7 +153,7 @@ export const ReceitaCard = ({
       <div className="p-4 md:p-5 space-y-3 text-slate-700">
         <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
         <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
-        <p><strong className="card-body">Primeira Dose:</strong> {lembrete.horaPrimeiraDose}</p>
+        <p><strong className="card-body">Data e Hora de Início:</strong> {new Date(lembrete.dataHoraInicio).toLocaleString('pt-BR')}</p>
         <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
         {lembrete.observacoes && (
           <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>

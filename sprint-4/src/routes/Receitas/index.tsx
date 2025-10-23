@@ -38,15 +38,15 @@ export default function Receitas() {
         nome: string;
         frequencia: string;
         dias: string[];
-        horaPrimeiraDose: string;
         numeroDias: number;
+        dataHoraInicio: string;
         observacoes: string;
     }>({
         nome: '',
         frequencia: 'A cada 24 horas',
         dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
-        horaPrimeiraDose: '08:00',
         numeroDias: 7,
+        dataHoraInicio: new Date().toISOString().slice(0, 16),
         observacoes: '',
     });
 
@@ -58,8 +58,8 @@ export default function Receitas() {
                 nome: editingLembrete.nome,
                 frequencia: editingLembrete.frequencia,
                 dias: editingLembrete.dias.sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
-                horaPrimeiraDose: editingLembrete.horaPrimeiraDose,
                 numeroDias: editingLembrete.numeroDias,
+                dataHoraInicio: editingLembrete.dataHoraInicio,
                 observacoes: editingLembrete.observacoes,
             });
         } else {
@@ -67,8 +67,8 @@ export default function Receitas() {
                 nome: '',
                 frequencia: 'A cada 24 horas',
                 dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
-                horaPrimeiraDose: '08:00',
                 numeroDias: 7,
+                dataHoraInicio: new Date().toISOString().slice(0, 16),
                 observacoes: '',
             });
         }
@@ -255,9 +255,10 @@ export default function Receitas() {
                                     ))}
                                 </div>
                             </div>
+
                             <div>
-                                <label htmlFor="horaPrimeiraDose" className="block text-sm font-medium text-slate-700 mb-1">Horário da Primeira Dose*</label>
-                                <input type="time" id="horaPrimeiraDose" name="horaPrimeiraDose" value={formData.horaPrimeiraDose} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                                <label htmlFor="dataHoraInicio" className="block text-sm font-medium text-slate-700 mb-1">Data e Hora de Início do Tratamento*</label>
+                                <input type="datetime-local" id="dataHoraInicio" name="dataHoraInicio" value={formData.dataHoraInicio} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
                             <div>
                                 <label htmlFor="numeroDias" className="block text-sm font-medium text-slate-700 mb-1">Número de Dias de Tratamento*</label>
