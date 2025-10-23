@@ -35,6 +35,28 @@
       "senha": "123@Mudar",
       "cpfPaciente": "392.942.080-52",
       "cpfCuidador": null
+    },
+    {
+      "id": "ed13",
+      "nomeCompleto": "Marcelinho",
+      "cpf": "981.815.730-30",
+      "dataNascimento": "23/12/2023",
+      "tipoUsuario": "PACIENTE",
+      "email": "marcelo.miranda@gmail.com",
+      "telefone": "(55) 11949-0075",
+      "senha": "123@Mudar"
+    },
+    {
+      "id": "d944",
+      "nomeCompleto": "dawdawdaw",
+      "cpf": "936.611.080-00",
+      "dataNascimento": "30/10/2003",
+      "tipoUsuario": "PACIENTE",
+      "email": "teste@gmail.com",
+      "telefone": "(11) 94905-0023",
+      "senha": "123@Mudar",
+      "lembretesConsulta": [],
+      "lembretesReceita": []
     }
   ],
   "consultas": [
@@ -48,7 +70,7 @@
       "local": "HC Clínicas - Unidade Central",
       "observacoes": "Trazer exames anteriores.",
       "status": "Agendada",
-      "usuarioId": 1
+      "usuarioId": "1"
     },
     {
       "id": "2",
@@ -60,7 +82,7 @@
       "local": "Teleconsulta",
       "observacoes": "Verificar conexão antes.",
       "status": "Agendada",
-      "usuarioId": 1
+      "usuarioId": "1"
     },
     {
       "id": "3",
@@ -72,7 +94,19 @@
       "local": "Teleconsulta",
       "observacoes": "Tenha boa iluminação no ambiente.",
       "status": "Agendada",
-      "usuarioId": 2
+      "usuarioId": "2"
+    },
+    {
+      "id": "4ee1",
+      "especialidade": "dawdawdaw",
+      "medico": "dawdawdaw",
+      "data": "30/10/2025",
+      "hora": "15:32",
+      "tipo": "Presencial",
+      "local": "dawda",
+      "observacoes": "dawdwa",
+      "status": "Agendada",
+      "usuarioId": "ed13"
     }
   ],
   "receitas": [
@@ -93,7 +127,7 @@
       "numeroDias": 30,
       "observacoes": "1 comprimido, 1x ao dia",
       "status": "Ativo",
-      "usuarioId": 1
+      "usuarioId": "1"
     },
     {
       "id": "2",
@@ -112,7 +146,7 @@
       "numeroDias": 30,
       "observacoes": "1 comprimido, 2x ao dia após as refeições",
       "status": "Ativo",
-      "usuarioId": 1
+      "usuarioId": "1"
     },
     {
       "id": "3",
@@ -131,7 +165,64 @@
       "numeroDias": 30,
       "observacoes": "1 cápsula ao dia, após o almoço",
       "status": "Ativo",
-      "usuarioId": 2
+      "usuarioId": "2"
+    },
+    {
+      "id": "fb61",
+      "nome": "dwadadaw",
+      "frequencia": "A cada 24 horas",
+      "dias": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado",
+        "Domingo"
+      ],
+      "horaPrimeiraDose": "08:00",
+      "numeroDias": 7,
+      "observacoes": "dwadaw",
+      "status": "Ativo",
+      "usuarioId": "ed13"
+    },
+    {
+      "id": "0a40",
+      "nome": "dipirona 2",
+      "frequencia": "A cada 4 horas",
+      "dias": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado",
+        "Domingo"
+      ],
+      "horaPrimeiraDose": "12:00",
+      "numeroDias": 2,
+      "observacoes": "123",
+      "status": "Ativo",
+      "usuarioId": "1"
+    },
+    {
+      "id": "66a5",
+      "nome": "dwadawdwa",
+      "frequencia": "A cada 6 horas",
+      "dias": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado",
+        "Domingo"
+      ],
+      "horaPrimeiraDose": "20:00",
+      "numeroDias": 7,
+      "observacoes": "dawdwa",
+      "status": "Ativo",
+      "usuarioId": "d944"
     }
   ]
 }

@@ -25,7 +25,7 @@ export interface LembreteReceita {
 };
 
 export interface Usuario {
-  id: number;
+  id: string;
   nomeCompleto: string;
   cpf: string;
   dataNascimento: string;
@@ -33,8 +33,6 @@ export interface Usuario {
   email: string;
   telefone: string;
   senha: string;
-  lembretesConsulta?: LembreteConsulta[]; // Opcional para cuidadores
-  lembretesReceita?: LembreteReceita[]; // Opcional para cuidadores
   cpfPaciente?: string | null; // Para cuidadores: CPF do paciente vinculado
   cpfCuidador?: string | null; // Para pacientes: CPF do cuidador vinculado
 }
@@ -76,7 +74,7 @@ export const useApiUsuarios = () => {
     }
   }, []);
 
-  const criarUsuario = useCallback(async (usuario: Omit<Usuario, 'id'>): Promise<Usuario | null> => {
+  const criarUsuario = useCallback(async (usuario: Omit<Usuario, 'id' | 'lembretesConsulta' | 'lembretesReceita'>): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
     try {
@@ -97,7 +95,7 @@ export const useApiUsuarios = () => {
     }
   }, []);
 
-  const atualizarUsuario = useCallback(async (id: number, usuario: Partial<Usuario>): Promise<Usuario | null> => {
+  const atualizarUsuario = useCallback(async (id: string, usuario: Partial<Usuario>): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
     let success = false;
@@ -126,7 +124,7 @@ export const useApiUsuarios = () => {
   }, []);
 
   // Funções para Consultas
-  const listarConsultas = useCallback(async (usuarioId: number): Promise<LembreteConsulta[]> => {
+  const listarConsultas = useCallback(async (usuarioId: string): Promise<LembreteConsulta[]> => {
     setLoading(true);
     setError(null);
     try {
@@ -141,16 +139,16 @@ export const useApiUsuarios = () => {
     }
   }, []);
 
-  const adicionarConsulta = useCallback(async (usuarioId: number, novaConsulta: Omit<LembreteConsulta, 'id'>): Promise<LembreteConsulta | null> => {
+  const adicionarConsulta = useCallback(async (usuarioId: string, novaConsulta: Omit<LembreteConsulta, 'id'>): Promise<LembreteConsulta | null> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/consultas`, {
+      const response = await fetch(`${API_URL}/consultas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(novaConsulta),
+        body: JSON.stringify({ ...novaConsulta, usuarioId }),
       });
       if (!response.ok) throw new Error('Erro ao adicionar consulta');
       return await response.json();
@@ -201,7 +199,7 @@ export const useApiUsuarios = () => {
   }, []);
 
   // Funções para Receitas
-  const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
+  const listarReceitas = useCallback(async (usuarioId: string): Promise<LembreteReceita[]> => {
     setLoading(true);
     setError(null);
     try {
@@ -216,16 +214,16 @@ export const useApiUsuarios = () => {
     }
   }, []);
 
-  const adicionarReceita = useCallback(async (usuarioId: number, novaReceita: Omit<LembreteReceita, 'id'>): Promise<LembreteReceita | null> => {
+  const adicionarReceita = useCallback(async (usuarioId: string, novaReceita: Omit<LembreteReceita, 'id'>): Promise<LembreteReceita | null> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios/${usuarioId}/receitas`, {
+      const response = await fetch(`${API_URL}/receitas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(novaReceita),
+        body: JSON.stringify({ ...novaReceita, usuarioId }),
       });
       if (!response.ok) throw new Error('Erro ao adicionar receita');
       return await response.json();

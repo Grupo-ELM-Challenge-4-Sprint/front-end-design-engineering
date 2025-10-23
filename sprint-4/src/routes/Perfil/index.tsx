@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PacientePage from "../../components/Painel/PacientePage";
 import { useApiUsuarios } from "../../hooks/useApiUsuarios";
-import type { Usuario } from "../../hooks/useApiUsuarios";
+import type { Usuario, LembreteConsulta, LembreteReceita } from "../../hooks/useApiUsuarios";
 import { CardConsulta, CardReceita } from "../../components/LembreteCard/LembreteCard";
 import { useInputMasks } from "../../hooks/useInputMasks";
 import { useAuthCheck } from "../../hooks/useAuthCheck";
@@ -12,7 +12,8 @@ export default function Perfil() {
     const { atualizarUsuario, listarConsultas, listarReceitas, getUsuarioPorCpf } = useApiUsuarios();
     const { applyMask } = useInputMasks();
     const { usuarioApi, setUsuarioApi } = useUser();
-    const [pacienteVinculado, setPacienteVinculado] = useState<Usuario | null>(null);
+    const [pacienteVinculado, setPacienteVinculado] = useState<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>(null);
+    const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
     const [linkMessage, setLinkMessage] = useState<string>('');
 
     // Buscar usuário da API ao carregar
@@ -21,15 +22,17 @@ export default function Perfil() {
         if (cpfLogado) {
             getUsuarioPorCpf(cpfLogado).then(async (usuario) => {
                 if (usuario) {
-                    // Buscar lembretes do usuário
-                    const consultas = await listarConsultas(usuario.id);
-                    const receitas = await listarReceitas(usuario.id);
-                    const usuarioComLembretes = {
-                        ...usuario,
-                        lembretesConsulta: consultas,
-                        lembretesReceita: receitas,
-                    };
-                    setUsuarioApi(usuarioComLembretes);
+                    setUsuarioApi(usuario);
+
+                    // Se for paciente, buscar seus próprios lembretes
+                    if (usuario.tipoUsuario === 'PACIENTE') {
+                        const consultas = await listarConsultas(usuario.id);
+                        const receitas = await listarReceitas(usuario.id);
+                        setMeusLembretes({
+                            lembretesConsulta: consultas,
+                            lembretesReceita: receitas,
+                        });
+                    }
 
                     // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
                     if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
@@ -282,33 +285,35 @@ export default function Perfil() {
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
                         {/* Consultas Agendadas */}
-                        {(usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesConsulta
-                            ?.filter(lembrete => lembrete.status === 'Agendada')
-                            .sort((a, b) => {
+                        {(pacienteVinculado?.lembretesConsulta || meusLembretes?.lembretesConsulta || [])
+                            ?.filter((lembrete: LembreteConsulta) => lembrete.status === 'Agendada')
+                            .sort((a: LembreteConsulta, b: LembreteConsulta) => {
                                 const dateA = new Date(`${a.data.split('/').reverse().join('-')}T${a.hora}`);
                                 const dateB = new Date(`${b.data.split('/').reverse().join('-')}T${b.hora}`);
                                 return dateA.getTime() - dateB.getTime();
                             })
                             .slice(0, 3)
-                            .map(lembrete => (
+                            .map((lembrete: LembreteConsulta) => (
                                 <CardConsulta key={lembrete.id} lembrete={lembrete} />
                             ))}
 
                         {/* Receitas Ativas */}
-                        {(usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesReceita
-                            ?.filter(lembrete => lembrete.status === 'Ativo')
+                        {(pacienteVinculado?.lembretesReceita || meusLembretes?.lembretesReceita || [])
+                            ?.filter((lembrete: LembreteReceita) => lembrete.status === 'Ativo')
                             .slice(0, 3)
-                            .map(lembrete => (
+                            .map((lembrete: LembreteReceita) => (
                                 <CardReceita key={lembrete.id} lembrete={lembrete} />
                             ))}
                     </div>
-                    {((usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesConsulta?.filter(l => l.status === 'Agendada').length === 0 &&
-                    (usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado ? pacienteVinculado : usuarioApi)?.lembretesReceita?.filter(l => l.status === 'Ativo').length === 0) && (
+                    {((pacienteVinculado?.lembretesConsulta?.filter((l: LembreteConsulta) => l.status === 'Agendada').length === 0 &&
+                    pacienteVinculado?.lembretesReceita?.filter((l: LembreteReceita) => l.status === 'Ativo').length === 0) ||
+                    (meusLembretes?.lembretesConsulta?.filter((l: LembreteConsulta) => l.status === 'Agendada').length === 0 &&
+                    meusLembretes?.lembretesReceita?.filter((l: LembreteReceita) => l.status === 'Ativo').length === 0)) && (
                         <div className="text-center py-8 text-slate-500">
                             <p>
                                 {usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado
-                                    ? `${pacienteVinculado.nomeCompleto} não há nenhuma consulta agendada ou receita ativa no momento.`
-                                    : 'Você não há nenhuma consulta agendada ou receita ativa no momento.'
+                                    ? `${pacienteVinculado.nomeCompleto} não tem nenhuma consulta agendada ou receita ativa no momento.`
+                                    : 'Você não tem nenhuma consulta agendada ou receita ativa no momento.'
                                 }
                             </p>
                         </div>
