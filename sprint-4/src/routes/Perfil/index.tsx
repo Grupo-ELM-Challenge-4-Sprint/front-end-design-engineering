@@ -245,7 +245,16 @@ export default function Perfil() {
                                                             await atualizarUsuario(usuarioApi!.id, { cpfPaciente });
                                                             await atualizarUsuario(paciente.id, { cpfCuidador: usuarioApi!.cpf });
 
-                                                            setPacienteVinculado(paciente);
+                                                            // Buscar lembretes do paciente recém-vinculado
+                                                            const consultasPaciente = await listarConsultas(paciente.id);
+                                                            const receitasPaciente = await listarReceitas(paciente.id);
+                                                            const pacienteComLembretes = {
+                                                                ...paciente,
+                                                                lembretesConsulta: consultasPaciente,
+                                                                lembretesReceita: receitasPaciente,
+                                                            };
+
+                                                            setPacienteVinculado(pacienteComLembretes);
                                                             setUsuarioApi({ ...usuarioApi!, cpfPaciente });
 
                                                             setLinkMessage('Vinculação realizada com sucesso!');
