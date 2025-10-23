@@ -1,53 +1,39 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useUser } from '../../hooks/useUser';
 
 export default function Receitas() {
-    const navigate = useNavigate();
-    const { getUsuarioPorCpf, listarReceitas, adicionarReceita, atualizarReceita, removerReceita, loading, error } = useApiUsuarios();
-
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
-
-    
+    useAuthCheck();
+    const { listarReceitas, adicionarReceita, atualizarReceita, removerReceita, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
     const [paciente, setPaciente] = useState<Usuario | null>(null);
     const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
 
-    // Buscar usuário da API ao carregar
+    // Buscar lembretes ao carregar
     useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado) {
-            getUsuarioPorCpf(cpfLogado).then((usuario) => {
-                if (usuario) {
-                    setUsuarioApi(usuario);
-                    // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
-                    if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
-                        getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
-                            if (paciente) {
-                                setPaciente(paciente);
-                                listarReceitas(paciente.id).then(setLembretes);
-                            }
-                        });
-                    } else {
-                        listarReceitas(usuario.id).then(setLembretes);
+        if (usuarioApi) {
+            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
+                    if (paciente) {
+                        setPaciente(paciente);
+                        listarReceitas(paciente.id).then(setLembretes);
                     }
-                }
-            });
+                });
+            } else {
+                listarReceitas(usuarioApi.id).then(setLembretes);
+            }
         }
-    }, [getUsuarioPorCpf, listarReceitas]);
+    }, [usuarioApi, getUsuarioPorCpf, listarReceitas]);
     const [formData, setFormData] = useState<{
         nome: string;
         frequencia: string;

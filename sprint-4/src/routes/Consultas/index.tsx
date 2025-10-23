@@ -1,50 +1,38 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteConsulta } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useUser } from '../../hooks/useUser';
 
 export default function Consultas() {
-    const navigate = useNavigate();
-    const { getUsuarioPorCpf, listarConsultas, adicionarConsulta, atualizarConsulta, removerConsulta, loading, error } = useApiUsuarios();
-
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
+    useAuthCheck();
+    const { listarConsultas, adicionarConsulta, atualizarConsulta, removerConsulta, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
     const [paciente, setPaciente] = useState<Usuario | null>(null);
     const [lembretes, setLembretes] = useState<LembreteConsulta[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
 
-    // Buscar usuário da API ao carregar
+    // Buscar lembretes ao carregar
     useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado) {
-            getUsuarioPorCpf(cpfLogado).then((usuario) => {
-                if (usuario) {
-                    setUsuarioApi(usuario);
-                    // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
-                    if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
-                        getUsuarioPorCpf(usuario.cpfPaciente).then((paciente) => {
-                            if (paciente) {
-                                setPaciente(paciente);
-                                listarConsultas(paciente.id).then(setLembretes);
-                            }
-                        });
-                    } else {
-                        listarConsultas(usuario.id).then(setLembretes);
+        if (usuarioApi) {
+            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
+                    if (paciente) {
+                        setPaciente(paciente);
+                        listarConsultas(paciente.id).then(setLembretes);
                     }
-                }
-            });
+                });
+            } else {
+                listarConsultas(usuarioApi.id).then(setLembretes);
+            }
         }
-    }, [getUsuarioPorCpf, listarConsultas]);
+    }, [usuarioApi, getUsuarioPorCpf, listarConsultas]);
 
     const [formData, setFormData] = useState<{
         tipoConsulta: 'Presencial' | 'Teleconsulta';

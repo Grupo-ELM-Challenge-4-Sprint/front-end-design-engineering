@@ -1,24 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import PacientePage from "../../components/Painel/PacientePage";
 import { useApiUsuarios } from "../../hooks/useApiUsuarios";
 import type { Usuario } from "../../hooks/useApiUsuarios";
 import { CardConsulta, CardReceita } from "../../components/LembreteCard/LembreteCard";
 import { useInputMasks } from "../../hooks/useInputMasks";
+import { useAuthCheck } from "../../hooks/useAuthCheck";
+import { useUser } from "../../hooks/useUser";
 
 export default function Perfil() {
-    const navigate = useNavigate();
-    const { getUsuarioPorCpf, atualizarUsuario, listarConsultas, listarReceitas } = useApiUsuarios();
+    useAuthCheck();
+    const { atualizarUsuario, listarConsultas, listarReceitas, getUsuarioPorCpf } = useApiUsuarios();
     const { applyMask } = useInputMasks();
-
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
-
-    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const { usuarioApi, setUsuarioApi } = useUser();
     const [pacienteVinculado, setPacienteVinculado] = useState<Usuario | null>(null);
     const [linkMessage, setLinkMessage] = useState<string>('');
 
