@@ -5,124 +5,89 @@
       "nomeCompleto": "Enzo Okuizumi",
       "cpf": "392.942.080-52",
       "dataNascimento": "30/10/2006",
+      "tipoUsuario": "PACIENTE",
       "email": "enzo.okuizumi@gmail.com",
       "telefone": "(11) 98765-4321",
       "senha": "123@mudar",
-      "lembretesConsulta": [
-        {
-          "id": 1,
-          "especialidade": "Cardiologia",
-          "medico": "Dr. Ricardo Alves",
-          "data": "28/06/2025",
-          "hora": "10:00",
-          "tipo": "Presencial",
-          "local": "HC Clínicas - Unidade Central",
-          "observacoes": "Trazer exames anteriores.",
-          "status": "Agendada"
-        },
-        {
-          "id": 2,
-          "especialidade": "Clínica Geral",
-          "medico": "Dra. Ana Martins",
-          "data": "25/06/2025",
-          "hora": "14:30",
-          "tipo": "Teleconsulta",
-          "local": "Teleconsulta",
-          "observacoes": "Verificar conexão antes.",
-          "status": "Agendada"
-        }
-      ],
-      "lembretesReceita": [
-        {
-          "id": 1,
-          "nome": "Losartana Potássica 50mg",
-          "frequencia": "A cada 24 horas",
-          "dias": [
-            "Segunda",
-            "Terça",
-            "Quarta",
-            "Quinta",
-            "Sexta",
-            "Sábado",
-            "Domingo"
-          ],
-          "horaPrimeiraDose": "08:00",
-          "numeroDias": 30,
-          "observacoes": "1 comprimido, 1x ao dia",
-          "status": "Ativo"
-        },
-        {
-          "id": 2,
-          "nome": "Metformina 500mg",
-          "frequencia": "A cada 12 horas",
-          "dias": [
-            "Segunda",
-            "Terça",
-            "Quarta",
-            "Quinta",
-            "Sexta",
-            "Sábado",
-            "Domingo"
-          ],
-          "horaPrimeiraDose": "08:00",
-          "numeroDias": 30,
-          "observacoes": "1 comprimido, 2x ao dia após as refeições",
-          "status": "Ativo"
-        }
-      ]
+      "cpfCuidador": "893.993.700-70"
     },
     {
       "id": "2",
-      "nomeCompleto": "Lucas Barros Gouveia",
+      "nomeCompleto": "Luz Barros Gouveia",
       "cpf": "769.139.958-81",
       "dataNascimento": "22/09/1992",
-      "email": "lucas.barros@example.com",
+      "tipoUsuario": "PACIENTE",
+      "email": "luz.barros@example.com",
       "telefone": "(11) 91234-5678",
       "senha": "123@mudar",
-      "lembretesConsulta": [
-        {
-          "id": 3,
-          "especialidade": "Dermatologia",
-          "medico": "Dra. Sofia Pereira",
-          "data": "25/03/2025",
-          "hora": "15:30",
-          "tipo": "Teleconsulta",
-          "local": "Teleconsulta",
-          "observacoes": "Tenha boa iluminação no ambiente.",
-          "status": "Agendada"
-        }
-      ],
-      "lembretesReceita": [
-        {
-          "id": 3,
-          "nome": "Isotretinoína 20mg",
-          "frequencia": "A cada 24 horas",
-          "dias": [
-            "Segunda",
-            "Terça",
-            "Quarta",
-            "Quinta",
-            "Sexta",
-            "Sábado",
-            "Domingo"
-          ],
-          "horaPrimeiraDose": "08:00",
-          "numeroDias": 30,
-          "observacoes": "1 cápsula ao dia, após o almoço",
-          "status": "Ativo"
-        }
-      ]
+      "cpfCuidador": "936.611.080-00"
     },
     {
-      "id": "5687",
-      "nomeCompleto": "Enzo Okuizumi Miranda de Souza",
+      "id": "3",
+      "nomeCompleto": "Milton Marcelino",
       "cpf": "893.993.700-70",
       "dataNascimento": "30/10/2006",
-      "email": "enzo.okuizumi@gmai.com",
-      "telefone": "(11) 94900-7573",
+      "tipoUsuario": "CUIDADOR",
+      "email": "milton.marcelino@gmail.com",
+      "telefone": "(11) 12345-6789",
       "senha": "123@Mudar",
-      "lembretesConsulta": [],
-      "lembretesReceita": []
+      "cpfPaciente": "392.942.080-52"
+    },
+    {
+      "id": "b34a",
+      "nomeCompleto": "Marcelinho",
+      "cpf": "936.611.080-00",
+      "dataNascimento": "30/10/2003",
+      "tipoUsuario": "CUIDADOR",
+      "email": "teste@gmail.com",
+      "telefone": "(11) 94905-0023",
+      "senha": "123@Mudar",
+      "cpfPaciente": "769.139.958-81"
+    }
+  ],
+  "consultas": [
+    {
+      "id": "6b34",
+      "especialidade": "Cardiologia",
+      "medico": "Dr. Ricardo Alves",
+      "data": "20/11/2025",
+      "hora": "22:20",
+      "tipo": "Presencial",
+      "local": "HC Clínicas - Unidade Central",
+      "observacoes": "Trazer RG",
+      "status": "Agendada",
+      "usuarioId": "1"
+    },
+    {
+      "id": "4f2f",
+      "especialidade": "Cardiologia",
+      "medico": "Dr. Ricardo Alves",
+      "data": "30/10/2025",
+      "hora": "13:02",
+      "tipo": "Teleconsulta",
+      "local": "HC Clínicas - Unidade Central",
+      "observacoes": "",
+      "status": "Agendada",
+      "usuarioId": "2"
+    }
+  ],
+  "receitas": [
+    {
+      "id": "2e6c",
+      "nome": "Losartana Potássica 50mg",
+      "frequencia": 6,
+      "dias": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Sexta",
+        "Sábado"
+      ],
+      "numeroDias": 7,
+      "dataHoraInicio": "2025-10-23T17:30",
+      "observacoes": "Tomar todos os dias",
+      "status": "Ativo",
+      "usuarioId": "1"
     }
   ]
 }
