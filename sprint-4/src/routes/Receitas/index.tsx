@@ -1,74 +1,77 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useUser } from '../../hooks/useUser';
 
 export default function Receitas() {
-    const navigate = useNavigate();
-    const { getUsuarioPorCpf, atualizarUsuario, loading, error } = useApiUsuarios();
-
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
-
-    
+    useAuthCheck();
+    const { listarReceitas, adicionarReceita, atualizarReceita, removerReceita, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
     const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string>('');
+    const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-    // Buscar usuário da API ao carregar
+    // Buscar lembretes ao carregar
     useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado) {
-            getUsuarioPorCpf(cpfLogado).then((usuario) => {
-                if (usuario) {
-                    setUsuarioApi(usuario);
-                    setLembretes(usuario.lembretesReceita || []);
-                }
-            });
+        if (usuarioApi) {
+            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
+                    if (paciente) {
+                        setPaciente(paciente);
+                        listarReceitas(paciente.id).then(setLembretes);
+                    }
+                });
+            } else {
+                listarReceitas(usuarioApi.id).then(setLembretes);
+            }
         }
-    }, [getUsuarioPorCpf]);
+    }, [usuarioApi, getUsuarioPorCpf, listarReceitas]);
     const [formData, setFormData] = useState<{
         nome: string;
-        frequencia: string;
+        frequencia: number;
         dias: string[];
-        horaPrimeiraDose: string;
         numeroDias: number;
+        dataHoraInicio: string;
         observacoes: string;
     }>({
         nome: '',
-        frequencia: 'A cada 24 horas',
-        dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
-        horaPrimeiraDose: '08:00',
+        frequencia: 24,
+        dias: diasDaSemana,
         numeroDias: 7,
+        dataHoraInicio: new Date().toISOString().slice(0, 16),
         observacoes: '',
     });
+
+    
 
     useEffect(() => {
         if (editingLembrete) {
             setFormData({
                 nome: editingLembrete.nome,
-                frequencia: editingLembrete.frequencia,
-                dias: editingLembrete.dias,
-                horaPrimeiraDose: editingLembrete.horaPrimeiraDose,
+                frequencia: editingLembrete.frequencia, // Usa o número diretamente
+                dias: editingLembrete.dias.sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
                 numeroDias: editingLembrete.numeroDias,
+                // Mantém o formato YYYY-MM-DDTHH:mm para o input datetime-local
+                dataHoraInicio: editingLembrete.dataHoraInicio.slice(0, 16),
                 observacoes: editingLembrete.observacoes,
             });
         } else {
+            // Reset form...
             setFormData({
                 nome: '',
-                frequencia: 'A cada 24 horas',
+                frequencia: 24, // Valor padrão numérico
                 dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
-                horaPrimeiraDose: '08:00',
                 numeroDias: 7,
+                dataHoraInicio: new Date().toISOString().slice(0, 16),
                 observacoes: '',
             });
         }
@@ -93,56 +96,68 @@ export default function Receitas() {
         }
     };
 
-    // Atualiza os lembretes do usuário na API
-    const persistLembretes = async (novosLembretes: LembreteReceita[]) => {
-        if (!usuarioApi) return;
-        const sucesso = await atualizarUsuario(usuarioApi.id, {
-            lembretesReceita: novosLembretes
-        });
-        if (sucesso) {
-            setUsuarioApi({ ...usuarioApi, lembretesReceita: novosLembretes });
-        }
-    };
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMessage('');
         if (!formData.nome) return;
-
-        if (editingLembrete) {
-            const novos = lembretes.map(l => l.id === editingLembrete.id ? { ...l, ...formData } : l);
-            setLembretes(novos);
-            persistLembretes(novos);
-        } else {
-            const novoLembrete: LembreteReceita = {
-                id: Date.now(),
-                ...formData,
-                status: 'Ativo',
-            };
-            const novos = [...lembretes, novoLembrete];
-            setLembretes(novos);
-            persistLembretes(novos);
+        if (formData.dias.length === 0) {
+            setErrorMessage('Selecione pelo menos um dia da semana.');
+            return;
         }
+
+        if (!usuarioApi) return;
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+
+        const dadosParaSalvar = {
+            ...formData,
+             frequencia: Number(formData.frequencia), // Garante que é número
+             // Certifique-se que a data/hora está no formato esperado pela API/db
+             dataHoraInicio: formData.dataHoraInicio
+        };
+
+         if (editingLembrete) {
+             await atualizarReceita(editingLembrete.id, {
+                 ...dadosParaSalvar, // Passa os dados com frequência numérica
+                 status: editingLembrete.status // Preserva o status ao editar
+             });
+         } else {
+             await adicionarReceita(usuarioId, {
+                 ...dadosParaSalvar, // Passa os dados com frequência numérica
+                 status: 'Ativo',
+             });
+         }
+
+        // Recarregar lembretes
+        listarReceitas(usuarioId).then(setLembretes);
 
         setIsModalOpen(false);
         setEditingLembrete(null);
     };
 
-    const handleRemoveLembrete = (id: number) => {
-        const novos = lembretes.filter(lembrete => lembrete.id !== id);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleRemoveLembrete = async (id: number) => {
+        await removerReceita(id);
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarReceitas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleConcluirLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Inativo' as 'Inativo' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleConcluirLembrete = async (id: number) => {
+        await atualizarReceita(id, { status: 'Inativo' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarReceitas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleReativarLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Ativo' as 'Ativo' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleReativarLembrete = async (id: number) => {
+        await atualizarReceita(id, { status: 'Ativo' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarReceitas(usuarioId).then(setLembretes);
+        }
     };
 
     const handleOpenAddModal = () => {
@@ -150,7 +165,7 @@ export default function Receitas() {
         setIsModalOpen(true);
     };
 
-    const handleOpenEditModal = (lembrete: any) => {
+    const handleOpenEditModal = (lembrete: LembreteReceita) => {
         setEditingLembrete(lembrete);
         setIsModalOpen(true);
     };
@@ -223,13 +238,13 @@ export default function Receitas() {
                                 <input type="text" id="nome" name="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Paracetamol 750mg" required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
                             <div>
-                                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência*</label>
+                                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência (em horas)*</label>
                                 <select id="frequencia" name="frequencia" value={formData.frequencia} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
-                                    <option value="A cada 4 horas">A cada 4 horas</option>
-                                    <option value="A cada 6 horas">A cada 6 horas</option>
-                                    <option value="A cada 8 horas">A cada 8 horas</option>
-                                    <option value="A cada 12 horas">A cada 12 horas</option>
-                                    <option value="A cada 24 horas">A cada 24 horas</option>
+                                    <option value={4}>4</option>
+                                    <option value={6}>6</option>
+                                    <option value={8}>8</option>
+                                    <option value={12}>12</option>
+                                    <option value={24}>24</option>
                                 </select>
                             </div>
                             <div>
@@ -242,7 +257,7 @@ export default function Receitas() {
                                                 checked={formData.dias.includes(dia)}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        setFormData(prev => ({ ...prev, dias: [...prev.dias, dia] }));
+                                                        setFormData(prev => ({ ...prev, dias: [...prev.dias, dia].sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)) }));
                                                     } else {
                                                         setFormData(prev => ({ ...prev, dias: prev.dias.filter(d => d !== dia) }));
                                                     }
@@ -253,9 +268,10 @@ export default function Receitas() {
                                     ))}
                                 </div>
                             </div>
+
                             <div>
-                                <label htmlFor="horaPrimeiraDose" className="block text-sm font-medium text-slate-700 mb-1">Horário da Primeira Dose*</label>
-                                <input type="time" id="horaPrimeiraDose" name="horaPrimeiraDose" value={formData.horaPrimeiraDose} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                                <label htmlFor="dataHoraInicio" className="block text-sm font-medium text-slate-700 mb-1">Data e Hora de Início do Tratamento*</label>
+                                <input type="datetime-local" id="dataHoraInicio" name="dataHoraInicio" value={formData.dataHoraInicio} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
                             <div>
                                 <label htmlFor="numeroDias" className="block text-sm font-medium text-slate-700 mb-1">Número de Dias de Tratamento*</label>
@@ -265,6 +281,11 @@ export default function Receitas() {
                                 <label htmlFor="observacoes" className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
                                 <textarea id="observacoes" name="observacoes" value={formData.observacoes} onChange={handleInputChange} rows={3} placeholder="Ex: Tomar após as refeições, 1 comprimido" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
                             </div>
+                            {errorMessage && (
+                                <div className="text-red-600 text-sm">
+                                    {errorMessage}
+                                </div>
+                            )}
                             <div className="flex justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => { setIsModalOpen(false); setEditingLembrete(null); }} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
                                     Cancelar
