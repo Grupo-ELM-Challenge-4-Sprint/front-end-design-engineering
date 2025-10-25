@@ -1,39 +1,38 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteConsulta } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useUser } from '../../hooks/useUser';
 
 export default function Consultas() {
-    const navigate = useNavigate();
-    const { getUsuarioPorCpf, atualizarUsuario, loading, error } = useApiUsuarios();
-
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
+    useAuthCheck();
+    const { listarConsultas, adicionarConsulta, atualizarConsulta, removerConsulta, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(null);
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
     const [lembretes, setLembretes] = useState<LembreteConsulta[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
 
-    // Buscar usuário da API ao carregar
+    // Buscar lembretes ao carregar
     useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado) {
-            getUsuarioPorCpf(cpfLogado).then((usuario) => {
-                if (usuario) {
-                    setUsuarioApi(usuario);
-                    setLembretes(usuario.lembretesConsulta || []);
-                }
-            });
+        if (usuarioApi) {
+            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
+                    if (paciente) {
+                        setPaciente(paciente);
+                        listarConsultas(paciente.id).then(setLembretes);
+                    }
+                });
+            } else {
+                listarConsultas(usuarioApi.id).then(setLembretes);
+            }
         }
-    }, [getUsuarioPorCpf]);
+    }, [usuarioApi, getUsuarioPorCpf, listarConsultas]);
 
     const [formData, setFormData] = useState<{
         tipoConsulta: 'Presencial' | 'Teleconsulta';
@@ -82,27 +81,20 @@ export default function Consultas() {
         setFormData((prevState) => ({ ...prevState, [name]: value }));
     };
 
-    // Atualiza os lembretes do usuário na API
-    const persistLembretes = async (novosLembretes: LembreteConsulta[]) => {
-        if (!usuarioApi) return;
-        const sucesso = await atualizarUsuario(usuarioApi.id, {
-            lembretesConsulta: novosLembretes
-        });
-        if (sucesso) {
-            setUsuarioApi({ ...usuarioApi, lembretesConsulta: novosLembretes });
-        }
-    };
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!usuarioApi) return;
         const [data, hora] = formData.dataConsulta.split('T');
         // Converter YYYY-MM-DD para DD/MM/YYYY para armazenamento consistente
         const [year, month, day] = data.split('-');
         const formattedData = `${day}/${month}/${year}`;
 
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+
         if (editingLembrete) {
-            const novos = lembretes.map(l => l.id === editingLembrete.id ? {
-                ...l,
+            await atualizarConsulta(editingLembrete.id, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
                 data: formattedData,
@@ -110,13 +102,10 @@ export default function Consultas() {
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
                 observacoes: formData.observacoesConsulta,
-                status: l.status as 'Agendada' | 'Concluída',
-            } : l);
-            setLembretes(novos);
-            persistLembretes(novos);
+                status: editingLembrete.status,
+            });
         } else {
-            const novoLembrete: LembreteConsulta = {
-                id: Date.now(),
+            await adicionarConsulta(usuarioId, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
                 data: formattedData,
@@ -125,32 +114,38 @@ export default function Consultas() {
                 local: formData.localConsulta,
                 observacoes: formData.observacoesConsulta,
                 status: 'Agendada',
-            };
-            const novos = [...lembretes, novoLembrete];
-            setLembretes(novos);
-            persistLembretes(novos);
+            });
         }
+
+        // Recarregar lembretes
+        listarConsultas(usuarioId).then(setLembretes);
 
         setIsModalOpen(false);
         setEditingLembrete(null);
     };
 
-    const handleRemoveLembrete = (id: number) => {
-        const novos = lembretes.filter(lembrete => lembrete.id !== id);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleRemoveLembrete = async (id: number) => {
+        await removerConsulta(id);
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleConcluirLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Concluída' as 'Concluída' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleConcluirLembrete = async (id: number) => {
+        await atualizarConsulta(id, { status: 'Concluída' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleReverterLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Agendada' as 'Agendada' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleReverterLembrete = async (id: number) => {
+        await atualizarConsulta(id, { status: 'Agendada' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
     const handleOpenAddModal = () => {
