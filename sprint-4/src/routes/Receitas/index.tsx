@@ -40,14 +40,16 @@ export default function Receitas() {
         frequencia: number;
         dias: string[];
         numeroDias: number;
-        dataHoraInicio: string;
+        data: string;
+        hora: string;
         observacoes: string;
     }>({
         nome: '',
         frequencia: 24,
         dias: diasDaSemana,
         numeroDias: 7,
-        dataHoraInicio: new Date().toISOString().slice(0, 16),
+        data: new Date().toLocaleDateString('pt-BR'),
+        hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         observacoes: '',
     });
 
@@ -60,8 +62,8 @@ export default function Receitas() {
                 frequencia: editingLembrete.frequencia, // Usa o número diretamente
                 dias: editingLembrete.dias.sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
                 numeroDias: editingLembrete.numeroDias,
-                // Mantém o formato YYYY-MM-DDTHH:mm para o input datetime-local
-                dataHoraInicio: editingLembrete.dataHoraInicio.slice(0, 16),
+                data: editingLembrete.data,
+                hora: editingLembrete.hora,
                 observacoes: editingLembrete.observacoes,
             });
         } else {
@@ -71,7 +73,8 @@ export default function Receitas() {
                 frequencia: 24, // Valor padrão numérico
                 dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
                 numeroDias: 7,
-                dataHoraInicio: new Date().toISOString().slice(0, 16),
+                data: new Date().toLocaleDateString('pt-BR'),
+                hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 observacoes: '',
             });
         }
@@ -113,8 +116,6 @@ export default function Receitas() {
         const dadosParaSalvar = {
             ...formData,
              frequencia: Number(formData.frequencia), // Garante que é número
-             // Certifique-se que a data/hora está no formato esperado pela API/db
-             dataHoraInicio: formData.dataHoraInicio
         };
 
          if (editingLembrete) {
@@ -270,8 +271,12 @@ export default function Receitas() {
                             </div>
 
                             <div>
-                                <label htmlFor="dataHoraInicio" className="block text-sm font-medium text-slate-700 mb-1">Data e Hora de Início do Tratamento*</label>
-                                <input type="datetime-local" id="dataHoraInicio" name="dataHoraInicio" value={formData.dataHoraInicio} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                                <label htmlFor="data" className="block text-sm font-medium text-slate-700 mb-1">Data de Início do Tratamento*</label>
+                                <input type="date" id="data" name="data" value={formData.data} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                            </div>
+                            <div>
+                                <label htmlFor="hora" className="block text-sm font-medium text-slate-700 mb-1">Hora de Início do Tratamento*</label>
+                                <input type="time" id="hora" name="hora" value={formData.hora} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
                             <div>
                                 <label htmlFor="numeroDias" className="block text-sm font-medium text-slate-700 mb-1">Número de Dias de Tratamento*</label>

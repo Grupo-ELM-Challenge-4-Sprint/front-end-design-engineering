@@ -52,14 +52,11 @@ export default function Consultas() {
 
     useEffect(() => {
         if (editingLembrete) {
-            // Converter data de DD/MM/YYYY para YYYY-MM-DD para input datetime-local
-            const [day, month, year] = editingLembrete.data.split('/');
-            const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
             setFormData({
                 tipoConsulta: editingLembrete.tipo,
                 especialidadeConsulta: editingLembrete.especialidade,
                 medicoConsulta: editingLembrete.medico,
-                dataConsulta: `${formattedDate}T${editingLembrete.hora}`,
+                dataConsulta: `${editingLembrete.data}T${editingLembrete.hora}`,
                 localConsulta: editingLembrete.local,
                 observacoesConsulta: editingLembrete.observacoes,
             });
@@ -87,17 +84,13 @@ export default function Consultas() {
         e.preventDefault();
         if (!usuarioApi) return;
         const [data, hora] = formData.dataConsulta.split('T');
-        // Converter YYYY-MM-DD para DD/MM/YYYY para armazenamento consistente
-        const [year, month, day] = data.split('-');
-        const formattedData = `${day}/${month}/${year}`;
-
         const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
 
         if (editingLembrete) {
             await atualizarConsulta(editingLembrete.id, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
-                data: formattedData,
+                data,
                 hora,
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
@@ -108,7 +101,7 @@ export default function Consultas() {
             await adicionarConsulta(usuarioId, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
-                data: formattedData,
+                data,
                 hora,
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
