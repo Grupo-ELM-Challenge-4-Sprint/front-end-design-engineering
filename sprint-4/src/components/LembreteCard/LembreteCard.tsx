@@ -1,14 +1,5 @@
 import type { LembreteConsulta, LembreteReceita } from '../../hooks/useApiUsuarios';
-
-const parseDate = (dateString: string): number[] => {
-  const [year, month, day] = dateString.split('-').map(Number);
-  return [year, month, day];
-};
-
-const formatDate = (dateString: string): string => {
-  const [year, month, day] = dateString.split('-');
-  return `${day}/${month}/${year}`;
-};
+import { parseDate, formatDate, getNextDose } from '../../utils/dateUtils';
 
 export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
   return (
@@ -31,45 +22,7 @@ export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
 };
 
 export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
-
-  // Parse data and hora to create startDateTime
-  const [year, month, day] = parseDate(lembrete.data);
-  const [hour, minute] = lembrete.hora.split(':').map(Number);
-  const startDateTime = new Date(year, month - 1, day, hour, minute);
-
-  const getNextDose = () => {
-    const now = new Date();
-    const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
-
-    let nextDayIndex = now.getDay();
-    let daysAhead = 0;
-    while (!selectedDays.includes(nextDayIndex)) {
-      nextDayIndex = (nextDayIndex + 1) % 7;
-      daysAhead++;
-      if (daysAhead > 7) break;
-    }
-
-    const nextDate = new Date(now);
-    nextDate.setDate(now.getDate() + daysAhead);
-
-    let doseTime = new Date(nextDate);
-    doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
-
-    if (daysAhead === 0 && doseTime <= now) {
-      const freqHours = lembrete.frequencia;
-      const diffHours = (now.getTime() - doseTime.getTime()) / (1000 * 60 * 60);
-      const intervalsPassed = Math.ceil(diffHours / freqHours);
-      doseTime.setHours(startDateTime.getHours() + intervalsPassed * freqHours, startDateTime.getMinutes());
-    }
-
-    return {
-      date: nextDate.toLocaleDateString('pt-BR'),
-      time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    };
-  };
-
-  const nextDose = getNextDose();
+  const nextDose = getNextDose(lembrete);
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
@@ -86,6 +39,78 @@ export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
   );
 };
 
+// Componente genérico para cards de lembretes com ações
+interface LembreteCardProps<T> {
+  lembrete: T;
+  title: string;
+  status: string;
+  bodyContent: React.ReactNode;
+  handleOpenEditModal: (lembrete: T) => void;
+  handleConcluirLembrete: (id: number) => void;
+  handleReverterLembrete: (id: number) => void;
+  handleRemoveLembrete: (id: number) => void;
+  activeStatus: string;
+  concluirButtonText: string;
+  reverterButtonText: string;
+}
+
+export const LembreteCard = <T extends { id: number; status: string }>({
+  lembrete,
+  title,
+  status,
+  bodyContent,
+  handleOpenEditModal,
+  handleConcluirLembrete,
+  handleReverterLembrete,
+  handleRemoveLembrete,
+  activeStatus,
+  concluirButtonText,
+  reverterButtonText
+}: LembreteCardProps<T>) => {
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      {/* Cabeçalho do Card */}
+      <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
+        <h3 className="text-lg font-bold text-indigo-800">
+          {title}
+        </h3>
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${status === activeStatus ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
+          {status}
+        </span>
+      </div>
+
+      {/* Corpo do Card */}
+      <div className="p-4 md:p-5 space-y-3 text-slate-700">
+        {bodyContent}
+      </div>
+
+      {/* Rodapé do Card */}
+      <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
+        {lembrete.status === activeStatus ? (
+          <>
+            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+              Alterar
+            </button>
+            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+              {concluirButtonText}
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => handleReverterLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
+              {reverterButtonText}
+            </button>
+            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
+              Remover Lembrete
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Componentes específicos usando o genérico
 export const ReceitaCard = ({
   lembrete,
   handleOpenEditModal,
@@ -99,128 +124,41 @@ export const ReceitaCard = ({
   handleReativarLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
 }) => {
-
   // Parse data and hora to create startDateTime
   const [year, month, day] = parseDate(lembrete.data);
   const [hour, minute] = lembrete.hora.split(':').map(Number);
   const startDateTime = new Date(year, month - 1, day, hour, minute);
 
-  // Calcula a data/hora final do tratamento
-  const endDateTime = new Date(startDateTime);
-  endDateTime.setDate(endDateTime.getDate() + lembrete.numeroDias);
-  
-  const now = new Date();
-  const displayStatus = lembrete.status;
-
-  const getNextDose = (lembrete: LembreteReceita): { date: string; time: string } => {
-    // 1. Verifica se o tratamento já foi concluído
-    if (now >= endDateTime) {
-        return { date: 'Concluído', time: '' };
-    }
-
-    // 2. Verifica se o tratamento ainda não começou
-    if (now < startDateTime) {
-        return {
-            date: startDateTime.toLocaleDateString('pt-BR'),
-            time: startDateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        };
-    }
-
-    // 3. Calcula a próxima dose válida a partir de agora
-    const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const selectedDayIndices = lembrete.dias.map(d => daysOfWeek.indexOf(d)).filter(i => i >= 0 && i <= 6);
-    const freqHours = lembrete.frequencia;
-
-    if (freqHours <= 0) {
-        console.error("Frequência inválida (<= 0) para o lembrete:", lembrete.id);
-        return { date: 'Erro Freq.', time: '' };
-    }
-
-    if (selectedDayIndices.length === 0) {
-        console.error("Dias não selecionados ou inválidos para o lembrete:", lembrete.id);
-        return { date: 'Erro Dias', time: '' };
-    }
-
-    // Encontra a próxima dose verificando os próximos dias
-    let current = new Date(now);
-    current.setHours(0, 0, 0, 0); // Início do dia atual
-
-    for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
-        if (selectedDayIndices.includes(current.getDay())) {
-            // Este é um dia selecionado, encontra a próxima dose neste dia
-            let doseTime = new Date(current);
-            doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
-
-            // Avança para a próxima dose válida neste dia
-            while (doseTime <= now) {
-                doseTime.setHours(doseTime.getHours() + freqHours);
-                if (doseTime >= endDateTime) break;
-            }
-
-            if (doseTime > now && doseTime < endDateTime) {
-                return {
-                    date: doseTime.toLocaleDateString('pt-BR'),
-                    time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                };
-            }
-        }
-        current.setDate(current.getDate() + 1);
-    }
-
-    // Se não encontrou dose nos próximos 7 dias, assume concluído
-    return { date: 'Concluído', time: '' };
-};
+  const bodyContent = (
+    <>
+      <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
+      <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
+      <p><strong className="card-body">Data e Hora de Início:</strong> {startDateTime.toLocaleDateString('pt-BR')} às {lembrete.hora}</p>
+      <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
+      {lembrete.observacoes && (
+        <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
+      )}
+      {(() => {
+        const nextDose = getNextDose(lembrete);
+        return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date === 'Concluído' ? 'Tratamento Concluído' : `${nextDose.date} às ${nextDose.time}`}</p>;
+      })()}
+    </>
+  );
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      {/* Cabeçalho do Card */}
-      <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
-        <h3 className="text-lg font-bold text-indigo-800">
-          {lembrete.nome}
-        </h3>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${displayStatus === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-          {displayStatus}
-        </span>
-      </div>
-
-      {/* Corpo do Card */}
-      <div className="p-4 md:p-5 space-y-3 text-slate-700">
-        <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
-        <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
-        <p><strong className="card-body">Data e Hora de Início:</strong> {startDateTime.toLocaleDateString('pt-BR')} às {lembrete.hora}</p>
-        <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
-        {lembrete.observacoes && (
-          <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
-        )}
-        {(() => {
-          const nextDose = getNextDose(lembrete);
-          return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date === 'Concluído' ? 'Tratamento Concluído' : `${nextDose.date} às ${nextDose.time}`}</p>;
-        })()}
-      </div>
-
-      {/* Rodapé do Card */}
-      <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
-        {lembrete.status === 'Ativo' ? (
-          <>
-            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-              Alterar
-            </button>
-            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-              Desativar
-            </button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => handleReativarLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-              Reativar
-            </button>
-            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-              Remover Lembrete
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+    <LembreteCard
+      lembrete={lembrete}
+      title={lembrete.nome}
+      status={lembrete.status}
+      bodyContent={bodyContent}
+      handleOpenEditModal={handleOpenEditModal}
+      handleConcluirLembrete={handleConcluirLembrete}
+      handleReverterLembrete={handleReativarLembrete}
+      handleRemoveLembrete={handleRemoveLembrete}
+      activeStatus="Ativo"
+      concluirButtonText="Desativar"
+      reverterButtonText="Reativar"
+    />
   );
 };
 
@@ -237,52 +175,30 @@ export const ConsultaCard = ({
   handleReverterLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
 }) => {
-  const displayStatus = lembrete.status;
+  const bodyContent = (
+    <>
+      <p><strong className="card-body">Médico:</strong> {lembrete.medico}</p>
+      <p><strong className="card-body">Data e Horário:</strong> {formatDate(lembrete.data)} às {lembrete.hora}</p>
+      <p><strong className="card-body">Local:</strong> {lembrete.local}</p>
+      {lembrete.observacoes && (
+        <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
+      )}
+    </>
+  );
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      {/* Cabeçalho do Card */}
-      <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
-        <h3 className="text-lg font-bold text-indigo-800">
-          {lembrete.especialidade} {lembrete.tipo === 'Teleconsulta' && '(Teleconsulta)'}
-        </h3>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${displayStatus === 'Agendada' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-          {displayStatus}
-        </span>
-      </div>
-
-      {/* Corpo do Card */}
-      <div className="p-4 md:p-5 space-y-3 text-slate-700">
-        <p><strong className="card-body">Médico:</strong> {lembrete.medico}</p>
-        <p><strong className="card-body">Data e Horário:</strong> {formatDate(lembrete.data)} às {lembrete.hora}</p>
-        <p><strong className="card-body">Local:</strong> {lembrete.local}</p>
-        {lembrete.observacoes && (
-          <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
-        )}
-      </div>
-
-      {/* Rodapé do Card */}
-      <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
-        {lembrete.status === 'Agendada' ? (
-          <>
-            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-              Alterar
-            </button>
-            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-              Marcar como Concluída
-            </button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => handleReverterLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-              Reverter
-            </button>
-            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-              Remover Lembrete
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+    <LembreteCard
+      lembrete={lembrete}
+      title={`${lembrete.especialidade} ${lembrete.tipo === 'Teleconsulta' ? '(Teleconsulta)' : ''}`}
+      status={lembrete.status}
+      bodyContent={bodyContent}
+      handleOpenEditModal={handleOpenEditModal}
+      handleConcluirLembrete={handleConcluirLembrete}
+      handleReverterLembrete={handleReverterLembrete}
+      handleRemoveLembrete={handleRemoveLembrete}
+      activeStatus="Agendada"
+      concluirButtonText="Marcar como Concluída"
+      reverterButtonText="Reverter"
+    />
   );
 };
