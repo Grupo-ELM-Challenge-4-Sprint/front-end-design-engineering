@@ -27,7 +27,7 @@ export interface LembreteReceita {
 
 export interface Usuario {
   id: string;
-  nomeCompleto: string;
+  nome: string;
   cpf: string;
   dataNascimento: string;
   tipoUsuario: 'PACIENTE' | 'CUIDADOR';
@@ -38,7 +38,8 @@ export interface Usuario {
   cpfCuidador?: string | null; // Para pacientes: CPF do cuidador vinculado
 }
 
-const API_URL = import.meta.env.VITE_API_URL_USUARIOS;
+
+const API_URL = '/api';
 
 export const useApiUsuarios = () => {
   const [loading, setLoading] = useState(false);
@@ -48,7 +49,7 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(`${API_URL}/usuario`);
       if (!response.ok) throw new Error('Erro ao buscar usuários');
       return await response.json();
     } catch (err) {
@@ -56,14 +57,14 @@ export const useApiUsuarios = () => {
       return [];
     } finally {
       setLoading(false);
-    } 
+    }
   }, []);
 
   const getUsuarioPorCpf = useCallback(async (cpf: string): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios?cpf=${cpf}`);
+      const response = await fetch(`${API_URL}/usuario?cpf=${cpf}`);
       if (!response.ok) throw new Error('Erro ao buscar usuário');
       const usuarios = await response.json();
       return usuarios.length > 0 ? usuarios[0] : null;
@@ -72,14 +73,14 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    } 
+    }
   }, []);
 
   const criarUsuario = useCallback(async (usuario: Omit<Usuario, 'id' | 'lembretesConsulta' | 'lembretesReceita'>): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios`, {
+      const response = await fetch(`${API_URL}/usuario`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,14 +94,14 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    } 
+    }
   }, []);
 
   const atualizarUsuario = useCallback(async (id: string, usuario: Partial<Usuario>): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuarios/${id}`, {
+      const response = await fetch(`${API_URL}/usuario/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
         setLoading(false);
-    } 
+    }
   }, []);
 
   // Funções para Consultas
