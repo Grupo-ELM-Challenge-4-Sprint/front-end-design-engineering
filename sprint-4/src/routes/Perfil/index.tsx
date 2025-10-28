@@ -7,7 +7,6 @@ import { useInputMasks } from "../../hooks/useInputMasks";
 import { useAuthCheck } from "../../hooks/useAuthCheck";
 import { useUser } from "../../hooks/useUser";
 import { cleanCpf } from "../../utils/stringUtils";
-import { convertToISODate } from "../../utils/dateUtils";
 
 export default function Perfil() {
     useAuthCheck();
