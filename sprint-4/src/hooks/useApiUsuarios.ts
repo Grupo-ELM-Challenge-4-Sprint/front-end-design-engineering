@@ -64,10 +64,11 @@ export const useApiUsuarios = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/usuario?cpf=${cpf}`);
+      const response = await fetch(`${API_URL}/usuario`);
       if (!response.ok) throw new Error('Erro ao buscar usuário');
       const usuarios = await response.json();
-      return usuarios.length > 0 ? usuarios[0] : null;
+      const usuario = usuarios.find((u: Usuario) => u.cpf === cpf);
+      return usuario || null;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       return null;

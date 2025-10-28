@@ -101,8 +101,9 @@ export const CadastroForm = ({
             {errors.cadastroEmail && <small className="error-message text-red-500">{errors.cadastroEmail}</small>}
           </div>
           <div className="form-group-auth">
-            <label htmlFor="cadastroTelefone">Telefone</label>
-            <input className="form-input" type="tel" id="cadastroTelefone" placeholder="(11) 99999-9999" value={formData.cadastroTelefone} onChange={(e) => onInputChange('cadastroTelefone', e.target.value)} />
+            <label htmlFor="cadastroTelefone">Telefone*</label>
+            <input className={`form-input ${errors.cadastroTelefone ? 'border-red-500' : ''}`} type="tel" id="cadastroTelefone" placeholder="(11) 99999-9999" value={formData.cadastroTelefone} onChange={(e) => onInputChange('cadastroTelefone', e.target.value)} required />
+            {errors.cadastroTelefone && <small className="error-message text-red-500">{errors.cadastroTelefone}</small>}
           </div>
 
           <h3 className="form-step-title mt-6">Definir Senha</h3>

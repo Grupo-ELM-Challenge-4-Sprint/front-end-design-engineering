@@ -6,6 +6,8 @@ import { CardConsulta, CardReceita } from "../../components/LembreteCard/Lembret
 import { useInputMasks } from "../../hooks/useInputMasks";
 import { useAuthCheck } from "../../hooks/useAuthCheck";
 import { useUser } from "../../hooks/useUser";
+import { cleanCpf } from "../../utils/stringUtils";
+import { convertToISODate } from "../../utils/dateUtils";
 
 export default function Perfil() {
     useAuthCheck();
@@ -20,7 +22,9 @@ export default function Perfil() {
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
         if (cpfLogado) {
-            getUsuarioPorCpf(cpfLogado).then(async (usuario) => {
+            // CPF já está limpo no localStorage, mas garantir limpeza se necessário
+            const cpfLimpo = cleanCpf(cpfLogado);
+            getUsuarioPorCpf(cpfLimpo).then(async (usuario) => {
                 if (usuario) {
                     setUsuarioApi(usuario);
 
@@ -55,14 +59,14 @@ export default function Perfil() {
 
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(() => ({
-        nomeCompleto: usuarioApi?.nomeCompleto || '',
+        nomeCompleto: usuarioApi?.nome || '',
         cpf: usuarioApi?.cpf || '',
         dataNascimento: usuarioApi?.dataNascimento || '',
         email: usuarioApi?.email || '',
         telefone: usuarioApi?.telefone || ''
     }));
     const [original, setOriginal] = useState(() => ({
-        nomeCompleto: usuarioApi?.nomeCompleto || '',
+        nomeCompleto: usuarioApi?.nome || '',
         cpf: usuarioApi?.cpf || '',
         dataNascimento: usuarioApi?.dataNascimento || '',
         email: usuarioApi?.email || '',
@@ -73,14 +77,14 @@ export default function Perfil() {
     useEffect(() => {
         if (usuarioApi) {
             setForm({
-                nomeCompleto: usuarioApi.nomeCompleto,
+                nomeCompleto: usuarioApi.nome,
                 cpf: usuarioApi.cpf,
                 dataNascimento: usuarioApi.dataNascimento,
                 email: usuarioApi.email,
                 telefone: usuarioApi.telefone
-            });
+            }); 
             setOriginal({
-                nomeCompleto: usuarioApi.nomeCompleto,
+                nomeCompleto: usuarioApi.nome,
                 cpf: usuarioApi.cpf,
                 dataNascimento: usuarioApi.dataNascimento,
                 email: usuarioApi.email,
@@ -179,7 +183,7 @@ export default function Perfil() {
 
                                     {pacienteVinculado ? (
                                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                                            <p className="text-green-800 font-medium">✅ Vinculado com: {pacienteVinculado.nomeCompleto}</p>
+                                            <p className="text-green-800 font-medium">✅ Vinculado com: {pacienteVinculado.nome}</p>
                                             <p className="text-green-600 text-sm mt-1">CPF: {pacienteVinculado.cpf}</p>
                                             <button type="button" className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer"
                                                 onClick={async () => {
@@ -221,7 +225,9 @@ export default function Perfil() {
                                                         }
 
                                                         try {
-                                                            const paciente = await getUsuarioPorCpf(cpfPaciente);
+                                                            // Limpar CPF para busca (remover pontos e traços)
+                                                            const cpfLimpo = cleanCpf(cpfPaciente);
+                                                            const paciente = await getUsuarioPorCpf(cpfLimpo);
                                                             if (!paciente) {
                                                                 setLinkMessage('Paciente não encontrado.');
                                                                 return;
@@ -238,7 +244,7 @@ export default function Perfil() {
                                                             }
 
                                                             // Vincular: adicionar cpfPaciente ao cuidador e cpfCuidador ao paciente
-                                                            await atualizarUsuario(usuarioApi!.id, { cpfPaciente });
+                                                            await atualizarUsuario(usuarioApi!.id, { cpfPaciente: cpfLimpo });
                                                             await atualizarUsuario(paciente.id, { cpfCuidador: usuarioApi!.cpf });
 
                                                             // Buscar lembretes do paciente recém-vinculado
@@ -251,7 +257,7 @@ export default function Perfil() {
                                                             };
 
                                                             setPacienteVinculado(pacienteComLembretes);
-                                                            setUsuarioApi({ ...usuarioApi!, cpfPaciente });
+                                                            setUsuarioApi({ ...usuarioApi!, cpfPaciente: cpfLimpo });
 
                                                             setLinkMessage('Vinculação realizada com sucesso!');
                                                         } catch (error) {
@@ -279,7 +285,7 @@ export default function Perfil() {
                 <div className="w-full justify-center lg:mr-5 notificacoes-section">
                     <h3 className="text-xl font-semibold text-[#1a237e] mb-4 lg:mt-0 mt-8 pb-2.5 border-b">
                         {usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado
-                            ? `Próximos Lembretes de ${pacienteVinculado.nomeCompleto}`
+                            ? `Próximos Lembretes de ${pacienteVinculado.nome}`
                             : 'Próximos Lembretes'
                         }
                     </h3>
@@ -312,7 +318,7 @@ export default function Perfil() {
                         <div className="text-center py-8 text-slate-500">
                             <p>
                                 {usuarioApi?.tipoUsuario === 'CUIDADOR' && pacienteVinculado
-                                    ? `${pacienteVinculado.nomeCompleto} não tem nenhuma consulta agendada ou receita ativa no momento.`
+                                    ? `${pacienteVinculado.nome} não tem nenhuma consulta agendada ou receita ativa no momento.`
                                     : 'Você não tem nenhuma consulta agendada ou receita ativa no momento.'
                                 }
                             </p>
