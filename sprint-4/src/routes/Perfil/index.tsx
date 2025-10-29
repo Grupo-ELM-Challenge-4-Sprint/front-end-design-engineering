@@ -18,11 +18,12 @@ export default function Perfil() {
     const [pacienteVinculado, setPacienteVinculado] = useState<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>(null);
     const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
 
-    // Buscar usuário da API ao carregar
+    // Buscar usuário da API ao carregar (apenas se não estiver carregado)
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado) {
+        if (cpfLogado && !usuarioApi) {
             setLoading(true);
             getUsuarioPorCpf(cpfLogado).then(async (usuario) => {
                 if (usuario) {
@@ -57,10 +58,10 @@ export default function Perfil() {
             }).catch(() => {
                 setLoading(false);
             });
-        } else {
+        } else if (!cpfLogado) {
             setLoading(false);
         }
-    }, [getUsuarioPorCpf, listarConsultas, listarReceitas]);
+    }, [getUsuarioPorCpf, listarConsultas, listarReceitas, usuarioApi]);
 
     const [editMode, setEditMode] = useState(false);
     const [editEmail, setEditEmail] = useState('');
@@ -87,6 +88,7 @@ export default function Perfil() {
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         if (!usuarioApi) return;
+        setUpdating(true);
         atualizarUsuario(usuarioApi.id, {
             email: editEmail,
             telefone: editTelefone
@@ -95,6 +97,9 @@ export default function Perfil() {
                 setUsuarioApi({ ...usuarioApi, email: editEmail, telefone: editTelefone });
                 setEditMode(false);
             }
+            setUpdating(false);
+        }).catch(() => {
+            setUpdating(false);
         });
     };
 
@@ -127,8 +132,10 @@ export default function Perfil() {
                                     )}
                                     {editMode && (
                                         <>
-                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais">Salvar</button>
-                                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel}>Cancelar</button>
+                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>
+                                                {updating ? 'Salvando...' : 'Salvar'}
+                                            </button>
+                                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel} disabled={updating}>Cancelar</button>
                                         </>
                                     )}
                                 </div>
