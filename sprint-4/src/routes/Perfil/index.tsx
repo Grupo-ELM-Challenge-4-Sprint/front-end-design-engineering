@@ -31,8 +31,8 @@ export default function Perfil() {
 
                     // Se for paciente, buscar seus próprios lembretes
                     if (usuario.tipoUsuario === 'PACIENTE') {
-                        const consultas = await listarConsultas(usuario.id);
-                        const receitas = await listarReceitas(usuario.id);
+                        const consultas = await listarConsultas(usuario.idUser);
+                        const receitas = await listarReceitas(usuario.idUser);
                         setMeusLembretes({
                             lembretesConsulta: consultas,
                             lembretesReceita: receitas,
@@ -43,8 +43,8 @@ export default function Perfil() {
                     if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
                         const paciente = await getUsuarioPorCpf(usuario.cpfPaciente);
                         if (paciente) {
-                            const consultasPaciente = await listarConsultas(paciente.id);
-                            const receitasPaciente = await listarReceitas(paciente.id);
+                            const consultasPaciente = await listarConsultas(paciente.idUser);
+                            const receitasPaciente = await listarReceitas(paciente.idUser);
                             const pacienteComLembretes = {
                                 ...paciente,
                                 lembretesConsulta: consultasPaciente,
@@ -89,7 +89,7 @@ export default function Perfil() {
         e.preventDefault();
         if (!usuarioApi) return;
         setUpdating(true);
-        atualizarUsuario(usuarioApi.id, {
+        atualizarUsuario(usuarioApi.idUser, {
             email: editEmail,
             telefone: editTelefone
         }).then((sucesso) => {

@@ -7,48 +7,58 @@ import { useAuthCheck } from '../../hooks/useAuthCheck';
 import { useLembretes } from '../../hooks/useLembretes';
 import { useUser } from '../../hooks/useUser';
 import Loading from '../../components/Loading/Loading';
+// Certifique-se que essas funções existem e estão corretas em dateUtils.ts
+import { formatLocalDateTimeForInput, formatISODateTimeLocal } from '../../utils/dateUtils';
 
 export default function Consultas() {
     useAuthCheck();
     const { adicionarConsulta, atualizarConsulta, removerConsulta } = useApiUsuarios();
-    const { lembretesConsultas: lembretes, loading, error, refreshLembretes, paciente } = useLembretes();
+    // Renomeado 'lembretes' para 'lembretesConsultas' para clareza, vindo de useLembretes
+    const { lembretesConsultas, loading, error, refreshLembretes, paciente } = useLembretes();
     const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
 
+    // ## Ajuste 1: Estado do formulário usa dataHoraConsulta ##
     const [formData, setFormData] = useState<{
         tipoConsulta: 'Presencial' | 'Teleconsulta';
         especialidadeConsulta: string;
         medicoConsulta: string;
-        dataConsulta: string;
+        dataHoraConsulta: string; // Campo único para datetime-local
         localConsulta: string;
         observacoesConsulta: string;
     }>({
         tipoConsulta: 'Presencial',
         especialidadeConsulta: '',
         medicoConsulta: '',
-        dataConsulta: '',
+        dataHoraConsulta: '', // Inicializa vazio
         localConsulta: '',
         observacoesConsulta: '',
     });
 
+    // ## Ajuste 2: useEffect usa formatLocalDateTimeForInput ##
     useEffect(() => {
         if (editingLembrete) {
             setFormData({
                 tipoConsulta: editingLembrete.tipo,
                 especialidadeConsulta: editingLembrete.especialidade,
                 medicoConsulta: editingLembrete.medico,
-                dataConsulta: `${editingLembrete.data}T${editingLembrete.hora}`,
-                localConsulta: editingLembrete.local,
+                // Formata o LocalDateTime string do backend para o input datetime-local
+                dataHoraConsulta: formatLocalDateTimeForInput(editingLembrete.hora),
+                localConsulta: editingLembrete.local, // Usa o campo 'local' correto
                 observacoesConsulta: editingLembrete.observacoes,
             });
         } else {
+            // Resetar form
+             const agora = new Date();
+             // Formato YYYY-MM-DDTHH:mm exigido pelo input datetime-local
+             const agoraFormatado = agora.toISOString().substring(0, 16);
             setFormData({
                 tipoConsulta: 'Presencial',
                 especialidadeConsulta: '',
                 medicoConsulta: '',
-                dataConsulta: '',
+                dataHoraConsulta: agoraFormatado, // Define um valor inicial válido
                 localConsulta: '',
                 observacoesConsulta: '',
             });
@@ -66,62 +76,67 @@ export default function Consultas() {
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!usuarioApi) return;
-        const [data, hora] = formData.dataConsulta.split('T');
-        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+
+        // ## Ajuste 3: Usa formatISODateTimeLocal para enviar ao backend ##
+        // Garante que a string está no formato YYYY-MM-DDTHH:mm:ss (ou o esperado pelo backend)
+        const dataHoraBackend = formatISODateTimeLocal(formData.dataHoraConsulta);
+
+        // ## Ajuste 4: Usa idUser do backend ##
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
+
+        // ## Ajuste 5: Payload alinhado com a API (campo 'hora' recebe a string ISO) ##
+        const consultaData = {
+            especialidade: formData.especialidadeConsulta,
+            medico: formData.medicoConsulta || 'Não especificado', // Mantém 'medico'
+            data: dataHoraBackend.split('T')[0], // Extrai a data da string ISO
+            hora: dataHoraBackend, // Campo 'hora' recebe a string combinada formatada
+            tipo: formData.tipoConsulta,
+            local: formData.localConsulta, // Mantém 'local'
+            observacoes: formData.observacoesConsulta,
+        };
+
 
         if (editingLembrete) {
-            await atualizarConsulta(editingLembrete.id, {
-                especialidade: formData.especialidadeConsulta,
-                medico: formData.medicoConsulta || 'Não especificado',
-                data,
-                hora,
-                tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
-                local: formData.localConsulta,
-                observacoes: formData.observacoesConsulta,
-                status: editingLembrete.status,
+            // ## Ajuste 6: Usa idConsulta ##
+            await atualizarConsulta(editingLembrete.idConsulta, {
+                ...consultaData,
+                status: editingLembrete.status, // Preserva status
             });
         } else {
             await adicionarConsulta(usuarioId, {
-                especialidade: formData.especialidadeConsulta,
-                medico: formData.medicoConsulta || 'Não especificado',
-                data,
-                hora,
-                tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
-                local: formData.localConsulta,
-                observacoes: formData.observacoesConsulta,
+                ...consultaData,
                 status: 'Agendada',
             });
         }
 
-        // Recarregar lembretes
         refreshLembretes();
-
         setIsModalOpen(false);
         setEditingLembrete(null);
     };
 
+    // ## Ajuste 7: Funções de manipulação usam idConsulta ##
     const handleRemoveLembrete = async (id: number) => {
-        await removerConsulta(id);
+        await removerConsulta(id); // id aqui é idConsulta
         refreshLembretes();
     };
 
     const handleConcluirLembrete = async (id: number) => {
-        await atualizarConsulta(id, { status: 'Concluída' });
+        await atualizarConsulta(id, { status: 'Concluída' }); // id aqui é idConsulta
         refreshLembretes();
     };
 
     const handleReverterLembrete = async (id: number) => {
-        await atualizarConsulta(id, { status: 'Agendada' });
+        await atualizarConsulta(id, { status: 'Agendada' }); // id aqui é idConsulta
         refreshLembretes();
     };
 
     const handleOpenAddModal = () => {
-        setEditingLembrete(null);
+        setEditingLembrete(null); // Reseta o formulário
         setIsModalOpen(true);
     };
 
     const handleOpenEditModal = (lembrete: LembreteConsulta) => {
-        setEditingLembrete(lembrete);
+        setEditingLembrete(lembrete); // Popula o formulário com dados existentes
         setIsModalOpen(true);
     };
 
@@ -152,21 +167,25 @@ export default function Consultas() {
                 <div id="lembretes-consultas-content" className="space-y-6">
                     <Loading loading={loading} message="Carregando lembretes de consultas..." />
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
-                    {!loading && !error && lembretes.length > 0 ? (
-                        lembretes.map((lembrete) => (
+                    {/* ## Ajuste 8: Usa lembretesConsultas e idConsulta ## */}
+                    {!loading && !error && lembretesConsultas.length > 0 ? (
+                        lembretesConsultas.map((lembrete) => (
                             <ConsultaCard
-                                key={lembrete.id}
+                                key={lembrete.idConsulta} // Usa idConsulta como key
                                 lembrete={lembrete}
                                 handleOpenEditModal={handleOpenEditModal}
-                                handleConcluirLembrete={handleConcluirLembrete}
-                                handleReverterLembrete={handleReverterLembrete}
-                                handleRemoveLembrete={handleRemoveLembrete}
+                                // Passa idConsulta para as funções handler
+                                handleConcluirLembrete={() => handleConcluirLembrete(lembrete.idConsulta)}
+                                handleReverterLembrete={() => handleReverterLembrete(lembrete.idConsulta)}
+                                handleRemoveLembrete={() => handleRemoveLembrete(lembrete.idConsulta)}
                             />
                         ))
                     ) : (
-                        <div className=" border border-slate-200 rounded-xl p-6 shadow-sm text-center">
-                            <p className="text-slate-600">Você não possui nenhum lembrete de consulta.</p>
-                        </div>
+                         !loading && !error && ( // Só mostra a mensagem se não estiver carregando e não houver erro
+                            <div className=" border border-slate-200 rounded-xl p-6 shadow-sm text-center">
+                                <p className="text-slate-600">Você não possui nenhum lembrete de consulta.</p>
+                            </div>
+                        )
                     )}
                 </div>
             </section>
@@ -182,7 +201,8 @@ export default function Consultas() {
                             {editingLembrete ? 'Alterar Lembrete' : 'Adicionar Lembrete'}
                         </h3>
                         <form onSubmit={handleFormSubmit} className="space-y-4">
-                            <div>
+                            {/* ... (campos tipoConsulta, especialidadeConsulta, medicoConsulta) ... */}
+                             <div>
                                 <label htmlFor="tipoConsulta" className="form-consultas">Tipo de Consulta*:</label>
                                 <select id="tipoConsulta" name="tipoConsulta" value={formData.tipoConsulta} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
                                     <option value="Presencial">Presencial</option>
@@ -197,15 +217,23 @@ export default function Consultas() {
                                 <label htmlFor="medicoConsulta" className="form-consultas">Médico (Opcional):</label>
                                 <input type="text" id="medicoConsulta" name="medicoConsulta" value={formData.medicoConsulta} onChange={handleInputChange} placeholder="Nome do médico" className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
+
+                            {/* ## Ajuste 9: Input datetime-local usando dataHoraConsulta ## */}
                             <div>
-                                <label htmlFor="dataConsulta" className="form-consultas">Data e Hora*:</label>
-                                <input type="datetime-local" id="dataConsulta" name="dataConsulta" value={formData.dataConsulta} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                                <label htmlFor="dataHoraConsulta" className="form-consultas">Data e Hora*:</label>
+                                <input type="datetime-local" id="dataHoraConsulta" name="dataHoraConsulta"
+                                       value={formData.dataHoraConsulta} onChange={handleInputChange} required
+                                       className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
+
+                             {/* ## Ajuste 10: Input localConsulta ## */}
                             <div>
                                 <label htmlFor="localConsulta" className="form-consultas">Local/Link*:</label>
                                 <input type="text" id="localConsulta" name="localConsulta" value={formData.localConsulta} onChange={handleInputChange} placeholder="Ex: Unidade Paulista ou link da sala" required className="w-full p-2 border border-slate-300 rounded-md" />
                             </div>
-                            <div>
+
+                             {/* ... (campo observacoesConsulta e botões) ... */}
+                             <div>
                                 <label htmlFor="observacoesConsulta" className="form-consultas">Observações:</label>
                                 <textarea id="observacoesConsulta" name="observacoesConsulta" value={formData.observacoesConsulta} onChange={handleInputChange} rows={3} placeholder="Ex: Trazer exames anteriores" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
                             </div>
