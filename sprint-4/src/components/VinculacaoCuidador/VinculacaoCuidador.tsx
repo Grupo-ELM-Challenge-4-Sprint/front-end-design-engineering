@@ -19,8 +19,8 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
   const handleDesvincular = async () => {
     if (usuarioApi && pacienteVinculado) {
       try {
-        await atualizarUsuario(usuarioApi.id, { cpfPaciente: null });
-        await atualizarUsuario(pacienteVinculado.id, { cpfCuidador: null });
+        await atualizarUsuario(usuarioApi.idUser, { cpfPaciente: null });
+        await atualizarUsuario(pacienteVinculado.idUser, { cpfCuidador: null });
         setPacienteVinculado(null);
         setUsuarioApi({ ...usuarioApi, cpfPaciente: null });
       } catch (error) {
@@ -62,11 +62,11 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         return;
       }
 
-      await atualizarUsuario(usuarioApi!.id, { cpfPaciente: cpfLimpo });
-      await atualizarUsuario(paciente.id, { cpfCuidador: usuarioApi!.cpf });
+      await atualizarUsuario(usuarioApi!.idUser, { cpfPaciente: cpfLimpo });
+      await atualizarUsuario(paciente.idUser, { cpfCuidador: usuarioApi!.cpf });
 
-      const consultasPaciente = await listarConsultas(paciente.id);
-      const receitasPaciente = await listarReceitas(paciente.id);
+      const consultasPaciente = await listarConsultas(paciente.idUser);
+      const receitasPaciente = await listarReceitas(paciente.idUser);
       const pacienteComLembretes = {
         ...paciente,
         lembretesConsulta: consultasPaciente,

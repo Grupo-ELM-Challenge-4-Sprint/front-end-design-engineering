@@ -4,7 +4,7 @@ import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
 import { useLembretes } from '../../hooks/useLembretes';
-import { useUser } from '../../hooks/useUser';
+
 import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 import Loading from '../../components/Loading/Loading';
 // Certifique-se que essas funções existem e estão corretas em dateUtils.ts
@@ -14,8 +14,7 @@ export default function Receitas() {
     useAuthCheck();
     const { adicionarReceita, atualizarReceita, removerReceita } = useApiUsuarios();
     // Renomeado 'lembretes' para 'lembretesReceitas' para clareza
-    const { lembretesReceitas, loading, error, refreshLembretes, paciente } = useLembretes();
-    const { usuarioApi } = useUser();
+    const { lembretesReceitas, loading, error, refreshLembretes, paciente, usuarioApi } = useLembretes();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);

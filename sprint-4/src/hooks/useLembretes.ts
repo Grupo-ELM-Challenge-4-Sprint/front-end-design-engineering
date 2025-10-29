@@ -4,7 +4,7 @@ import { useUser } from './useUser';
 import type { LembreteConsulta, LembreteReceita, Usuario } from './useApiUsuarios';
 
 export const useLembretes = () => {
-    const { listarConsultas, listarReceitas, getUsuarioPorCpf } = useApiUsuarios();
+    const { listarConsultas, listarReceitas, getUsuarioPorId, getUsuarioPorCpf } = useApiUsuarios();
     const { usuarioApi } = useUser();
 
     const [paciente, setPaciente] = useState<Usuario | null>(null);
@@ -25,8 +25,8 @@ export const useLembretes = () => {
                     if (paciente) {
                         setPaciente(paciente);
                         Promise.all([
-                            listarConsultas(paciente.id),
-                            listarReceitas(paciente.id)
+                            listarConsultas(paciente.idUser),
+                            listarReceitas(paciente.idUser)
                         ]).then(([consultas, receitas]) => {
                             setLembretesConsultas(consultas);
                             setLembretesReceitas(receitas);
@@ -41,8 +41,8 @@ export const useLembretes = () => {
                 });
             } else {
                 Promise.all([
-                    listarConsultas(usuarioApi.id),
-                    listarReceitas(usuarioApi.id)
+                    listarConsultas(usuarioApi.idUser),
+                    listarReceitas(usuarioApi.idUser)
                 ]).then(([consultas, receitas]) => {
                     setLembretesConsultas(consultas);
                     setLembretesReceitas(receitas);
@@ -53,11 +53,11 @@ export const useLembretes = () => {
                 });
             }
         }
-    }, [usuarioApi, getUsuarioPorCpf, listarConsultas, listarReceitas]);
+    }, [usuarioApi, getUsuarioPorId, getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
     const refreshLembretes = () => {
         if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
             Promise.all([
                 listarConsultas(usuarioId),
                 listarReceitas(usuarioId)
@@ -72,6 +72,7 @@ export const useLembretes = () => {
 
     return {
         paciente,
+        usuarioApi,
         lembretesConsultas,
         lembretesReceitas,
         loading,

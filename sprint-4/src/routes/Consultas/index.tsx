@@ -5,7 +5,7 @@ import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
 import { useLembretes } from '../../hooks/useLembretes';
-import { useUser } from '../../hooks/useUser';
+
 import Loading from '../../components/Loading/Loading';
 // Certifique-se que essas funções existem e estão corretas em dateUtils.ts
 import { formatLocalDateTimeForInput, formatISODateTimeLocal } from '../../utils/dateUtils';
@@ -14,8 +14,7 @@ export default function Consultas() {
     useAuthCheck();
     const { adicionarConsulta, atualizarConsulta, removerConsulta } = useApiUsuarios();
     // Renomeado 'lembretes' para 'lembretesConsultas' para clareza, vindo de useLembretes
-    const { lembretesConsultas, loading, error, refreshLembretes, paciente } = useLembretes();
-    const { usuarioApi } = useUser();
+    const { lembretesConsultas, loading, error, refreshLembretes, usuarioApi } = useLembretes();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
@@ -82,7 +81,7 @@ export default function Consultas() {
         const dataHoraBackend = formatISODateTimeLocal(formData.dataHoraConsulta);
 
         // ## Ajuste 4: Usa idUser do backend ##
-        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
+        const usuarioId = usuarioApi.idUser;
 
         // ## Ajuste 5: Payload alinhado com a API (campo 'hora' recebe a string ISO) ##
         const consultaData = {

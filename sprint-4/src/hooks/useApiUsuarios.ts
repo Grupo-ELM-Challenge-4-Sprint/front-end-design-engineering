@@ -124,21 +124,18 @@ export const useApiUsuarios = () => {
 
 
   // --- Funções CONSULTA ---
-    const listarConsultas = useCallback(async (usuarioId: number): Promise<LembreteConsulta[]> => {
-        // Precisa buscar TODAS as consultas e filtrar no front-end, OU ajustar backend para filtrar por usuarioId
-        const todasConsultas = await fetchApi('/consulta') as LembreteConsulta[] | null;
-        return todasConsultas?.filter(c => c.idUser === usuarioId) || []; // Filtro Front-end
-        // Ideal seria: return fetchApi(`/consulta?usuarioId=${usuarioId}`); se o backend suportar
-    }, [fetchApi]);
+  const listarConsultas = useCallback(async (usuarioId: number): Promise<LembreteConsulta[]> => {
+      // Usa o endpoint /consulta/usuario/{userId} criado no Java
+      const consultasDoUsuario = await fetchApi(`/consulta/usuario/${usuarioId}`) as LembreteConsulta[] | null;
+      return consultasDoUsuario || []; // Retorna a lista filtrada pela API ou um array vazio
+
+  }, [fetchApi]);
 
 
    const adicionarConsulta = useCallback(async (usuarioId: number, novaConsulta: Omit<LembreteConsulta, 'idConsulta' | 'idUser'>): Promise<LembreteConsulta | null> => {
         const payload = {
             ...novaConsulta,
             idUser: usuarioId,
-            // Certificar que data e hora estão no formato correto para LocalDateTime
-            // Se o backend espera LocalDateTime, data e hora devem ser combinados
-            // Exemplo: hora: "2025-10-27T22:25:00" - Ajustar a formatação no componente
         };
         return fetchApi('/consulta', {
             method: 'POST',
@@ -162,18 +159,12 @@ export const useApiUsuarios = () => {
 
 
   // --- Funções RECEITA ---
-    const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
-        // Similar a consultas, filtrar no front ou ajustar backend
-        const todasReceitas = await fetchApi('/receita') as LembreteReceita[] | null;
-        // O backend retorna 'dias_semana' como string, precisa converter para array
-        const receitasFormatadas = todasReceitas?.map(r => ({
-           ...r,
-           // @ts-ignore - Supõe que o backend envia dias_semana como string
-           dias: typeof r.dias_semana === 'string' ? r.dias_semana.split(',') : (r.dias || []),
-        })) || [];
-        return receitasFormatadas.filter(r => r.idUser === usuarioId);
-        // Ideal: return fetchApi(`/receita?usuarioId=${usuarioId}`);
-    }, [fetchApi]);
+  const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
+      // Usa o endpoint /receita/usuario/{userId} criado no Java
+      const receitasDoUsuario = await fetchApi(`/receita/usuario/${usuarioId}`) as LembreteReceita[] | null;
+      return receitasDoUsuario || [];
+
+  }, [fetchApi]);
 
 
     const adicionarReceita = useCallback(async (usuarioId: number, novaReceita: Omit<LembreteReceita, 'idReceita' | 'idUser'>): Promise<LembreteReceita | null> => {
