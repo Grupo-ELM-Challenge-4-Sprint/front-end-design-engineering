@@ -52,12 +52,10 @@ export const getNextDose = (lembrete: {
   const freqHours = lembrete.frequencia;
 
   if (freqHours <= 0) {
-    console.error("Frequência inválida (<= 0) para o lembrete:", lembrete);
     return { date: 'Erro Freq.', time: '' };
   }
 
   if (selectedDayIndices.length === 0) {
-    console.error("Dias não selecionados ou inválidos para o lembrete:", lembrete);
     return { date: 'Erro Dias', time: '' };
   }
 

@@ -17,8 +17,7 @@ export const useContatoForm = () => {
     reset,
   } = useForm<ContatoFormInputs>();
 
-  const onSubmit: SubmitHandler<ContatoFormInputs> = async (data) => {
-    console.log(data); // Exibe os dados do formulário no console
+  const onSubmit: SubmitHandler<ContatoFormInputs> = async () => {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     reset();
   };
