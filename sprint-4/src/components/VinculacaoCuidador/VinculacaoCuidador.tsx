@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
+import { useApiConsultas } from '../../hooks/useApiConsultas';
+import { useApiReceitas } from '../../hooks/useApiReceitas';
 import { useInputMasks } from '../../hooks/useInputMasks';
-import { useUser } from '../../hooks/useUser';
 import { cleanCpf } from '../../utils/stringUtils';
-import type { Usuario, LembreteConsulta, LembreteReceita } from '../../hooks/useApiUsuarios';
+import type { Usuario } from '../../hooks/useApiUsuarios';
+import type { LembreteConsulta, LembreteReceita } from '../../types/lembretes';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
 interface VinculacaoCuidadorProps {
   pacienteVinculado: (Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null;
   setPacienteVinculado: React.Dispatch<React.SetStateAction<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>>;
 }
 
 export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVinculado }: VinculacaoCuidadorProps) {
-  const { atualizarUsuario, listarConsultas, listarReceitas, getUsuarioPorCpf } = useApiUsuarios();
+  const { atualizarUsuario, getUsuarioPorCpf } = useApiUsuarios();
+  const { listarConsultas } = useApiConsultas();
+  const { listarReceitas } = useApiReceitas();
   const { applyMask } = useInputMasks();
-  const { usuarioApi, setUsuarioApi } = useUser();
+  const { usuarioApi, setUsuarioApi } = useAuthCheck();
   const [linkMessage, setLinkMessage] = useState<string>('');
   const [linkingLoading, setLinkingLoading] = useState(false);
 

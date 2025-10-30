@@ -12,6 +12,8 @@ export const useAuth = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('cpfLogado');
+    localStorage.removeItem('usuarioApi');
+    localStorage.removeItem('tipoUsuario');
     setIsLoggedIn(false);
     navigate('/entrar');
   };
