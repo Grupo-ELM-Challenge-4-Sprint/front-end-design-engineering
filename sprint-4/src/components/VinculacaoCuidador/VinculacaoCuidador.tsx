@@ -7,6 +7,7 @@ import { cleanCpf } from '../../utils/stringUtils';
 import type { Usuario } from '../../hooks/useApiUsuarios';
 import type { LembreteConsulta, LembreteReceita } from '../../types/lembretes';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
+
 interface VinculacaoCuidadorProps {
   pacienteVinculado: (Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null;
   setPacienteVinculado: React.Dispatch<React.SetStateAction<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>>;
@@ -24,8 +25,20 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
   const handleDesvincular = async () => {
     if (usuarioApi && pacienteVinculado) {
       try {
-        await atualizarUsuario(usuarioApi.idUser, { cpfPaciente: null });
-        await atualizarUsuario(pacienteVinculado.idUser, { cpfCuidador: null });
+        // 1. Crie o payload completo para o CUIDADOR
+        const cuidadorPayload = {
+          ...usuarioApi,
+          cpfPaciente: null
+        };
+
+        // 2. Crie o payload completo para o PACIENTE
+        const pacientePayload = {
+          ...pacienteVinculado,
+          cpfCuidador: null
+        };
+        
+        await atualizarUsuario(usuarioApi.idUser, cuidadorPayload);
+        await atualizarUsuario(pacienteVinculado.idUser, pacientePayload);
         setPacienteVinculado(null);
         setUsuarioApi({ ...usuarioApi, cpfPaciente: null });
       } catch (error) {
@@ -54,21 +67,32 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         setLinkingLoading(false);
         return;
       }
-
       if (paciente.tipoUsuario !== 'PACIENTE') {
         setLinkMessage('Este usuário não é um paciente.');
         setLinkingLoading(false);
         return;
       }
-
       if (paciente.cpfCuidador) {
         setLinkMessage('Este paciente já está vinculado a outro cuidador.');
         setLinkingLoading(false);
         return;
       }
 
-      await atualizarUsuario(usuarioApi!.idUser, { cpfPaciente: cpfLimpo });
-      await atualizarUsuario(paciente.idUser, { cpfCuidador: usuarioApi!.cpf });
+      // 1. Crie o payload completo para o CUIDADOR
+      const cuidadorPayload = {
+        ...usuarioApi!,
+        cpfPaciente: cpfLimpo
+      };
+      
+      // 2. Crie o payload completo para o PACIENTE
+      const pacientePayload = {
+        ...paciente,
+        cpfCuidador: usuarioApi!.cpf
+      };
+
+      await atualizarUsuario(usuarioApi!.idUser, cuidadorPayload); // Envia payload completo
+      await atualizarUsuario(paciente.idUser, pacientePayload); // Envia payload completo
+      // --- FIM DA CORREÇÃO ---
 
       const consultasPaciente = await listarConsultas(paciente.idUser);
       const receitasPaciente = await listarReceitas(paciente.idUser);

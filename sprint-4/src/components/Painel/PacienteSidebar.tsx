@@ -1,34 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { useApiUsuarios } from '../../hooks/useApiUsuarios';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
 
 export default function PacienteSidebar() {
   const navigate = useNavigate();
-  const { getUsuarioPorCpf } = useApiUsuarios();
-
-  const [tipoUsuario, setTipoUsuario] = useState<'PACIENTE' | 'CUIDADOR' | null>(null);
-
-  useEffect(() => {
-    const cpfLogado = localStorage.getItem('cpfLogado');
-    const tipoUsuarioStorage = localStorage.getItem('tipoUsuario');
-    if (tipoUsuarioStorage) {
-      setTipoUsuario(tipoUsuarioStorage as 'PACIENTE' | 'CUIDADOR');
-    } else if (cpfLogado) {
-      // Fallback: tentar buscar via API se não estiver no localStorage
-      getUsuarioPorCpf(cpfLogado).then((usuario) => {
-        if (usuario) {
-          setTipoUsuario(usuario.tipoUsuario);
-          // Salvar no localStorage para próximas vezes
-          localStorage.setItem('tipoUsuario', usuario.tipoUsuario);
-        }
-      }).catch(() => {
-        // Silenciar erro e usar fallback
-        setTipoUsuario('PACIENTE');
-      });
-    } else {
-      setTipoUsuario('PACIENTE'); // fallback
-    }
-  }, [getUsuarioPorCpf]);
+  const { usuarioApi } = useAuthCheck();
 
   const handleLogout = () => {
     // Remove os dados de autenticação do localStorage
@@ -47,7 +22,7 @@ export default function PacienteSidebar() {
       data-guide-text="Use este menu para navegar entre as diferentes seções da sua área, como seus dados e tutoriais."
       data-guide-arrow="down">
       <div className="paciente-sidebar-header">
-        <h3>Área do {tipoUsuario === 'CUIDADOR' ? 'Cuidador' : 'Paciente'}</h3>
+        <h3>Área do {usuarioApi?.tipoUsuario === 'CUIDADOR' ? 'Cuidador' : 'Paciente'}</h3>
       </div>
       <nav className="paciente-nav" aria-label="Navegação Área do Usuário">
         <ul>
@@ -60,5 +35,3 @@ export default function PacienteSidebar() {
     </aside>
   );
 }
-
-
