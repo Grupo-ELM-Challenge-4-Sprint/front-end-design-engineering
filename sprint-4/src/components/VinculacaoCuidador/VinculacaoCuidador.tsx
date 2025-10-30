@@ -25,13 +25,11 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
   const handleDesvincular = async () => {
     if (usuarioApi && pacienteVinculado) {
       try {
-        // 1. Crie o payload completo para o CUIDADOR
         const cuidadorPayload = {
           ...usuarioApi,
           cpfPaciente: null
         };
 
-        // 2. Crie o payload completo para o PACIENTE
         const pacientePayload = {
           ...pacienteVinculado,
           cpfCuidador: null
@@ -78,13 +76,11 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         return;
       }
 
-      // 1. Crie o payload completo para o CUIDADOR
       const cuidadorPayload = {
         ...usuarioApi!,
         cpfPaciente: cpfLimpo
       };
       
-      // 2. Crie o payload completo para o PACIENTE
       const pacientePayload = {
         ...paciente,
         cpfCuidador: usuarioApi!.cpf
@@ -92,7 +88,6 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
 
       await atualizarUsuario(usuarioApi!.idUser, cuidadorPayload); // Envia payload completo
       await atualizarUsuario(paciente.idUser, pacientePayload); // Envia payload completo
-      // --- FIM DA CORREÇÃO ---
 
       const consultasPaciente = await listarConsultas(paciente.idUser);
       const receitasPaciente = await listarReceitas(paciente.idUser);
