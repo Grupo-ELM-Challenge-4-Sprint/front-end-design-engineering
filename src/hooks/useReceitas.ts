@@ -39,8 +39,8 @@ export const useReceitas = () => {
                         const receitasData = await listarReceitas(usuarioApi.idUser);
                         setLembretesReceitas(receitasData || []);
                     }
-                } catch (err) {
-                    console.error('Erro ao buscar receitas:', err);
+                } catch {
+                    console.error('Erro ao buscar receitas');
                     setError('Erro ao carregar receitas');
                 } finally {
                     setLoading(false);
@@ -67,7 +67,7 @@ export const useReceitas = () => {
             try {
                 const receitasData = await listarReceitas(idParaBuscar);
                 setLembretesReceitas(receitasData || []);
-            } catch (err) {
+            } catch {
                 setError('Erro ao atualizar receitas');
             } finally {
                 setLoading(false);

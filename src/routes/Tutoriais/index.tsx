@@ -6,7 +6,7 @@ import '../../globals.css';
 export default function Tutoriais(){
     return(
     <main>
-        {/* Seção de introdução aos serviços  */}
+        {/* Seção de introdução aos serviços */}
         <section className="bg-[#e9f3fb] py-10 text-center md:text-[17px] lg:text-[20px]"
             data-guide-step="1"
             data-guide-title="Bem-vindo aos Tutoriais!"
@@ -31,7 +31,7 @@ export default function Tutoriais(){
                 </div>
         </section>
 
-        {/* botão para Acessar minha conta ou Contato  */}
+        {/* botão para Acessar minha conta ou Contato */}
         <section className="py-10 bg-indigo-100 text-center md:text-lg"
             data-guide-step="3"
             data-guide-title="Entre em contato"

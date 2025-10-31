@@ -3,7 +3,7 @@ import { cleanCpf } from '../utils/stringUtils';
 import type { Usuario } from '../types/lembretes';
 export type { Usuario };
 
-const API_URL = '/api';
+const API_URL = 'https://projeto-simpleshc.onrender.com';
 
 export const useApiUsuarios = () => {
   const [loading, setLoading] = useState(false);

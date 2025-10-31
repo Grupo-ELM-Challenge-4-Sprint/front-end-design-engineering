@@ -47,6 +47,7 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
 
   const handleVincular = async () => {
     const cpfInput = document.getElementById('cpfPacienteInput') as HTMLInputElement;
+    if (!cpfInput) return;
     const cpfPaciente = cpfInput.value;
     setLinkMessage('Carregando dados do usuário...');
     setLinkingLoading(true);
@@ -101,10 +102,11 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
       setUsuarioApi({ ...usuarioApi!, cpfPaciente: cpfLimpo });
 
       setLinkMessage('Vinculação realizada com sucesso!');
-    } catch (error) {
-      setLinkMessage('Erro ao vincular paciente.');
-    } finally {
-      setLinkingLoading(false);
+      } catch {
+        setLinkMessage('Erro ao vincular paciente.');
+      } finally {
+        setLinkMessage('Vinculação realizada com sucesso!');
+        setLinkingLoading(false);
     }
   };
 
@@ -116,11 +118,7 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
           <p className="text-green-800 font-medium">✅ Vinculado com: {pacienteVinculado.nome}</p>
           <p className="text-green-600 text-sm mt-1">CPF: {applyMask(pacienteVinculado.cpf, 'cpf')}</p>
-          <button
-            type="button"
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer"
-            onClick={handleDesvincular}
-          >
+          <button type="button" className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer" onClick={handleDesvincular}>
             Desvincular
           </button>
         </div>
@@ -128,28 +126,18 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p className="text-gray-700 mb-3">Você não está vinculado a nenhum paciente.</p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Digite o CPF do paciente"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-              id="cpfPacienteInput"
+            <input type="text" placeholder="Digite o CPF do paciente" className="flex-1 px-3 py-2 border border-gray-300 rounded-md" id="cpfPacienteInput"
               onChange={(e) => {
                 const value = applyMask(e.target.value, 'cpf');
                 e.target.value = value;
               }}
             />
-            <button
-              type="button"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer"
-              onClick={handleVincular}
-            >
+            <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer" onClick={handleVincular}>
               {linkingLoading ? 'Vinculando...' : 'Vincular'}
             </button>
           </div>
           {linkMessage && (
-            <p className={`mt-3 text-sm ${linkMessage.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}>
-              {linkMessage}
-            </p>
+            <p className={`mt-3 text-sm ${linkMessage.includes('sucesso') ? 'text-green-600' : 'text-red-600'}`}>{linkMessage}</p>
           )}
         </div>
       )}

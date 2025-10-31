@@ -112,7 +112,7 @@ interface LembreteCardProps<T> {
 
 export const LembreteCard = <T extends { status: string }>({
   lembrete,
-  id, // Recebe o ID
+  id,
   title,
   status,
   bodyContent,

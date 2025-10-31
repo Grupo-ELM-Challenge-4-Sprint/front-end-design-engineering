@@ -40,8 +40,8 @@ export const useConsultas = () => {
                         setLembretesConsultas(consultasData || []);
                     }
                     // Se for cuidador sem paciente, não faz nada, listas ficam vazias
-                } catch (err) {
-                    console.error('Erro ao buscar consultas:', err);
+                } catch {
+                    console.error('Erro ao buscar consultas');
                     setError('Erro ao carregar consultas');
                 } finally {
                     setLoading(false);
@@ -70,7 +70,7 @@ export const useConsultas = () => {
             try {
                 const consultasData = await listarConsultas(idParaBuscar);
                 setLembretesConsultas(consultasData || []);
-            } catch (err) {
+            } catch {
                 setError('Erro ao atualizar consultas');
             } finally {
                 setLoading(false);

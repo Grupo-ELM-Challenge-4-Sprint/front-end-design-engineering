@@ -124,12 +124,9 @@ export default function Perfil() {
     return (
         <PacientePage>
             <Loading loading={loading} message="Carregando dados do perfil..." />
-            <div className="content-header">
-                <h2>Meus Dados</h2>
-            </div>
+            <div className="content-header"><h2>Meus Dados</h2></div>
 
             <div className="flex flex-col lg:flex-row">
-
                 <form id="formInformacoesPessoais" onSubmit={handleSave}>
                     <div className="meus-dados-grid">
                         <div className="info-section"
@@ -150,9 +147,7 @@ export default function Perfil() {
                                     )}
                                     {editMode && (
                                         <>
-                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>
-                                                {updating ? 'Salvando...' : 'Salvar'}
-                                            </button>
+                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>{updating ? 'Salvando...' : 'Salvar'}</button>
                                             <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel} disabled={updating}>Cancelar</button>
                                         </>
                                     )}

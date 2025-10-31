@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { LembreteReceita } from '../types/lembretes';
 
-const API_URL = '/api';
+const API_URL = 'https://projeto-simpleshc.onrender.com';
 
 export const useApiReceitas = () => {
   const [loading, setLoading] = useState(false);

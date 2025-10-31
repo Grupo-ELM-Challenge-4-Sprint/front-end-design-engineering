@@ -37,8 +37,8 @@ export type LembreteReceita = {
   idUser: number;
 };
 
-export type FormDataConsulta = {
-  tipoConsulta: 'Presencial' | 'Teleconsulta';
+export interface FormDataConsulta {
+  tipoConsulta: string;
   especialidadeConsulta: string;
   medicoConsulta: string;
   dataConsulta: string;
@@ -47,7 +47,7 @@ export type FormDataConsulta = {
   observacoesConsulta: string;
 };
 
-export type FormDataReceita = {
+export interface FormDataReceita {
   nomeMedicamento: string;
   frequenciaHoras: number;
   dias: string[];
@@ -55,4 +55,13 @@ export type FormDataReceita = {
   dataInicio: string;
   horaInicio: string;
   observacoes: string;
+};
+
+export type ModalLembreteProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  editingLembrete: LembreteConsulta | LembreteReceita | null;
+  onSubmit: (formData: FormDataConsulta | FormDataReceita) => Promise<void>;
+  type: 'consulta' | 'receita';
+  setErrorMessage?: (message: string) => void;
 };

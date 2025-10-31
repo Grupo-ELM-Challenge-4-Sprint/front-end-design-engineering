@@ -5,9 +5,13 @@ import { useInputMasks, useApiUsuarios, useZodForm } from "../../hooks";
 import { LoginForm, CadastroForm } from "../../components/forms";
 import { convertToISODate } from "../../utils/dateUtils";
 import { cleanCpf } from "../../utils/stringUtils";
+import { useNavigate } from "react-router-dom";
 
 
 export default function Entrar() {
+
+    const navigate = useNavigate();
+
     // Estados principais
     const [formAtual, setFormAtual] = useState<'login' | 'cadastro'>('login');
     const [cadastroSucesso, setCadastroSucesso] = useState(false);
@@ -76,12 +80,12 @@ export default function Entrar() {
             localStorage.setItem('cpfLogado', cpfLimpo); // Salvar CPF limpo no localStorage
             setStatus('success', 'Login bem-sucedido! Redirecionando...');
             setTimeout(() => {
-                window.location.href = '/perfil';
+                navigate('/perfil');
             }, 1500);
         } else {
             setStatus('error', 'CPF ou senha inválidos.');
         }
-    }, [setStatus, getUsuarioPorCpf]);
+    }, [setStatus, getUsuarioPorCpf, navigate]);
 
     const handleCadastroSubmit = useCallback(async (data: CadastroFormData) => {
         setStatus('info', 'Verificando disponibilidade...');
