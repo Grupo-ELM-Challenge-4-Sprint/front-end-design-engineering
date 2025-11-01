@@ -6,6 +6,7 @@ import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
 import { useLembretes } from '../../hooks/useLembretes';
 import { useUser } from '../../hooks/useUser';
+import Loading from '../../components/Loading/Loading';
 
 export default function Consultas() {
     useAuthCheck();
@@ -149,7 +150,7 @@ export default function Consultas() {
                 </div>
 
                 <div id="lembretes-consultas-content" className="space-y-6">
-                    {loading && <p className="text-center text-slate-600">Carregando lembretes...</p>}
+                    <Loading loading={loading} message="Carregando lembretes de consultas..." />
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
                     {!loading && !error && lembretes.length > 0 ? (
                         lembretes.map((lembrete) => (

@@ -7,7 +7,8 @@ import { useInputMasks } from "../../hooks/useInputMasks";
 import { useAuthCheck } from "../../hooks/useAuthCheck";
 import { useUser } from "../../hooks/useUser";
 import { cleanCpf } from "../../utils/stringUtils";
-import { convertToISODate } from "../../utils/dateUtils";
+import { formatDate } from "../../utils/dateUtils";
+import Loading from "../../components/Loading/Loading";
 
 export default function Perfil() {
     useAuthCheck();
@@ -17,11 +18,14 @@ export default function Perfil() {
     const [pacienteVinculado, setPacienteVinculado] = useState<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>(null);
     const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
     const [linkMessage, setLinkMessage] = useState<string>('');
+    const [loading, setLoading] = useState(true);
+    const [linkingLoading, setLinkingLoading] = useState(false);
 
     // Buscar usuário da API ao carregar
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
         if (cpfLogado) {
+            setLoading(true);
             // CPF já está limpo no localStorage, mas garantir limpeza se necessário
             const cpfLimpo = cleanCpf(cpfLogado);
             getUsuarioPorCpf(cpfLimpo).then(async (usuario) => {
@@ -53,7 +57,12 @@ export default function Perfil() {
                         }
                     }
                 }
+                setLoading(false);
+            }).catch(() => {
+                setLoading(false);
             });
+        } else {
+            setLoading(false);
         }
     }, [getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
@@ -122,6 +131,7 @@ export default function Perfil() {
 
     return (
         <PacientePage>
+            <Loading loading={loading} message="Carregando dados do perfil..." />
             <div className="content-header">
                 <h2>Meus Dados</h2>
             </div>
@@ -165,7 +175,7 @@ export default function Perfil() {
                             </div>
                             <div className="info-item">
                                 <strong>Data de Nascimento:</strong>
-                                <input type="text" id="userDob" name="dataNascimento" value={form.dataNascimento} disabled title="Data de Nascimento" placeholder="DD/MM/AAAA" />
+                                <input type="text" id="userDob" name="dataNascimento" value={form.dataNascimento ? formatDate(form.dataNascimento) : ''} disabled title="Data de Nascimento" placeholder="DD/MM/AAAA" />
                             </div>
                             <div className="info-item">
                                 <strong>Email:</strong>
@@ -217,10 +227,12 @@ export default function Perfil() {
                                                     onClick={async () => {
                                                         const cpfInput = document.getElementById('cpfPacienteInput') as HTMLInputElement;
                                                         const cpfPaciente = cpfInput.value;
-                                                        setLinkMessage('');
+                                                        setLinkMessage('Carregando dados do usuário...');
+                                                        setLinkingLoading(true);
 
                                                         if (!cpfPaciente || cpfPaciente.length !== 14) {
                                                             setLinkMessage('Por favor, digite um CPF válido.');
+                                                            setLinkingLoading(false);
                                                             return;
                                                         }
 
@@ -230,16 +242,19 @@ export default function Perfil() {
                                                             const paciente = await getUsuarioPorCpf(cpfLimpo);
                                                             if (!paciente) {
                                                                 setLinkMessage('Paciente não encontrado.');
+                                                                setLinkingLoading(false);
                                                                 return;
                                                             }
 
                                                             if (paciente.tipoUsuario !== 'PACIENTE') {
                                                                 setLinkMessage('Este usuário não é um paciente.');
+                                                                setLinkingLoading(false);
                                                                 return;
                                                             }
 
                                                             if (paciente.cpfCuidador) {
                                                                 setLinkMessage('Este paciente já está vinculado a outro cuidador.');
+                                                                setLinkingLoading(false);
                                                                 return;
                                                             }
 
@@ -262,10 +277,12 @@ export default function Perfil() {
                                                             setLinkMessage('Vinculação realizada com sucesso!');
                                                         } catch (error) {
                                                             setLinkMessage('Erro ao vincular paciente.');
+                                                        } finally {
+                                                            setLinkingLoading(false);
                                                         }
                                                     }}
                                                 >
-                                                    Vincular
+                                                    {linkingLoading ? 'Vinculando...' : 'Vincular'}
                                                 </button>
                                             </div>
                                             {linkMessage && (

@@ -6,6 +6,7 @@ import { useAuthCheck } from '../../hooks/useAuthCheck';
 import { useLembretes } from '../../hooks/useLembretes';
 import { useUser } from '../../hooks/useUser';
 import type { LembreteReceita } from '../../hooks/useApiUsuarios';
+import Loading from '../../components/Loading/Loading';
 
 export default function Receitas() {
     useAuthCheck();
@@ -172,7 +173,7 @@ export default function Receitas() {
                      data-guide-title="Seus Lembretes"
                      data-guide-text="Aqui você vê todos os seus lembretes de medicamentos. Cada card mostra o nome do medicamento e suas instruções."
                      data-guide-arrow="up">
-                    {loading && <p className="text-center text-slate-600">Carregando lembretes...</p>}
+                    <Loading loading={loading} message="Carregando lembretes de medicamentos..." />
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
                     {!loading && !error && lembretes.length > 0 ? (
                         lembretes.map((lembrete) => (
