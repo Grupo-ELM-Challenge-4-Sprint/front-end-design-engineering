@@ -89,3 +89,35 @@ export const getNextDose = (lembrete: {
   // Se não encontrou dose nos próximos 7 dias, assume concluído
   return { date: 'Concluído', time: '' };
 };
+
+// --- Funções utilitárias de data (exemplo, podem precisar de ajustes) ---
+// Colocar em src/utils/dateUtils.ts
+
+export const formatLocalDateTimeForInput = (dateTimeString: string): string => {
+  // Converte YYYY-MM-DDTHH:mm:ss para YYYY-MM-DDTHH:mm (formato do input datetime-local)
+  if (!dateTimeString) return '';
+  return dateTimeString.substring(0, 16); // Pega até os minutos
+};
+
+export const formatLocalDateForInput = (dateString: string): string => {
+   // Formato YYYY-MM-DD já é compatível com input date
+   return dateString || '';
+};
+
+export const formatLocalTimeForInput = (dateTimeString: string): string => {
+   // Extrai HH:mm de YYYY-MM-DDTHH:mm:ss
+   if (!dateTimeString || dateTimeString.length < 16) return '';
+   return dateTimeString.substring(11, 16);
+};
+
+export const combineDateAndTime = (date: string, time: string): string => {
+    // Combina YYYY-MM-DD e HH:mm para YYYY-MM-DDTHH:mm:ss (ou o formato esperado pelo backend)
+    if (!date || !time) return '';
+    return `${date}T${time}:00`; // Adiciona segundos :00
+};
+
+export const formatISODateTimeLocal = (dateTimeLocal: string): string => {
+    // Converte YYYY-MM-DDTHH:mm para YYYY-MM-DDTHH:mm:ss
+    if (!dateTimeLocal) return '';
+    return `${dateTimeLocal}:00`; // Adiciona segundos :00
+};

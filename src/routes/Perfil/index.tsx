@@ -18,11 +18,12 @@ export default function Perfil() {
     const [pacienteVinculado, setPacienteVinculado] = useState<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>(null);
     const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
 
-    // Buscar usuário da API ao carregar
+    // Buscar usuário da API ao carregar (apenas se não estiver carregado)
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado) {
+        if (cpfLogado && !usuarioApi) {
             setLoading(true);
             getUsuarioPorCpf(cpfLogado).then(async (usuario) => {
                 if (usuario) {
@@ -30,8 +31,8 @@ export default function Perfil() {
 
                     // Se for paciente, buscar seus próprios lembretes
                     if (usuario.tipoUsuario === 'PACIENTE') {
-                        const consultas = await listarConsultas(usuario.id);
-                        const receitas = await listarReceitas(usuario.id);
+                        const consultas = await listarConsultas(usuario.idUser);
+                        const receitas = await listarReceitas(usuario.idUser);
                         setMeusLembretes({
                             lembretesConsulta: consultas,
                             lembretesReceita: receitas,
@@ -42,8 +43,8 @@ export default function Perfil() {
                     if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
                         const paciente = await getUsuarioPorCpf(usuario.cpfPaciente);
                         if (paciente) {
-                            const consultasPaciente = await listarConsultas(paciente.id);
-                            const receitasPaciente = await listarReceitas(paciente.id);
+                            const consultasPaciente = await listarConsultas(paciente.idUser);
+                            const receitasPaciente = await listarReceitas(paciente.idUser);
                             const pacienteComLembretes = {
                                 ...paciente,
                                 lembretesConsulta: consultasPaciente,
@@ -57,10 +58,10 @@ export default function Perfil() {
             }).catch(() => {
                 setLoading(false);
             });
-        } else {
+        } else if (!cpfLogado) {
             setLoading(false);
         }
-    }, [getUsuarioPorCpf, listarConsultas, listarReceitas]);
+    }, [getUsuarioPorCpf, listarConsultas, listarReceitas, usuarioApi]);
 
     const [editMode, setEditMode] = useState(false);
     const [editEmail, setEditEmail] = useState('');
@@ -87,7 +88,8 @@ export default function Perfil() {
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         if (!usuarioApi) return;
-        atualizarUsuario(usuarioApi.id, {
+        setUpdating(true);
+        atualizarUsuario(usuarioApi.idUser, {
             email: editEmail,
             telefone: editTelefone
         }).then((sucesso) => {
@@ -95,6 +97,9 @@ export default function Perfil() {
                 setUsuarioApi({ ...usuarioApi, email: editEmail, telefone: editTelefone });
                 setEditMode(false);
             }
+            setUpdating(false);
+        }).catch(() => {
+            setUpdating(false);
         });
     };
 
@@ -127,8 +132,10 @@ export default function Perfil() {
                                     )}
                                     {editMode && (
                                         <>
-                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais">Salvar</button>
-                                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel}>Cancelar</button>
+                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>
+                                                {updating ? 'Salvando...' : 'Salvar'}
+                                            </button>
+                                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel} disabled={updating}>Cancelar</button>
                                         </>
                                     )}
                                 </div>
