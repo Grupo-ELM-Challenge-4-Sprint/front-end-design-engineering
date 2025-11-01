@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApiUsuarios } from './useApiUsuarios';
 import type { Usuario } from './useApiUsuarios';
 
 let fetchPromise: Promise<Usuario | null> | null = null;
 
+// Definir rotas públicas que não exigem login
+const PUBLIC_PATHS = ['/', '/entrar', '/hospitais', '/tutoriais', '/integrantes', '/faq', '/contato'];
+
 export const useAuthCheck = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { getUsuarioPorCpf } = useApiUsuarios();
     const [usuarioApi, setUsuarioApi] = useState<Usuario | null>(() => {
         const usuarioStorage = localStorage.getItem('usuarioApi');
@@ -23,13 +27,21 @@ export const useAuthCheck = () => {
 
     useEffect(() => {
         const cpfLogado = localStorage.getItem('cpfLogado');
+
+        // Verificar se a rota atual é pública (incluindo sub-rotas de /tutoriais)
+        const isPublicPath = PUBLIC_PATHS.includes(location.pathname) || location.pathname.startsWith('/tutoriais/');
+
         if (!cpfLogado) {
-            navigate('/entrar');
-            return;
+            // Só redirecionar se NÃO ESTIVER em uma rota pública
+            if (!isPublicPath) {
+                navigate('/entrar');
+            }
+            return; // Parar a execução se não estiver logado
         }
 
+        // Se estiver logado (cpfLogado existe)
         if (usuarioApi) {
-            return;
+            return; // Já temos os dados do usuário
         }
 
         if (!fetchPromise) {
@@ -43,19 +55,24 @@ export const useAuthCheck = () => {
                 setUsuarioApi(usuario);
                 localStorage.setItem('usuarioApi', JSON.stringify(usuario));
             } else {
-                // Se falhar (ex: 404), limpe tudo e mande para o login
+                // Se falhar (ex: 404), limpe tudo
                 localStorage.removeItem('cpfLogado');
                 localStorage.removeItem('usuarioApi');
-                navigate('/entrar');
+                // E só redirecione se não estiver numa página pública
+                if (!isPublicPath) {
+                    navigate('/entrar');
+                }
             }
             fetchPromise = null; // Libera a trava
         }).catch((error) => {
             console.error('Erro crítico ao buscar usuário:', error);
             fetchPromise = null; // Libera a trava
-            navigate('/entrar');
+            if (!isPublicPath) {
+                navigate('/entrar');
+            }
         });
 
- }, [navigate, getUsuarioPorCpf, usuarioApi]); // Adiciona usuarioApi à dependência
+    }, [navigate, getUsuarioPorCpf, usuarioApi, location.pathname]);
 
     const setUsuarioApiAndStorage = (usuario: Usuario | null) => {
         setUsuarioApi(usuario);
