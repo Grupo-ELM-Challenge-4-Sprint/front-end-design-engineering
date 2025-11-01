@@ -78,7 +78,7 @@ export default function Perfil() {
         if (usuarioApi?.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
             buscarDadosPacienteVinculado(usuarioApi.cpfPaciente);
         }
-    }, [usuarioApi, getUsuarioPorCpf, listarConsultas, listarReceitas]);
+    }, [usuarioApi?.tipoUsuario, usuarioApi?.cpfPaciente, getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
     const [editMode, setEditMode] = useState(false);
     const [editEmail, setEditEmail] = useState('');
