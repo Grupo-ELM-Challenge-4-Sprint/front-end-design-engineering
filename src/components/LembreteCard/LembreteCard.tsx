@@ -1,5 +1,15 @@
 import type { LembreteConsulta, LembreteReceita } from '../../hooks/useApiUsuarios';
 
+const parseDate = (dateString: string): number[] => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return [year, month, day];
+};
+
+const formatDate = (dateString: string): string => {
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
@@ -12,7 +22,7 @@ export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
       </div>
       <div className="space-y-2 text-sm text-slate-700">
         <p><strong>Médico:</strong> {lembrete.medico}</p>
-        <p><strong>Data:</strong> {lembrete.data} às {lembrete.hora}</p>
+        <p><strong>Data:</strong> {formatDate(lembrete.data)} às {lembrete.hora}</p>
         <p><strong>Local:</strong> {lembrete.local}</p>
         {lembrete.observacoes && <p><strong>Obs:</strong> {lembrete.observacoes}</p>}
       </div>
@@ -21,9 +31,14 @@ export const CardConsulta = ({ lembrete }: { lembrete: LembreteConsulta }) => {
 };
 
 export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
+
+  // Parse data and hora to create startDateTime
+  const [year, month, day] = parseDate(lembrete.data);
+  const [hour, minute] = lembrete.hora.split(':').map(Number);
+  const startDateTime = new Date(year, month - 1, day, hour, minute);
+
   const getNextDose = () => {
     const now = new Date();
-    const startDateTime = new Date(lembrete.dataHoraInicio);
     const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const selectedDays = lembrete.dias.map(d => daysOfWeek.indexOf(d));
 
@@ -84,15 +99,20 @@ export const ReceitaCard = ({
   handleReativarLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
 }) => {
+
+  // Parse data and hora to create startDateTime
+  const [year, month, day] = parseDate(lembrete.data);
+  const [hour, minute] = lembrete.hora.split(':').map(Number);
+  const startDateTime = new Date(year, month - 1, day, hour, minute);
+
+  // Calcula a data/hora final do tratamento
+  const endDateTime = new Date(startDateTime);
+  endDateTime.setDate(endDateTime.getDate() + lembrete.numeroDias);
+  
+  const now = new Date();
+  const displayStatus = lembrete.status;
+
   const getNextDose = (lembrete: LembreteReceita): { date: string; time: string } => {
-    const now = new Date(); // Hora local atual
-    // Assume que a string armazenada representa a hora local de início correta
-    const startDateTime = new Date(lembrete.dataHoraInicio);
-
-    // Calcula a data/hora final do tratamento
-    const endDateTime = new Date(startDateTime);
-    endDateTime.setDate(endDateTime.getDate() + lembrete.numeroDias);
-
     // 1. Verifica se o tratamento já foi concluído
     if (now >= endDateTime) {
         return { date: 'Concluído', time: '' };
@@ -108,45 +128,47 @@ export const ReceitaCard = ({
 
     // 3. Calcula a próxima dose válida a partir de agora
     const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const selectedDayIndices = lembrete.dias.map(d => daysOfWeek.indexOf(d));
-    const freqHours = lembrete.frequencia; // Usa o número diretamente
+    const selectedDayIndices = lembrete.dias.map(d => daysOfWeek.indexOf(d)).filter(i => i >= 0 && i <= 6);
+    const freqHours = lembrete.frequencia;
 
-    // Começa o cálculo a partir da hora de início
-    let nextDoseTime = new Date(startDateTime);
-
-    // Adiciona a frequência em horas até encontrar uma dose que:
-    // a) Seja no futuro (posterior a 'agora')
-    // b) Caia em um dia da semana selecionado
-    let iterations = 0;
-    // Limite de segurança para evitar loops infinitos (ex: 1 ano de doses)
-    const maxIterations = Math.ceil((365 * 24) / (freqHours > 0 ? freqHours : 24));
-
-    while ( (nextDoseTime <= now || !selectedDayIndices.includes(nextDoseTime.getDay())) && iterations < maxIterations ) {
-        // Se a frequência for 0 ou inválida, quebra o loop para evitar erro
-        if (freqHours <= 0) {
-           console.error("Frequência inválida (<= 0) para o lembrete:", lembrete.id);
-           return { date: 'Erro Freq.', time: '' };
-        }
-        nextDoseTime.setHours(nextDoseTime.getHours() + freqHours);
-
-        // Se ao adicionar a frequência, passamos do fim do tratamento, marca como concluído
-        if (nextDoseTime >= endDateTime) {
-            return { date: 'Concluído', time: '' };
-        }
-        iterations++;
+    if (freqHours <= 0) {
+        console.error("Frequência inválida (<= 0) para o lembrete:", lembrete.id);
+        return { date: 'Erro Freq.', time: '' };
     }
 
-    // Se atingir o limite de iterações, algo deu errado
-    if (iterations >= maxIterations) {
-         console.error("Não foi possível encontrar a próxima dose dentro do limite para o lembrete:", lembrete.id);
-         return { date: 'Erro Calc.', time: '' };
+    if (selectedDayIndices.length === 0) {
+        console.error("Dias não selecionados ou inválidos para o lembrete:", lembrete.id);
+        return { date: 'Erro Dias', time: '' };
     }
 
-    // Encontrou a próxima dose válida
-    return {
-        date: nextDoseTime.toLocaleDateString('pt-BR'),
-        time: nextDoseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-    };
+    // Encontra a próxima dose verificando os próximos dias
+    let current = new Date(now);
+    current.setHours(0, 0, 0, 0); // Início do dia atual
+
+    for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
+        if (selectedDayIndices.includes(current.getDay())) {
+            // Este é um dia selecionado, encontra a próxima dose neste dia
+            let doseTime = new Date(current);
+            doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
+
+            // Avança para a próxima dose válida neste dia
+            while (doseTime <= now) {
+                doseTime.setHours(doseTime.getHours() + freqHours);
+                if (doseTime >= endDateTime) break;
+            }
+
+            if (doseTime > now && doseTime < endDateTime) {
+                return {
+                    date: doseTime.toLocaleDateString('pt-BR'),
+                    time: doseTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                };
+            }
+        }
+        current.setDate(current.getDate() + 1);
+    }
+
+    // Se não encontrou dose nos próximos 7 dias, assume concluído
+    return { date: 'Concluído', time: '' };
 };
 
   return (
@@ -156,8 +178,8 @@ export const ReceitaCard = ({
         <h3 className="text-lg font-bold text-indigo-800">
           {lembrete.nome}
         </h3>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${lembrete.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-          {lembrete.status}
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${displayStatus === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
+          {displayStatus}
         </span>
       </div>
 
@@ -165,14 +187,14 @@ export const ReceitaCard = ({
       <div className="p-4 md:p-5 space-y-3 text-slate-700">
         <p><strong className="card-body">Frequência:</strong> {lembrete.frequencia}</p>
         <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a, b) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
-        <p><strong className="card-body">Data e Hora de Início:</strong> {new Date(lembrete.dataHoraInicio).toLocaleString('pt-BR')}</p>
+        <p><strong className="card-body">Data e Hora de Início:</strong> {startDateTime.toLocaleDateString('pt-BR')} às {lembrete.hora}</p>
         <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
         {lembrete.observacoes && (
           <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
         )}
         {(() => {
           const nextDose = getNextDose(lembrete);
-          return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date} às {nextDose.time}</p>;
+          return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date === 'Concluído' ? 'Tratamento Concluído' : `${nextDose.date} às ${nextDose.time}`}</p>;
         })()}
       </div>
 
@@ -215,6 +237,8 @@ export const ConsultaCard = ({
   handleReverterLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
 }) => {
+  const displayStatus = lembrete.status;
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       {/* Cabeçalho do Card */}
@@ -222,15 +246,15 @@ export const ConsultaCard = ({
         <h3 className="text-lg font-bold text-indigo-800">
           {lembrete.especialidade} {lembrete.tipo === 'Teleconsulta' && '(Teleconsulta)'}
         </h3>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${lembrete.status === 'Agendada' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-          {lembrete.status}
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${displayStatus === 'Agendada' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
+          {displayStatus}
         </span>
       </div>
 
       {/* Corpo do Card */}
       <div className="p-4 md:p-5 space-y-3 text-slate-700">
         <p><strong className="card-body">Médico:</strong> {lembrete.medico}</p>
-        <p><strong className="card-body">Data e Horário:</strong> {lembrete.data} às {lembrete.hora}</p>
+        <p><strong className="card-body">Data e Horário:</strong> {formatDate(lembrete.data)} às {lembrete.hora}</p>
         <p><strong className="card-body">Local:</strong> {lembrete.local}</p>
         {lembrete.observacoes && (
           <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>

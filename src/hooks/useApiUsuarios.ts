@@ -18,7 +18,8 @@ export interface LembreteReceita {
     nome: string;
     frequencia: number;
     dias: string[];
-    dataHoraInicio: string; // Formato: DD/MM/YYYY HH:mm
+    data: string; // Formato: DD/MM/YYYY
+    hora: string; // Formato: HH:mm
     numeroDias: number;
     observacoes: string;
     status: 'Ativo' | 'Inativo';
@@ -55,7 +56,7 @@ export const useApiUsuarios = () => {
       return [];
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const getUsuarioPorCpf = useCallback(async (cpf: string): Promise<Usuario | null> => {
@@ -71,7 +72,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const criarUsuario = useCallback(async (usuario: Omit<Usuario, 'id' | 'lembretesConsulta' | 'lembretesReceita'>): Promise<Usuario | null> => {
@@ -92,13 +93,12 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const atualizarUsuario = useCallback(async (id: string, usuario: Partial<Usuario>): Promise<Usuario | null> => {
     setLoading(true);
     setError(null);
-    let success = false;
     try {
       const response = await fetch(`${API_URL}/usuarios/${id}`, {
         method: 'PATCH',
@@ -109,18 +109,13 @@ export const useApiUsuarios = () => {
       });
       if (!response.ok) throw new Error('Erro ao atualizar usuário');
       const result = await response.json();
-      success = true;
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       return null;
     } finally {
-      if (success) {
-        setTimeout(() => setLoading(false), 100);
-      } else {
         setLoading(false);
-      }
-    }
+    } 
   }, []);
 
   // Funções para Consultas
@@ -136,7 +131,7 @@ export const useApiUsuarios = () => {
       return [];
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const adicionarConsulta = useCallback(async (usuarioId: string, novaConsulta: Omit<LembreteConsulta, 'id'>): Promise<LembreteConsulta | null> => {
@@ -157,7 +152,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const atualizarConsulta = useCallback(async (consultaId: number, dadosAtualizados: Partial<LembreteConsulta>): Promise<LembreteConsulta | null> => {
@@ -178,7 +173,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const removerConsulta = useCallback(async (consultaId: number): Promise<boolean> => {
@@ -195,7 +190,7 @@ export const useApiUsuarios = () => {
       return false;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   // Funções para Receitas
@@ -211,7 +206,7 @@ export const useApiUsuarios = () => {
       return [];
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const adicionarReceita = useCallback(async (usuarioId: string, novaReceita: Omit<LembreteReceita, 'id'>): Promise<LembreteReceita | null> => {
@@ -232,7 +227,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const atualizarReceita = useCallback(async (receitaId: number, dadosAtualizados: Partial<LembreteReceita>): Promise<LembreteReceita | null> => {
@@ -253,7 +248,7 @@ export const useApiUsuarios = () => {
       return null;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   const removerReceita = useCallback(async (receitaId: number): Promise<boolean> => {
@@ -270,7 +265,7 @@ export const useApiUsuarios = () => {
       return false;
     } finally {
       setLoading(false);
-    }
+    } 
   }, []);
 
   return {
