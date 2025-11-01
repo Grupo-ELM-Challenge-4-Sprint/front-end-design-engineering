@@ -10,8 +10,7 @@ export default function Hospitais() {
         data-guide-step="1"
         data-guide-title="Bem-vindo às Nossas Unidades"
         data-guide-text="Esta seção apresenta uma visão geral das nossas unidades hospitalares."
-        data-guide-arrow="up"
-      >
+        data-guide-arrow="up">
         <div className="container">
           <h2>Nossas Unidades</h2>
           <p className='text-center md:text-[18px]'>
@@ -27,8 +26,7 @@ export default function Hospitais() {
         data-guide-text="Utilize o mapa para visualizar a localização de todas as nossas unidades e planejar sua rota."
         data-guide-arrow="up">
         <div className="container max-w-7xl mx-auto">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1493.9251962264836!2d-46.67025976576064!3d-23.558067770266657!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59b00d3aa487%3A0xfe715b43e354f823!2sHospital%20das%20Cl%C3%ADnicas%20FMUSP!5e0!3m2!1spt-BR!2sbr!4v1747314059376!5m2!1spt-BR!2sbr"
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1493.9251962264836!2d-46.67025976576064!3d-23.558067770266657!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59b00d3aa487%3A0xfe715b43e354f823!2sHospital%20das%20Cl%C3%ADnicas%20FMUSP!5e0!3m2!1spt-BR!2sbr!4v1747314059376!5m2!1spt-BR!2sbr"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             className='w-full block h-[220px] min-h-[180px] border-0 rounded-lg shadow-sm bg-gray-200 sm:h-[280px] md:h-[350px] xl:h-[400px]'

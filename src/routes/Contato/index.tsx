@@ -17,7 +17,7 @@ export default function Contato() {
                 data-guide-step="1"
                 data-guide-title="Fale Conosco"
                 data-guide-text="Bem-vindo à nossa página de Contato. Utilize as opções abaixo para nos enviar sua mensagem ou encontrar outras formas de nos contatar."
-                data-guide-arrow="down">
+                data-guide-arrow="up">
                 <div className="container">
                     <h2>Entre em Contato</h2>
                     <p>Estamos aqui para ajudar. Envie sua mensagem e responderemos o mais breve possível.</p>

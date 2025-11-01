@@ -18,7 +18,7 @@ export default function Rodape() {
                 <ul className="grid">
                     <li><NavLink to={'/'} >Início</NavLink></li>
                     <li><NavLink to={'/hospitais'} >Hospitais</NavLink></li>
-                    <li><NavLink to={'/servicos'} >Serviços</NavLink></li>
+                    <li><NavLink to={'/tutoriais'} >Tutoriais</NavLink></li>
                     <li><NavLink to={'/integrantes'} >Integrantes</NavLink></li>
                     <li><NavLink to={'/faq'} >FAQ</NavLink></li>
                     <li><NavLink to={'/contato'} >Contato</NavLink></li>
@@ -29,7 +29,6 @@ export default function Rodape() {
                 <h4>Serviços</h4>
                 <ul className="grid">
                     <li><NavLink to={'/perfil'} >Área do Usuário</NavLink></li>
-                    <li><NavLink to={'/tutoriais'} >Tutoriais App HC</NavLink></li>
                     <li><NavLink to={'/receitas'} >Lembrete Receitas</NavLink></li>
                     <li><NavLink to={'/consultas'} >Lembrete Teleconsulta</NavLink></li>
                 </ul>

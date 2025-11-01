@@ -1,134 +1,210 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import PacientePage from "../../components/Painel/PacientePage";
-import { getPacientePorCpf, getPacientes, setPacientes } from "../../data/dados";
+import { useApiUsuarios } from "../../hooks/useApiUsuarios";
+import { useApiConsultas } from "../../hooks/useApiConsultas";
+import { useApiReceitas } from "../../hooks/useApiReceitas";
+import type { Usuario, LembreteConsulta, LembreteReceita } from "../../types/lembretes";
+import { useAuthCheck } from "../../hooks/useAuthCheck";
+import { formatDate } from "../../utils/dateUtils";
+import { useInputMasks } from "../../hooks/useInputMasks";
+import Loading from "../../components/Loading/Loading";
+import { ProximosLembretes } from "../../components/LembreteCard/LembreteCard";
+import VinculacaoCuidador from "../../components/VinculacaoCuidador/VinculacaoCuidador";
+ 
 
 export default function Perfil() {
-    const navigate = useNavigate();
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
+    useAuthCheck();
+    const { atualizarUsuario, getUsuarioPorCpf } = useApiUsuarios();
+    const { listarConsultas } = useApiConsultas();
+    const { listarReceitas } = useApiReceitas();
+    const { usuarioApi, setUsuarioApi } = useAuthCheck();
+    const { applyMask } = useInputMasks();
+    const [pacienteVinculado, setPacienteVinculado] = useState<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>(null);
+    const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-    const cpfUsuarioLogado = localStorage.getItem('cpfLogado') || '';
-    const pacienteLogado = cpfUsuarioLogado ? getPacientePorCpf(cpfUsuarioLogado) : undefined;
+    // Buscar lembretes do próprio usuário (paciente)
+    useEffect(() => {
+        const buscarMeusLembretes = async (idUser: number) => {
+            setLoading(true);
+            try {
+                const consultas = await listarConsultas(idUser);
+                const receitas = await listarReceitas(idUser);
+
+                setMeusLembretes({
+                    lembretesConsulta: consultas || [],
+                    lembretesReceita: receitas || [],
+                });
+            } catch (error) {
+                console.error('Erro ao buscar lembretes do paciente:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (usuarioApi?.tipoUsuario === 'PACIENTE' && usuarioApi.idUser) {
+            buscarMeusLembretes(usuarioApi.idUser);
+        } else if (usuarioApi?.tipoUsuario === 'CUIDADOR' && !usuarioApi.cpfPaciente) {
+            setLoading(false);
+        }
+    }, [usuarioApi?.idUser, usuarioApi?.tipoUsuario, listarConsultas, listarReceitas]);
+
+    // Buscar dados do paciente vinculado (cuidador)
+    useEffect(() => {
+        const buscarDadosPacienteVinculado = async (cpfPaciente: string) => {
+            setLoading(true);
+            try {
+                const paciente = await getUsuarioPorCpf(cpfPaciente);
+                if (paciente) {
+                    const consultasPaciente = await listarConsultas(paciente.idUser);
+                    const receitasPaciente = await listarReceitas(paciente.idUser);
+
+                    const pacienteComLembretes = {
+                        ...paciente,
+                        lembretesConsulta: consultasPaciente || [],
+                        lembretesReceita: receitasPaciente || [],
+                    };
+                    setPacienteVinculado(pacienteComLembretes);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do paciente:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (usuarioApi?.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+            buscarDadosPacienteVinculado(usuarioApi.cpfPaciente);
+        }
+    }, [usuarioApi?.tipoUsuario, usuarioApi?.cpfPaciente, getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
     const [editMode, setEditMode] = useState(false);
-    const [form, setForm] = useState(() => ({
-        nomeCompleto: pacienteLogado?.nomeCompleto || '',
-        cpf: pacienteLogado?.cpf || '',
-        dataNascimento: pacienteLogado?.dataNascimento || '',
-        email: pacienteLogado?.email || '',
-        telefone: pacienteLogado?.telefone || ''
-    }));
-    const [original, setOriginal] = useState(() => ({
-        nomeCompleto: pacienteLogado?.nomeCompleto || '',
-        cpf: pacienteLogado?.cpf || '',
-        dataNascimento: pacienteLogado?.dataNascimento || '',
-        email: pacienteLogado?.email || '',
-        telefone: pacienteLogado?.telefone || ''
-    }));
+    const [editEmail, setEditEmail] = useState('');
+    const [editTelefone, setEditTelefone] = useState('');
 
     // Só atualiza se trocar de usuário logado
     useEffect(() => {
-        if (pacienteLogado) {
-            setForm({
-                nomeCompleto: pacienteLogado.nomeCompleto,
-                cpf: pacienteLogado.cpf,
-                dataNascimento: pacienteLogado.dataNascimento,
-                email: pacienteLogado.email,
-                telefone: pacienteLogado.telefone
-            });
-            setOriginal({
-                nomeCompleto: pacienteLogado.nomeCompleto,
-                cpf: pacienteLogado.cpf,
-                dataNascimento: pacienteLogado.dataNascimento,
-                email: pacienteLogado.email,
-                telefone: pacienteLogado.telefone
-            });
+        if (usuarioApi) {
+            setEditEmail(usuarioApi.email);
+            setEditTelefone(usuarioApi.telefone);
         }
-    }, [cpfUsuarioLogado]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
+    }, [usuarioApi]);
 
     const handleEdit = () => {
         setEditMode(true);
     };
     const handleCancel = () => {
-        setForm(original);
+        if (usuarioApi) {
+            setEditEmail(usuarioApi.email);
+            setEditTelefone(usuarioApi.telefone);
+        }
         setEditMode(false);
     };
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!pacienteLogado) return;
-        const pacientes = getPacientes();
-        const cpfKey = pacienteLogado.cpf.replace(/\D/g, '');
-        pacientes[cpfKey] = {
-            ...pacienteLogado,
-            email: form.email,
-            telefone: form.telefone
-        };
-        setPacientes(pacientes);
-        setOriginal(form);
-        setEditMode(false);
-    };
+        if (!usuarioApi) return;
+        setUpdating(true);
 
+        const payloadCompleto = {
+            ...usuarioApi,
+            email: editEmail,
+            telefone: editTelefone
+        };
+
+        // Envia o objeto completo para o hook
+        atualizarUsuario(usuarioApi.idUser, payloadCompleto)
+            .then((usuarioAtualizado) => {
+        if (usuarioAtualizado) {
+        setUsuarioApi(usuarioAtualizado);
+        setEditMode(false);
+        } else {
+        setStatusMessage("Falha ao atualizar o perfil. Tente novamente.");
+        }
+        setUpdating(false);
+    }).catch(() => {
+        setStatusMessage("Erro ao salvar. Verifique sua conexão e tente novamente.");
+        setUpdating(false);
+    });
+  };
     return (
         <PacientePage>
-            <div className="content-header">
-                <h2>Meus Dados</h2>
-                <div className="form-actions-header"
-                    data-guide-step="2"
-                    data-guide-title="Editar Informações"
-                    data-guide-text="Clique em 'Editar' para modificar seus dados de contato e preferências. Lembre-se de 'Salvar' as alterações."
-                    data-guide-arrow="up">
-                    {!editMode && (
-                        <button id="editProfileButton" className="btn btn-secondary" type="button" onClick={handleEdit}>Editar</button>
-                    )}
-                    {editMode && (
-                        <>
-                            <button id="saveProfileButton" className="btn btn-primary" type="submit" form="formInformacoesPessoais">Salvar</button>
-                            <button id="cancelEditButton" className="btn btn-tertiary" type="button" onClick={handleCancel}>Cancelar</button>
-                        </>
-                    )}
-                </div>
-            </div>
-            <form id="formInformacoesPessoais" onSubmit={handleSave}>
-                <div className="meus-dados-grid">
-                    <div className="info-section"
-                        data-guide-step="1"
-                        data-guide-title="Suas Informações Pessoais"
-                        data-guide-text="Confira seus dados cadastrais. Alguns campos como nome e CPF não podem ser alterados por aqui."
-                        data-guide-arrow="down">
-                        <h3>Informações Pessoais</h3>
-                        <div className="info-item">
-                            <strong>Nome Completo:</strong>
-                            <input type="text" id="userName" name="nomeCompleto" value={form.nomeCompleto} disabled title="Nome Completo" placeholder="Nome usuário" />
-                        </div>
-                        <div className="info-item">
-                            <strong>CPF:</strong>
-                            <input type="text" id="userCpf" name="cpf" value={form.cpf} disabled title="CPF" placeholder="CPF usuário" />
-                        </div>
-                        <div className="info-item">
-                            <strong>Data de Nascimento:</strong>
-                            <input type="text" id="userDob" name="dataNascimento" value={form.dataNascimento} disabled title="Data de Nascimento" placeholder="DD/MM/AAAA" />
-                        </div>
-                        <div className="info-item">
-                            <strong>Email:</strong>
-                            <input type="email" id="userEmail" name="email" value={form.email} onChange={handleChange} disabled={!editMode} title="Email" placeholder="Email usuário" />
-                        </div>
-                        <div className="info-item">
-                            <strong>Telefone:</strong>
-                            <input type="tel" id="userTelefone" name="telefone" value={form.telefone} onChange={handleChange} disabled={!editMode} title="Telefone" placeholder="(XX) XXXXX-XXXX" />
+            <Loading loading={loading} message="Carregando dados do perfil..." />
+            <div className="content-header"><h2>Meus Dados</h2></div>
+
+            <div className="flex flex-col lg:flex-row">
+                <form id="formInformacoesPessoais" onSubmit={handleSave}>
+                    <div className="meus-dados-grid">
+                        <div className="info-section"
+                            data-guide-step="1"
+                            data-guide-title="Suas Informações Pessoais"
+                            data-guide-text="Confira seus dados cadastrais. Alguns campos como nome e CPF não podem ser alterados por aqui."
+                            data-guide-arrow="down">
+
+                            <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#e0e0e0] flex-col sm:flex-row">
+                                <h3 className="text-xl font-semibold">Informações Pessoais</h3>
+                                <div className="form-actions-header pl-2"
+                                    data-guide-step="2"
+                                    data-guide-title="Editar Informações"
+                                    data-guide-text="Clique em 'Editar' para modificar seus dados de contato e preferências. Lembre-se de 'Salvar' as alterações."
+                                    data-guide-arrow="up">
+                                    {!editMode && (
+                                        <button id="editProfileButton" className="btn btn-secondary" type="button" onClick={handleEdit}>Editar</button>
+                                    )}
+                                    {editMode && (
+                                        <>
+                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>{updating ? 'Salvando...' : 'Salvar'}</button>
+                                            <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel} disabled={updating}>Cancelar</button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="info-item">
+                                <strong>Nome Completo:</strong>
+                                <input type="text" id="userName" name="nomeCompleto" value={usuarioApi?.nome || ''} disabled title="Nome Completo" placeholder="Nome usuário" />
+                            </div>
+                            <div className="info-item">
+                                <strong>CPF:</strong>
+                                <input type="text" id="userCpf" name="cpf" value={usuarioApi?.cpf ? applyMask(usuarioApi.cpf, 'cpf') : ''} disabled title="CPF" placeholder="CPF usuário" />
+                            </div>
+                            <div className="info-item">
+                                <strong>Data de Nascimento:</strong>
+                                <input type="text" id="userDob" name="dataNascimento" value={usuarioApi?.dataNascimento ? formatDate(usuarioApi.dataNascimento) : ''} disabled title="Data de Nascimento" placeholder="DD/MM/AAAA" />
+                            </div>
+                            <div className="info-item">
+                                <strong>Email:</strong>
+                                <input type="email" id="userEmail" name="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} disabled={!editMode} title="Email" placeholder="Email usuário" />
+                            </div>
+                            <div className="info-item">
+                                <strong>Telefone:</strong>
+                                <input type="tel" id="userTelefone" name="telefone" value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} disabled={!editMode} title="Telefone" placeholder="(XX) XXXXX-XXXX" />
+                            </div>
+
+                            {statusMessage && (
+                                <div className={`status-message ${statusMessage.includes('sucesso') ? 'success' : 'error'}`}>
+                                    {statusMessage}
+                                </div>
+                            )}
+
+                            {/* Seção de Vinculação para Cuidadores */}
+                            {usuarioApi?.tipoUsuario === 'CUIDADOR' && (
+                                <VinculacaoCuidador pacienteVinculado={pacienteVinculado} setPacienteVinculado={setPacienteVinculado} />
+                            )}
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+
+                {!loading && (
+                    <ProximosLembretes
+                        lembretesConsultas={pacienteVinculado?.lembretesConsulta || meusLembretes?.lembretesConsulta || []}
+                        lembretesReceitas={pacienteVinculado?.lembretesReceita || meusLembretes?.lembretesReceita || []}
+                        usuarioApi={usuarioApi}
+                        pacienteVinculado={pacienteVinculado}
+                    />
+                )}
+            </div>
         </PacientePage>
     );
 }
