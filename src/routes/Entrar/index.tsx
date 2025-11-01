@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { loginSchema, cadastroSchema } from "../../schemas/validationSchemas";
 import type { LoginFormData, CadastroFormData } from "../../schemas/validationSchemas";
 import { useInputMasks, useApiUsuarios, useZodForm } from "../../hooks";
+import { convertToISODate } from "../../utils/dateUtils";
 import { LoginForm, CadastroForm } from "../../components/forms";
 
 
@@ -88,9 +89,9 @@ export default function Entrar() {
         }
 
         const novoUsuario = {
-            nomeCompleto: data.cadastroNomeCompleto,
+            nome: data.cadastroNomeCompleto,
             cpf: data.cadastroCpf,
-            dataNascimento: data.dataNascimento,
+            dataNascimento: convertToISODate(data.dataNascimento),
             tipoUsuario: data.tipoUsuario,
             email: data.cadastroEmail,
             telefone: data.cadastroTelefone || '',
@@ -106,6 +107,8 @@ export default function Entrar() {
             setStatus('error', 'Erro ao criar conta. Tente novamente.');
         }
     }, [setStatus, getUsuarioPorCpf, criarUsuario, cadastroZod]);
+
+
 
     return (
         <main className="flex justify-center items-start min-h-screen bg-slate-100 p-4 sm:p-6">

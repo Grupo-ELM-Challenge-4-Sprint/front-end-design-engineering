@@ -12,6 +12,13 @@ export const formatDate = (dateString: string): string => {
   return `${day}/${month}/${year}`;
 };
 
+export const convertToISODate = (dateString: string): string => {
+  // Converte de DD/MM/YYYY para YYYY-MM-DD
+  const [day, month, year] = dateString.split('/');
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
+
 export const getNextDose = (lembrete: {
   data: string;
   hora: string;
@@ -55,14 +62,15 @@ export const getNextDose = (lembrete: {
   }
 
   // Encontra a próxima dose verificando os próximos dias
-  let current = new Date(now);
+  const current = new Date(now);
   current.setHours(0, 0, 0, 0); // Início do dia atual
 
   for (let daysAhead = 0; daysAhead < 7; daysAhead++) {
     if (selectedDayIndices.includes(current.getDay())) {
       // Este é um dia selecionado, encontra a próxima dose neste dia
-      let doseTime = new Date(current);
+      const doseTime = new Date(current);
       doseTime.setHours(startDateTime.getHours(), startDateTime.getMinutes(), 0, 0);
+
 
       // Avança para a próxima dose válida neste dia
       while (doseTime <= now) {
