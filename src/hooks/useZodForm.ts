@@ -7,11 +7,11 @@ export function useZodForm<T extends z.ZodSchema>(schema: T) {
   // Initialize with empty strings for all fields to avoid controlled/uncontrolled issues
   const getInitialData = useCallback((): Partial<FormData> => {
     try {
-      const shape = (schema as any).def?.shape || (schema as any)._def?.shape();
-      if (shape) {
+      if (schema instanceof z.ZodObject) {
+        const shape = schema.shape;
         const initial: Partial<FormData> = {};
         Object.keys(shape).forEach(key => {
-          initial[key as keyof FormData] = '' as any;
+          initial[key as keyof FormData] = '' as unknown as FormData[keyof FormData];
         });
         return initial;
       }

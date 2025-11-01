@@ -1,26 +1,38 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import PacientePage from '../../components/Painel/PacientePage';
-import type { LembreteConsulta } from '../../data/dados';
-import { getPacientePorCpf, setPacientes, getPacientes } from '../../data/dados';
+import type { LembreteConsulta } from '../../hooks/useApiUsuarios';
+import { useApiUsuarios } from '../../hooks/useApiUsuarios';
+import type { Usuario } from '../../hooks/useApiUsuarios';
+import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useUser } from '../../hooks/useUser';
 
 export default function Consultas() {
-    const navigate = useNavigate();
-    useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (!cpfLogado) {
-            navigate('/entrar');
-        }
-    }, [navigate]);
+    useAuthCheck();
+    const { listarConsultas, adicionarConsulta, atualizarConsulta, removerConsulta, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // Busca CPF do usuário logado (exemplo: salvar no localStorage ao logar)
-    const cpfUsuarioLogado = localStorage.getItem('cpfLogado') || '';
-    const pacienteLogado = cpfUsuarioLogado ? getPacientePorCpf(cpfUsuarioLogado) : undefined;
-    const [lembretes, setLembretes] = useState<LembreteConsulta[]>(
-        pacienteLogado?.lembretesConsulta || []
-    );
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
+    const [lembretes, setLembretes] = useState<LembreteConsulta[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
+
+    // Buscar lembretes ao carregar
+    useEffect(() => {
+        if (usuarioApi) {
+            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
+            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
+                    if (paciente) {
+                        setPaciente(paciente);
+                        listarConsultas(paciente.id).then(setLembretes);
+                    }
+                });
+            } else {
+                listarConsultas(usuarioApi.id).then(setLembretes);
+            }
+        }
+    }, [usuarioApi, getUsuarioPorCpf, listarConsultas]);
 
     const [formData, setFormData] = useState<{
         tipoConsulta: 'Presencial' | 'Teleconsulta';
@@ -40,7 +52,7 @@ export default function Consultas() {
 
     useEffect(() => {
         if (editingLembrete) {
-            // Convert date from DD/MM/YYYY to YYYY-MM-DD for datetime-local input
+            // Converter data de DD/MM/YYYY para YYYY-MM-DD para input datetime-local
             const [day, month, year] = editingLembrete.data.split('/');
             const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
             setFormData({
@@ -69,28 +81,20 @@ export default function Consultas() {
         setFormData((prevState) => ({ ...prevState, [name]: value }));
     };
 
-    // Atualiza os lembretes do paciente logado no localStorage
-    const persistLembretes = (novosLembretes: LembreteConsulta[]) => {
-        if (!pacienteLogado) return;
-        const pacientes = getPacientes();
-        const cpfKey = pacienteLogado.cpf.replace(/\D/g, '');
-        pacientes[cpfKey] = {
-            ...pacienteLogado,
-            lembretesConsulta: novosLembretes
-        };
-        setPacientes(pacientes);
-    };
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!usuarioApi) return;
         const [data, hora] = formData.dataConsulta.split('T');
-        // Convert YYYY-MM-DD to DD/MM/YYYY for consistent storage
+        // Converter YYYY-MM-DD para DD/MM/YYYY para armazenamento consistente
         const [year, month, day] = data.split('-');
         const formattedData = `${day}/${month}/${year}`;
 
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+
         if (editingLembrete) {
-            const novos = lembretes.map(l => l.id === editingLembrete.id ? {
-                ...l,
+            await atualizarConsulta(editingLembrete.id, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
                 data: formattedData,
@@ -98,13 +102,10 @@ export default function Consultas() {
                 tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
                 local: formData.localConsulta,
                 observacoes: formData.observacoesConsulta,
-                status: l.status as 'Agendada' | 'Concluída',
-            } : l);
-            setLembretes(novos);
-            persistLembretes(novos);
+                status: editingLembrete.status,
+            });
         } else {
-            const novoLembrete: LembreteConsulta = {
-                id: Date.now(),
+            await adicionarConsulta(usuarioId, {
                 especialidade: formData.especialidadeConsulta,
                 medico: formData.medicoConsulta || 'Não especificado',
                 data: formattedData,
@@ -113,32 +114,38 @@ export default function Consultas() {
                 local: formData.localConsulta,
                 observacoes: formData.observacoesConsulta,
                 status: 'Agendada',
-            };
-            const novos = [...lembretes, novoLembrete];
-            setLembretes(novos);
-            persistLembretes(novos);
+            });
         }
+
+        // Recarregar lembretes
+        listarConsultas(usuarioId).then(setLembretes);
 
         setIsModalOpen(false);
         setEditingLembrete(null);
     };
 
-    const handleRemoveLembrete = (id: number) => {
-        const novos = lembretes.filter(lembrete => lembrete.id !== id);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleRemoveLembrete = async (id: number) => {
+        await removerConsulta(id);
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleConcluirLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Concluída' as 'Concluída' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleConcluirLembrete = async (id: number) => {
+        await atualizarConsulta(id, { status: 'Concluída' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
-    const handleReverterLembrete = (id: number) => {
-        const novos = lembretes.map(l => l.id === id ? { ...l, status: 'Agendada' as 'Agendada' } : l);
-        setLembretes(novos);
-        persistLembretes(novos);
+    const handleReverterLembrete = async (id: number) => {
+        await atualizarConsulta(id, { status: 'Agendada' });
+        if (usuarioApi) {
+            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
+            listarConsultas(usuarioId).then(setLembretes);
+        }
     };
 
     const handleOpenAddModal = () => {
@@ -151,20 +158,16 @@ export default function Consultas() {
         setIsModalOpen(true);
     };
 
-    const formatarDataHora = (dataStr: string, horaStr: string) => {
-        if (!dataStr || !horaStr) return '';
-        return `${dataStr} às ${horaStr}`;
-    }
+
 
     return (
         <PacientePage>
-            <section
-                className="py-2"
+            <section className="py-2"
                 data-guide-step="1"
                 data-guide-title="Seus Lembretes de Consulta"
                 data-guide-text="Adicione e gerencie seus lembretes de consulta para não esquecer de nenhum agendamento."
-                data-guide-arrow="down"
-            >
+                data-guide-arrow="down">
+
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left">
                         Meus Lembretes de Consulta
@@ -180,52 +183,18 @@ export default function Consultas() {
                 </div>
 
                 <div id="lembretes-consultas-content" className="space-y-6">
-                    {lembretes.length > 0 ? (
-                        lembretes.map(lembrete => (
-                            <div key={lembrete.id} className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                {/* Card Header */}
-                                <div className="p-4 md:p-5 flex justify-between items-center bg-slate-50/80 border-b border-slate-200">
-                                    <h3 className="text-lg font-bold text-indigo-800">
-                                        {lembrete.especialidade} {lembrete.tipo === 'Teleconsulta' && '(Teleconsulta)'}
-                                    </h3>
-                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${lembrete.status === 'Agendada' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'}`}>
-                                        {lembrete.status}
-                                    </span>
-                                </div>
-
-                                {/* Card Body */}
-                                <div className="p-4 md:p-5 space-y-3 text-slate-700">
-                                    <p><strong className="card-body">Médico:</strong> {lembrete.medico}</p>
-                                    <p><strong className="card-body">Data e Horário:</strong> {formatarDataHora(lembrete.data, lembrete.hora)}</p>
-                                    <p><strong className="card-body">Local:</strong> {lembrete.local}</p>
-                                    {lembrete.observacoes && (
-                                        <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
-                                    )}
-                                </div>
-
-                                {/* Card Footer */}
-                                <div className="p-4 md:p-5 border-t border-slate-200 bg-slate-50/80 flex flex-col md:flex-row justify-end items-center gap-3">
-                                    {lembrete.status === 'Agendada' ? (
-                                        <>
-                                            <button onClick={() => handleOpenEditModal(lembrete)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Alterar
-                                            </button>
-                                            <button onClick={() => handleConcluirLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Marcar como Concluída
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <button onClick={() => handleReverterLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer">
-                                                Reverter
-                                            </button>
-                                            <button onClick={() => handleRemoveLembrete(lembrete.id)} className="px-4 py-2 text-sm font-medium text-center text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full md:w-auto cursor-pointer">
-                                                Remover Lembrete
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                    {loading && <p className="text-center text-slate-600">Carregando lembretes...</p>}
+                    {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
+                    {!loading && !error && lembretes.length > 0 ? (
+                        lembretes.map((lembrete) => (
+                            <ConsultaCard
+                                key={lembrete.id}
+                                lembrete={lembrete}
+                                handleOpenEditModal={handleOpenEditModal}
+                                handleConcluirLembrete={handleConcluirLembrete}
+                                handleReverterLembrete={handleReverterLembrete}
+                                handleRemoveLembrete={handleRemoveLembrete}
+                            />
                         ))
                     ) : (
                         <div className=" border border-slate-200 rounded-xl p-6 shadow-sm text-center">
@@ -237,7 +206,7 @@ export default function Consultas() {
 
             {/* Modal de Adicionar/Editar Lembrete */}
             {isModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-50 overflow-y-auto py-8" aria-labelledby="modalAgendarTitle">
+                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-60 overflow-y-auto py-8" aria-labelledby="modalAgendarTitle">
                     <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg relative m-4">
                         <button type="button" className="absolute top-4 right-4 text-2xl font-semibold text-slate-500 hover:text-slate-800" aria-label="Fechar modal" onClick={() => setIsModalOpen(false)} >
                             &times;
@@ -274,7 +243,7 @@ export default function Consultas() {
                                 <textarea id="observacoesConsulta" name="observacoesConsulta" value={formData.observacoesConsulta} onChange={handleInputChange} rows={3} placeholder="Ex: Trazer exames anteriores" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
                             </div>
                             <div className="flex justify-end gap-4 pt-4">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                                <button type="button" onClick={() => { setIsModalOpen(false); setEditingLembrete(null); }} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
                                     Cancelar
                                 </button>
                                 <button type="submit" className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">

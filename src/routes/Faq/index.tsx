@@ -28,13 +28,12 @@ export default function Faq() {
                     <div className="max-w-[800px] mx-auto border border-gray-200 rounded-lg overflow-hidden md:text-[18px]">
                         {faqData.map((faq, indice) => (
                             <div className="border-b border-gray-200" key={faq.id}>
-                                <button
+                                <button 
                                     className="faq-question text-[#1a237e] cursor-pointer text-[1.05em] p-5 w-full text-left flex justify-between items-center font-semibold hover:bg-[#eff1f7] focus:bg-[#eff1f7] focus:outline-none duration-200"
                                     type="button"
                                     aria-expanded={openIndex === indice}
                                     aria-controls={`faq-answer-${faq.id}`}
-                                    onClick={() => setOpenIndex(openIndex === indice ? null : indice)}
-                                >
+                                    onClick={() => setOpenIndex(openIndex === indice ? null : indice)}>
                                     <span>{faq.question}</span>
                                     <span className={`transition-transform duration-300 ease-in-out ml-[10px] w-[12px] h-[12px] border-r-2 border-b-2 border-[#007bff] inline-block ${
                                         openIndex === indice

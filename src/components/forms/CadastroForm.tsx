@@ -7,6 +7,7 @@ interface CadastroFormProps {
     cadastroNomeCompleto: string;
     cadastroCpf: string;
     dataNascimento: string;
+    tipoUsuario: string;
     cadastroEmail: string;
     cadastroTelefone: string;
     cadastroSenha: string;
@@ -42,11 +43,7 @@ export const CadastroForm = ({
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Cadastro realizado!</h2>
           <p className="auth-subtitle">Sua conta foi criada. Agora você já pode acessar a plataforma.</p>
           <div className="mt-6 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => onFormChange('login')}
-              className="btn btn-primary w-full"
-            >
+            <button type="button" onClick={() => onFormChange('login')} className="btn btn-primary w-full">
               Fazer login
             </button>
             <Link to="/" className="btn btn-secondary w-full">Voltar à página inicial</Link>
@@ -85,7 +82,16 @@ export const CadastroForm = ({
               onChange={(e) => onInputChange('dataNascimento', e.target.value)} required />
             {errors.dataNascimento && <small className="error-message text-red-500">{errors.dataNascimento}</small>}
           </div>
-
+          <div className="form-group-auth">
+            <label htmlFor="tipoUsuario">Tipo de usuário*</label>
+            <select id="tipoUsuario" className={`form-input ${errors.tipoUsuario ? 'border-red-500' : ''}`} value={formData.tipoUsuario}
+              onChange={(e) => onInputChange('tipoUsuario', e.target.value)} required>
+              <option value="">Selecione</option>
+              <option value="PACIENTE">PACIENTE</option>
+              <option value="CUIDADOR">CUIDADOR</option>
+            </select>
+            {errors.tipoUsuario && <small className="error-message text-red-500">{errors.tipoUsuario}</small>}
+          </div>
           <h3 className="form-step-title mt-6">Informações de Contato</h3>
           <div className="form-group-auth">
             <label htmlFor="cadastroEmail">Email*</label>
@@ -95,14 +101,7 @@ export const CadastroForm = ({
           </div>
           <div className="form-group-auth">
             <label htmlFor="cadastroTelefone">Telefone</label>
-            <input
-              className="form-input"
-              type="tel"
-              id="cadastroTelefone"
-              placeholder="(11) 99999-9999"
-              value={formData.cadastroTelefone}
-              onChange={(e) => onInputChange('cadastroTelefone', e.target.value)}
-            />
+            <input className="form-input" type="tel" id="cadastroTelefone" placeholder="(11) 99999-9999" value={formData.cadastroTelefone} onChange={(e) => onInputChange('cadastroTelefone', e.target.value)} />
           </div>
 
           <h3 className="form-step-title mt-6">Definir Senha</h3>
@@ -140,7 +139,7 @@ export const CadastroForm = ({
                 : statusMessage.type === 'error'
                 ? 'bg-red-50 border border-red-200 text-red-800'
                 : 'bg-blue-50 border border-blue-200 text-blue-800'
-            }`}>
+              }`}>
               {statusMessage.message}
             </div>
           )}

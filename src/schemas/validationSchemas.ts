@@ -66,6 +66,10 @@ export const cadastroSchema = z
       .min(1, 'Data de nascimento é obrigatória.')
       .refine((date) => dateRegex.test(date), 'Data deve estar no formato dd/mm/yyyy.')
       .refine(validateDate, 'Data inválida.'),
+    tipoUsuario: z
+      .string()
+      .min(1, 'Tipo de usuário é obrigatório.')
+      .refine((val) => val === 'PACIENTE' || val === 'CUIDADOR', 'Tipo de usuário deve ser PACIENTE ou CUIDADOR.'),
     cadastroEmail: z
       .string()
       .min(1, 'Email é obrigatório.')

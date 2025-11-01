@@ -10,8 +10,7 @@ export default function Hospitais() {
         data-guide-step="1"
         data-guide-title="Bem-vindo às Nossas Unidades"
         data-guide-text="Esta seção apresenta uma visão geral das nossas unidades hospitalares."
-        data-guide-arrow="up"
-      >
+        data-guide-arrow="up">
         <div className="container">
           <h2>Nossas Unidades</h2>
           <p className='text-center md:text-[18px]'>
