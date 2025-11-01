@@ -1,163 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PacientePage from '../../components/Painel/PacientePage';
-import type { LembreteReceita } from '../../hooks/useApiUsuarios';
-import { useApiUsuarios } from '../../hooks/useApiUsuarios';
-import type { Usuario } from '../../hooks/useApiUsuarios';
+import { useApiReceitas } from '../../hooks/useApiReceitas';
 import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
-import { useAuthCheck } from '../../hooks/useAuthCheck';
-import { useUser } from '../../hooks/useUser';
+import { useReceitas } from '../../hooks/useReceitas';
+import ModalLembrete from '../../components/LembreteCard/ModalLembrete';
+import type { LembreteReceita } from '../../types/lembretes';
+import Loading from '../../components/Loading/Loading';
 
 export default function Receitas() {
-    useAuthCheck();
-    const { listarReceitas, adicionarReceita, atualizarReceita, removerReceita, loading, error, getUsuarioPorCpf } = useApiUsuarios();
-    const { usuarioApi } = useUser();
+    const { adicionarReceita, atualizarReceita, removerReceita } = useApiReceitas();
+    const { lembretesReceitas, loading, error, refreshReceitas, usuarioApi, paciente } = useReceitas();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [paciente, setPaciente] = useState<Usuario | null>(null);
-    const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string>('');
-    const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-    // Buscar lembretes ao carregar
-    useEffect(() => {
-        if (usuarioApi) {
-            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
-            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
-                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
-                    if (paciente) {
-                        setPaciente(paciente);
-                        listarReceitas(paciente.id).then(setLembretes);
-                    }
-                });
-            } else {
-                listarReceitas(usuarioApi.id).then(setLembretes);
-            }
-        }
-    }, [usuarioApi, getUsuarioPorCpf, listarReceitas]);
-    const [formData, setFormData] = useState<{
-        nome: string;
-        frequencia: number;
-        dias: string[];
-        numeroDias: number;
-        dataHoraInicio: string;
-        observacoes: string;
-    }>({
-        nome: '',
-        frequencia: 24,
-        dias: diasDaSemana,
-        numeroDias: 7,
-        dataHoraInicio: new Date().toISOString().slice(0, 16),
-        observacoes: '',
-    });
-
-    
-
-    useEffect(() => {
-        if (editingLembrete) {
-            setFormData({
-                nome: editingLembrete.nome,
-                frequencia: editingLembrete.frequencia, // Usa o número diretamente
-                dias: editingLembrete.dias.sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
-                numeroDias: editingLembrete.numeroDias,
-                // Mantém o formato YYYY-MM-DDTHH:mm para o input datetime-local
-                dataHoraInicio: editingLembrete.dataHoraInicio.slice(0, 16),
-                observacoes: editingLembrete.observacoes,
-            });
-        } else {
-            // Reset form...
-            setFormData({
-                nome: '',
-                frequencia: 24, // Valor padrão numérico
-                dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
-                numeroDias: 7,
-                dataHoraInicio: new Date().toISOString().slice(0, 16),
-                observacoes: '',
-            });
-        }
-    }, [editingLembrete]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value, type } = e.target;
-        if (type === 'checkbox') {
-            const checked = (e.target as HTMLInputElement).checked;
-            const day = value;
-            setFormData(prevState => ({
-                ...prevState,
-                dias: checked
-                    ? [...prevState.dias, day]
-                    : prevState.dias.filter(d => d !== day)
-            }));
-        } else {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: type === 'number' ? parseInt(value) || 0 : value
-            }));
-        }
-    };
-
-
-
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrorMessage('');
-        if (!formData.nome) return;
-        if (formData.dias.length === 0) {
-            setErrorMessage('Selecione pelo menos um dia da semana.');
-            return;
-        }
-
+    const handleFormSubmit = async (formData: any) => {
         if (!usuarioApi) return;
-        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
 
-        const dadosParaSalvar = {
-            ...formData,
-             frequencia: Number(formData.frequencia), // Garante que é número
-             // Certifique-se que a data/hora está no formato esperado pela API/db
-             dataHoraInicio: formData.dataHoraInicio
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente)
+                          ? paciente.idUser
+                          : usuarioApi.idUser;
+
+        const receitaData = {
+            nomeMedicamento: formData.nomeMedicamento,
+            frequenciaHoras: Number(formData.frequenciaHoras),
+            dias: formData.dias,
+            numeroDiasTratamento: Number(formData.numeroDiasTratamento),
+            dataInicio: formData.dataInicio,
+            horaInicio: formData.horaInicio,
+            observacoes: formData.observacoes,
         };
 
-         if (editingLembrete) {
-             await atualizarReceita(editingLembrete.id, {
-                 ...dadosParaSalvar, // Passa os dados com frequência numérica
-                 status: editingLembrete.status // Preserva o status ao editar
-             });
-         } else {
-             await adicionarReceita(usuarioId, {
-                 ...dadosParaSalvar, // Passa os dados com frequência numérica
-                 status: 'Ativo',
-             });
-         }
-
-        // Recarregar lembretes
-        listarReceitas(usuarioId).then(setLembretes);
-
-        setIsModalOpen(false);
-        setEditingLembrete(null);
+        try {
+            if (editingLembrete) {
+                await atualizarReceita(editingLembrete.idReceita, {
+                    ...receitaData,
+                    idUser: usuarioId,
+                    status: editingLembrete.status,
+                });
+            } else {
+                await adicionarReceita(usuarioId, {
+                    ...receitaData,
+                    status: 'Ativo',
+                });
+            }
+            refreshReceitas();
+        } catch (error) {
+             console.error("Erro ao salvar receita:", error);
+        }
     };
 
     const handleRemoveLembrete = async (id: number) => {
         await removerReceita(id);
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarReceitas(usuarioId).then(setLembretes);
-        }
+        refreshReceitas();
     };
 
     const handleConcluirLembrete = async (id: number) => {
-        await atualizarReceita(id, { status: 'Inativo' });
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarReceitas(usuarioId).then(setLembretes);
-        }
+        const lembreteAtual = lembretesReceitas.find(l => l.idReceita === id);
+        if (!lembreteAtual) return;
+        
+        await atualizarReceita(id, {
+            ...lembreteAtual,
+            status: 'Inativo',
+        });
+        refreshReceitas();
     };
 
     const handleReativarLembrete = async (id: number) => {
-        await atualizarReceita(id, { status: 'Ativo' });
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarReceitas(usuarioId).then(setLembretes);
-        }
+        const lembreteAtual = lembretesReceitas.find(l => l.idReceita === id);
+        if (!lembreteAtual) return;
+
+        await atualizarReceita(id, {
+            ...lembreteAtual,
+            status: 'Ativo',
+        });
+        refreshReceitas();
     };
 
     const handleOpenAddModal = () => {
@@ -169,6 +86,7 @@ export default function Receitas() {
         setEditingLembrete(lembrete);
         setIsModalOpen(true);
     };
+
 
 
     return (
@@ -197,106 +115,40 @@ export default function Receitas() {
                      data-guide-title="Seus Lembretes"
                      data-guide-text="Aqui você vê todos os seus lembretes de medicamentos. Cada card mostra o nome do medicamento e suas instruções."
                      data-guide-arrow="up">
-                    {loading && <p className="text-center text-slate-600">Carregando lembretes...</p>}
+                    {loading && <Loading loading={loading} message="Carregando lembretes de medicamentos..." />}
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
-                    {!loading && !error && lembretes.length > 0 ? (
-                        lembretes.map((lembrete) => (
+                    {/* ## Ajuste 9: Usa lembretesReceitas e idReceita ## */}
+                    {!loading && !error && lembretesReceitas.length > 0 ? (
+                        lembretesReceitas.map((lembrete) => (
                             <ReceitaCard
-                                key={lembrete.id}
+                                key={lembrete.idReceita} // Usa idReceita
                                 lembrete={lembrete}
                                 handleOpenEditModal={handleOpenEditModal}
-                                handleConcluirLembrete={handleConcluirLembrete}
-                                handleReativarLembrete={handleReativarLembrete}
-                                handleRemoveLembrete={handleRemoveLembrete}
+                                // Passa idReceita para os handlers
+                                handleConcluirLembrete={() => handleConcluirLembrete(lembrete.idReceita)}
+                                handleReativarLembrete={() => handleReativarLembrete(lembrete.idReceita)}
+                                handleRemoveLembrete={() => handleRemoveLembrete(lembrete.idReceita)}
                             />
                         ))
                     ) : (
                         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm text-center"
-                             data-guide-step="4"
-                             data-guide-title="Nenhum Lembrete"
-                             data-guide-text="Quando você não tem lembretes, esta mensagem aparece. Use o botão 'Adicionar Lembrete' para criar um novo."
-                             data-guide-arrow="up">
+                            data-guide-step="4"
+                            data-guide-title="Nenhum Lembrete"
+                            data-guide-text="Quando você não tem lembretes, esta mensagem aparece. Use o botão 'Adicionar Lembrete' para criar um novo."
+                            data-guide-arrow="up">
                             <p className="text-slate-600">Você não possui nenhum lembrete de medicamento.</p>
                         </div>
                     )}
                 </div>
             </section>
 
-            {isModalOpen && (
-                <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-start z-60 overflow-y-auto py-8">
-                    <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg relative m-4">
-                        <button type="button" className="absolute top-4 right-4 text-2xl font-semibold text-slate-500 hover:text-slate-800" aria-label="Fechar modal" onClick={() => setIsModalOpen(false)}>
-                            &times;
-                        </button>
-                        <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                            {editingLembrete ? 'Alterar Lembrete' : 'Adicionar Lembrete'}
-                        </h3>
-                        <form onSubmit={handleFormSubmit} className="space-y-4">
-                            <div>
-                                <label htmlFor="nome" className="block text-sm font-medium text-slate-700 mb-1">Nome do Medicamento*</label>
-                                <input type="text" id="nome" name="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Paracetamol 750mg" required className="w-full p-2 border border-slate-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência (em horas)*</label>
-                                <select id="frequencia" name="frequencia" value={formData.frequencia} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
-                                    <option value={4}>4</option>
-                                    <option value={6}>6</option>
-                                    <option value={8}>8</option>
-                                    <option value={12}>12</option>
-                                    <option value={24}>24</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Dias da Semana*</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map(dia => (
-                                        <label key={dia} className="flex items-center">
-                                            <input className="mr-2"
-                                                type="checkbox"
-                                                checked={formData.dias.includes(dia)}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setFormData(prev => ({ ...prev, dias: [...prev.dias, dia].sort((a, b) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)) }));
-                                                    } else {
-                                                        setFormData(prev => ({ ...prev, dias: prev.dias.filter(d => d !== dia) }));
-                                                    }
-                                                }}
-                                            />
-                                            {dia}
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label htmlFor="dataHoraInicio" className="block text-sm font-medium text-slate-700 mb-1">Data e Hora de Início do Tratamento*</label>
-                                <input type="datetime-local" id="dataHoraInicio" name="dataHoraInicio" value={formData.dataHoraInicio} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label htmlFor="numeroDias" className="block text-sm font-medium text-slate-700 mb-1">Número de Dias de Tratamento*</label>
-                                <input type="number" id="numeroDias" name="numeroDias" value={formData.numeroDias} onChange={handleInputChange} min="1" required className="w-full p-2 border border-slate-300 rounded-md" />
-                            </div>
-                            <div>
-                                <label htmlFor="observacoes" className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
-                                <textarea id="observacoes" name="observacoes" value={formData.observacoes} onChange={handleInputChange} rows={3} placeholder="Ex: Tomar após as refeições, 1 comprimido" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
-                            </div>
-                            {errorMessage && (
-                                <div className="text-red-600 text-sm">
-                                    {errorMessage}
-                                </div>
-                            )}
-                            <div className="flex justify-end gap-4 pt-4">
-                                <button type="button" onClick={() => { setIsModalOpen(false); setEditingLembrete(null); }} className="px-4 py-2 text-sm font-medium text-center border border-slate-300 rounded-md text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-                                    Cancelar
-                                </button>
-                                <button type="submit" className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-                                    Salvar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <ModalLembrete
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                editingLembrete={editingLembrete}
+                onSubmit={handleFormSubmit}
+                type="receita"
+            />
         </PacientePage>
     );
 }

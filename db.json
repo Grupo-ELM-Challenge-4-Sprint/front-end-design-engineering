@@ -13,11 +13,11 @@
     },
     {
       "id": "2",
-      "nomeCompleto": "Luz Barros Gouveia",
+      "nomeCompleto": "Lucas Barros Gouveia",
       "cpf": "769.139.958-81",
       "dataNascimento": "22/09/1992",
       "tipoUsuario": "PACIENTE",
-      "email": "luz.barros@example.com",
+      "email": "lucas.barros@example.com",
       "telefone": "(11) 91234-5678",
       "senha": "123@mudar",
       "cpfCuidador": "936.611.080-00"
@@ -50,8 +50,8 @@
       "id": "6b34",
       "especialidade": "Cardiologia",
       "medico": "Dr. Ricardo Alves",
-      "data": "20/11/2025",
-      "hora": "22:20",
+      "data": "2025-10-27",
+      "hora": "22:25",
       "tipo": "Presencial",
       "local": "HC Clínicas - Unidade Central",
       "observacoes": "Trazer RG",
@@ -69,23 +69,58 @@
       "observacoes": "",
       "status": "Agendada",
       "usuarioId": "2"
+    },
+    {
+      "id": "e230",
+      "especialidade": "dwadawd",
+      "medico": "dawdada",
+      "data": "2025-10-20",
+      "hora": "13:02",
+      "tipo": "Teleconsulta",
+      "local": "dawdw",
+      "observacoes": "dawdawa",
+      "status": "Agendada",
+      "usuarioId": "1"
     }
   ],
   "receitas": [
     {
       "id": "2e6c",
-      "nome": "Losartana Potássica 50mg",
-      "frequencia": 6,
+      "nome": "Pão com medicamento alterado 50mg",
+      "frequencia": 4,
       "dias": [
         "Segunda",
         "Terça",
         "Quarta",
+        "Quinta",
         "Sexta",
-        "Sábado"
+        "Sábado",
+        "Domingo"
       ],
       "numeroDias": 7,
-      "dataHoraInicio": "2025-10-23T17:30",
+      "data": "2025-10-20",
+      "hora": "22:15",
       "observacoes": "Tomar todos os dias",
+      "status": "Ativo",
+      "usuarioId": "1"
+    },
+    {
+      "id": "bb26",
+      "nome": "Losartana Potássica 50mg",
+      "frequencia": 4,
+      "dias": [
+        "Segunda",
+        "Terça",
+        "Quarta",
+        "Quinta",
+        "Sexta",
+        "Sábado",
+        "Domingo"
+      ],
+      "numeroDias": 10,
+      "data": "2025-10-25",
+      "hora": "14:30",
+      "observacoes": "Tomar após refeições",
       "status": "Ativo",
       "usuarioId": "1"
     }

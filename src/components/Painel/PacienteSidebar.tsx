@@ -1,27 +1,15 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { useApiUsuarios } from '../../hooks/useApiUsuarios';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
 
 export default function PacienteSidebar() {
   const navigate = useNavigate();
-  const { getUsuarioPorCpf } = useApiUsuarios();
-
-  const [tipoUsuario, setTipoUsuario] = useState<'PACIENTE' | 'CUIDADOR' | null>(null);
-
-  useEffect(() => {
-    const cpfLogado = localStorage.getItem('cpfLogado');
-    if (cpfLogado) {
-      getUsuarioPorCpf(cpfLogado).then((usuario) => {
-        if (usuario) {
-          setTipoUsuario(usuario.tipoUsuario);
-        }
-      });
-    }
-  }, [getUsuarioPorCpf]);
+  const { usuarioApi } = useAuthCheck();
 
   const handleLogout = () => {
     // Remove os dados de autenticação do localStorage
     localStorage.removeItem('cpfLogado');
+    localStorage.removeItem('usuarioApi');
+    localStorage.removeItem('tipoUsuario');
 
     // Redireciona para a página inicial
     navigate('/');
@@ -34,7 +22,7 @@ export default function PacienteSidebar() {
       data-guide-text="Use este menu para navegar entre as diferentes seções da sua área, como seus dados e tutoriais."
       data-guide-arrow="down">
       <div className="paciente-sidebar-header">
-        <h3>Área do {tipoUsuario === 'CUIDADOR' ? 'Cuidador' : 'Paciente'}</h3>
+        <h3>Área do {usuarioApi?.tipoUsuario === 'CUIDADOR' ? 'Cuidador' : 'Paciente'}</h3>
       </div>
       <nav className="paciente-nav" aria-label="Navegação Área do Usuário">
         <ul>
@@ -47,5 +35,3 @@ export default function PacienteSidebar() {
     </aside>
   );
 }
-
-
