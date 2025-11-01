@@ -7,8 +7,8 @@ export const getProximosLembretes = (
   const lembretesConsultaFiltrados = (lembretesConsultas || [])
     ?.filter((lembrete: LembreteConsulta) => lembrete.status.toLowerCase() === 'agendada')
     .sort((a: LembreteConsulta, b: LembreteConsulta) => {
-      const dateA = new Date(`${a.data.split('/').reverse().join('-')}T${a.hora}`);
-      const dateB = new Date(`${b.data.split('/').reverse().join('-')}T${b.hora}`);
+      const dateA = new Date(`${a.data}T${a.hora}`);
+      const dateB = new Date(`${b.data}T${b.hora}`);
       return dateA.getTime() - dateB.getTime();
     });
 

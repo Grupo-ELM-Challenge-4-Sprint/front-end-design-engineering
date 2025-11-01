@@ -4,8 +4,8 @@ import { useApiReceitas } from '../../hooks/useApiReceitas';
 import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
 import { useReceitas } from '../../hooks/useReceitas';
 import ModalLembrete from '../../components/LembreteCard/ModalLembrete';
-import type { LembreteReceita } from '../../types/lembretes';
 import Loading from '../../components/Loading/Loading';
+import type { LembreteReceita, FormDataConsulta, FormDataReceita } from '../../types/lembretes';
 
 export default function Receitas() {
     const { adicionarReceita, atualizarReceita, removerReceita } = useApiReceitas();
@@ -14,39 +14,39 @@ export default function Receitas() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
 
-    const handleFormSubmit = async (formData: any) => {
+    const handleFormSubmit = async (formData: FormDataConsulta | FormDataReceita) => {
         if (!usuarioApi) return;
 
-        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente)
-                          ? paciente.idUser
-                          : usuarioApi.idUser;
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
 
-        const receitaData = {
-            nomeMedicamento: formData.nomeMedicamento,
-            frequenciaHoras: Number(formData.frequenciaHoras),
-            dias: formData.dias,
-            numeroDiasTratamento: Number(formData.numeroDiasTratamento),
-            dataInicio: formData.dataInicio,
-            horaInicio: formData.horaInicio,
-            observacoes: formData.observacoes,
-        };
+        if ('nomeMedicamento' in formData) {
+            const receitaData = {
+                nomeMedicamento: formData.nomeMedicamento,
+                frequenciaHoras: Number(formData.frequenciaHoras),
+                dias: formData.dias,
+                numeroDiasTratamento: Number(formData.numeroDiasTratamento),
+                dataInicio: formData.dataInicio,
+                horaInicio: formData.horaInicio,
+                observacoes: formData.observacoes,
+            };
 
-        try {
-            if (editingLembrete) {
-                await atualizarReceita(editingLembrete.idReceita, {
-                    ...receitaData,
-                    idUser: usuarioId,
-                    status: editingLembrete.status,
-                });
-            } else {
-                await adicionarReceita(usuarioId, {
-                    ...receitaData,
-                    status: 'Ativo',
-                });
+            try {
+                if (editingLembrete) {
+                    await atualizarReceita(editingLembrete.idReceita, {
+                        ...receitaData,
+                        idUser: usuarioId,
+                        status: editingLembrete.status,
+                    });
+                } else {
+                    await adicionarReceita(usuarioId, {
+                        ...receitaData,
+                        status: 'Ativo',
+                    });
+                }
+                refreshReceitas();
+            } catch (_error) {
+                 console.error("Erro ao salvar receita:", _error);
             }
-            refreshReceitas();
-        } catch (error) {
-             console.error("Erro ao salvar receita:", error);
         }
     };
 
@@ -91,15 +91,13 @@ export default function Receitas() {
 
     return (
         <PacientePage>
-            <section className="py-2">
+            <section className="py-2"
+                    data-guide-step="1"
+                    data-guide-title="Bem-vindo às Receitas!"
+                    data-guide-text="Esta é a página onde você gerencia seus lembretes de medicamentos e receitas médicas."
+                    data-guide-arrow="down">
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left"
-                        data-guide-step="1"
-                        data-guide-title="Bem-vindo às Receitas!"
-                        data-guide-text="Esta é a página onde você gerencia seus lembretes de medicamentos e receitas médicas."
-                        data-guide-arrow="down">
-                        Meus Lembretes de Medicamentos
-                    </h1>
+                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left">Meus Lembretes de Medicamentos</h1>
                     <button onClick={handleOpenAddModal}
                             className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer"
                             data-guide-step="2"
@@ -117,7 +115,6 @@ export default function Receitas() {
                      data-guide-arrow="up">
                     {loading && <Loading loading={loading} message="Carregando lembretes de medicamentos..." />}
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
-                    {/* ## Ajuste 9: Usa lembretesReceitas e idReceita ## */}
                     {!loading && !error && lembretesReceitas.length > 0 ? (
                         lembretesReceitas.map((lembrete) => (
                             <ReceitaCard

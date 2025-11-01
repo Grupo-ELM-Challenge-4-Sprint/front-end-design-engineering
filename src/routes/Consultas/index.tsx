@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import PacientePage from '../../components/Painel/PacientePage';
-import type { LembreteConsulta } from '../../types/lembretes';
 import { useApiConsultas } from '../../hooks/useApiConsultas';
 import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
 import { useConsultas } from '../../hooks/useConsultas';
 import ModalLembrete from '../../components/LembreteCard/ModalLembrete';
 import Loading from '../../components/Loading/Loading';
+import type { LembreteConsulta, FormDataConsulta, FormDataReceita } from '../../types/lembretes';
+
 export default function Consultas() {
     const { adicionarConsulta, atualizarConsulta, removerConsulta } = useApiConsultas();
     const { lembretesConsultas, loading, error, refreshConsultas, usuarioApi, paciente } = useConsultas();
@@ -13,37 +14,36 @@ export default function Consultas() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
 
-    const handleFormSubmit = async (formData: any) => {
+    const handleFormSubmit = async (formData: FormDataConsulta | FormDataReceita) => {
         if (!usuarioApi) return;
 
-        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente)
-                          ? paciente.idUser
-                          : usuarioApi.idUser;
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
 
-        const consultaData = {
-            especialidade: formData.especialidadeConsulta,
-            medico: formData.medicoConsulta || 'Não especificado',
-            data: formData.dataConsulta,
-            hora: formData.horaConsulta,
-            tipo: formData.tipoConsulta,
-            local: formData.localConsulta,
-            observacoes: formData.observacoesConsulta,
-        };
+        if ('especialidadeConsulta' in formData) {
+            const consultaData = {
+                especialidade: formData.especialidadeConsulta,
+                medico: formData.medicoConsulta || 'Não especificado',
+                data: formData.dataConsulta,
+                hora: formData.horaConsulta,
+                tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
+                local: formData.localConsulta,
+                observacoes: formData.observacoesConsulta,
+            };
 
-
-        if (editingLembrete) {
-            await atualizarConsulta(editingLembrete.idConsulta, {
-                ...consultaData,
-                idUser: usuarioId,
-                status: editingLembrete.status,
-            });
-        } else {
-            await adicionarConsulta(usuarioId, {
-                ...consultaData,
-                status: 'Agendada',
-            });
+            if (editingLembrete) {
+                await atualizarConsulta(editingLembrete.idConsulta, {
+                    ...consultaData,
+                    idUser: usuarioId,
+                    status: editingLembrete.status,
+                });
+            } else {
+                await adicionarConsulta(usuarioId, {
+                    ...consultaData,
+                    status: 'Agendada',
+                });
+            }
+            refreshConsultas();
         }
-        refreshConsultas();
     };
 
     const handleRemoveLembrete = async (id: number) => {
@@ -96,9 +96,7 @@ export default function Consultas() {
                 data-guide-arrow="down">
 
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left">
-                        Meus Lembretes de Consulta
-                    </h1>
+                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left">Meus Lembretes de Consulta</h1>
                     <button onClick={handleOpenAddModal}
                             className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer"
                             data-guide-step="2"

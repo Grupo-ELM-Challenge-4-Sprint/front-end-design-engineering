@@ -1,89 +1,51 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useApiReceitas } from './useApiReceitas';
-import { useAuthCheck } from './useAuthCheck';
-import type { LembreteReceita, Usuario } from '../types/lembretes';
-import { useApiUsuarios } from './useApiUsuarios';
+import { useCallback } from 'react';
+import type { LembreteReceita } from '../types/lembretes';
+import { useApiBase } from './useApiBase';
 
-export const useReceitas = () => {
-    const { listarReceitas } = useApiReceitas();
-    const { usuarioApi } = useAuthCheck();
-    const { getUsuarioPorCpf } = useApiUsuarios();
+export const useApiReceitas = () => {
+  const { loading, error, fetchApi } = useApiBase();
 
-    const [lembretesReceitas, setLembretesReceitas] = useState<LembreteReceita[]>([]);
-    const [paciente, setPaciente] = useState<Usuario | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [hasFetched, setHasFetched] = useState(false);
+  // --- Funções RECEITA ---
+  const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
+      // Usa o endpoint /receita/usuario/{userId} criado no Java
+      const receitasDoUsuario = await fetchApi(`/receita/usuario/${usuarioId}`) as LembreteReceita[] | null;
+      return receitasDoUsuario || [];
 
-    useEffect(() => {
-        if (usuarioApi && !hasFetched) {
-            setHasFetched(true);
-            setLoading(true);
-            setError(null);
-            setPaciente(null);
+  }, [fetchApi]);
 
-            const fetchDados = async () => {
-                try {
-                    if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
-                        // É CUIDADOR, buscar dados do paciente
-                        const pacienteEncontrado = await getUsuarioPorCpf(usuarioApi.cpfPaciente);
-                        if (pacienteEncontrado) {
-                            setPaciente(pacienteEncontrado);
-                            const receitasData = await listarReceitas(pacienteEncontrado.idUser);
-                            setLembretesReceitas(receitasData || []);
-                        } else {
-                            setError('Paciente vinculado não encontrado.');
-                        }
-                    } else if (usuarioApi.tipoUsuario === 'PACIENTE') {
-                        // É PACIENTE, buscar próprios dados
-                        const receitasData = await listarReceitas(usuarioApi.idUser);
-                        setLembretesReceitas(receitasData || []);
-                    }
-                } catch (err) {
-                    console.error('Erro ao buscar receitas:', err);
-                    setError('Erro ao carregar receitas');
-                } finally {
-                    setLoading(false);
-                }
-            };
-            
-            fetchDados();
-        } else if (!usuarioApi) {
-             const cpfLogado = localStorage.getItem('cpfLogado');
-             if (!cpfLogado) {
-                  setLoading(false);
-             }
-        }
-    }, [usuarioApi, hasFetched, getUsuarioPorCpf, listarReceitas]);
 
-    const refreshReceitas = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        const idParaBuscar = (usuarioApi?.tipoUsuario === 'CUIDADOR' && paciente) 
-                             ? paciente.idUser 
-                             : usuarioApi?.idUser;
+    const adicionarReceita = useCallback(async (usuarioId: number, novaReceita: Omit<LembreteReceita, 'idReceita' | 'idUser'>): Promise<LembreteReceita | null> => {
+        const payload = {
+            ...novaReceita,
+            idUser: usuarioId,
+        };
+        return fetchApi('/receita', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }, [fetchApi]);
 
-        if (idParaBuscar) {
-            try {
-                const receitasData = await listarReceitas(idParaBuscar);
-                setLembretesReceitas(receitasData || []);
-            } catch (err) {
-                setError('Erro ao atualizar receitas');
-            } finally {
-                setLoading(false);
-            }
-        } else {
-            setLembretesReceitas([]);
-            setLoading(false);
-        }
-    }, [usuarioApi, paciente, listarReceitas]);
 
-    return {
-        usuarioApi,
-        paciente,
-        lembretesReceitas,
-        loading,
-        error,
-        refreshReceitas
-    };
+    const atualizarReceita = useCallback(async (receitaId: number, dadosAtualizados: Partial<Omit<LembreteReceita, 'idReceita'>>): Promise<LembreteReceita | null> => {
+        const payload = {
+            ...dadosAtualizados,
+        };
+         return fetchApi(`/receita/${receitaId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    }, [fetchApi]);
+
+  const removerReceita = useCallback(async (receitaId: number): Promise<boolean> => {
+      return fetchApi(`/receita/${receitaId}`, { method: 'DELETE' }) as Promise<boolean>;
+  }, [fetchApi]);
+
+  return {
+    loading,
+    error,
+    listarReceitas,
+    adicionarReceita,
+    atualizarReceita,
+    removerReceita,
+  };
 };

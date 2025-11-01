@@ -23,58 +23,62 @@ export default function Perfil() {
     const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-    // Buscar lembretes quando o usuário estiver disponível
+    // Buscar lembretes do próprio usuário (paciente)
     useEffect(() => {
-        const buscarDadosDoPerfil = async (usuario: Usuario) => {
+        const buscarMeusLembretes = async (idUser: number) => {
             setLoading(true);
+            try {
+                const consultas = await listarConsultas(idUser);
+                const receitas = await listarReceitas(idUser);
 
-            // Se for paciente, buscar seus próprios lembretes
-            if (usuario.tipoUsuario === 'PACIENTE') {
-                try {
-                    const consultas = await listarConsultas(usuario.idUser);
-                    const receitas = await listarReceitas(usuario.idUser);
-                    
-                    setMeusLembretes({
-                        lembretesConsulta: consultas || [],
-                        lembretesReceita: receitas || [],
-                    });
-                } catch (error) {
-                    console.error('Erro ao buscar lembretes do paciente:', error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-
-            // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
-            else if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
-                try {
-                    const paciente = await getUsuarioPorCpf(usuario.cpfPaciente);
-                    if (paciente) {
-                        const consultasPaciente = await listarConsultas(paciente.idUser);
-                        const receitasPaciente = await listarReceitas(paciente.idUser);
-                        
-                        const pacienteComLembretes = {
-                            ...paciente,
-                            lembretesConsulta: consultasPaciente || [],
-                            lembretesReceita: receitasPaciente || [],
-                        };
-                        setPacienteVinculado(pacienteComLembretes);
-                    }
-                } catch (error) {
-                    console.error('Erro ao buscar dados do paciente:', error);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
+                setMeusLembretes({
+                    lembretesConsulta: consultas || [],
+                    lembretesReceita: receitas || [],
+                });
+            } catch (error) {
+                console.error('Erro ao buscar lembretes do paciente:', error);
+            } finally {
                 setLoading(false);
             }
         };
 
-        if (usuarioApi) {
-            buscarDadosDoPerfil(usuarioApi);
+        if (usuarioApi?.tipoUsuario === 'PACIENTE' && usuarioApi.idUser) {
+            buscarMeusLembretes(usuarioApi.idUser);
+        } else if (usuarioApi?.tipoUsuario === 'CUIDADOR' && !usuarioApi.cpfPaciente) {
+            setLoading(false);
         }
-    }, [usuarioApi, getUsuarioPorCpf, listarConsultas, listarReceitas]);
+    }, [usuarioApi?.idUser, usuarioApi?.tipoUsuario, listarConsultas, listarReceitas]);
+
+    // Buscar dados do paciente vinculado (cuidador)
+    useEffect(() => {
+        const buscarDadosPacienteVinculado = async (cpfPaciente: string) => {
+            setLoading(true);
+            try {
+                const paciente = await getUsuarioPorCpf(cpfPaciente);
+                if (paciente) {
+                    const consultasPaciente = await listarConsultas(paciente.idUser);
+                    const receitasPaciente = await listarReceitas(paciente.idUser);
+
+                    const pacienteComLembretes = {
+                        ...paciente,
+                        lembretesConsulta: consultasPaciente || [],
+                        lembretesReceita: receitasPaciente || [],
+                    };
+                    setPacienteVinculado(pacienteComLembretes);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do paciente:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (usuarioApi?.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+            buscarDadosPacienteVinculado(usuarioApi.cpfPaciente);
+        }
+    }, [usuarioApi?.tipoUsuario, usuarioApi?.cpfPaciente, getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
     const [editMode, setEditMode] = useState(false);
     const [editEmail, setEditEmail] = useState('');
@@ -111,25 +115,25 @@ export default function Perfil() {
 
         // Envia o objeto completo para o hook
         atualizarUsuario(usuarioApi.idUser, payloadCompleto)
-            .then((usuarioAtualizado) => { 
-        if (usuarioAtualizado) { 
-        setUsuarioApi(usuarioAtualizado); 
+            .then((usuarioAtualizado) => {
+        if (usuarioAtualizado) {
+        setUsuarioApi(usuarioAtualizado);
         setEditMode(false);
+        } else {
+        setStatusMessage("Falha ao atualizar o perfil. Tente novamente.");
         }
         setUpdating(false);
     }).catch(() => {
+        setStatusMessage("Erro ao salvar. Verifique sua conexão e tente novamente.");
         setUpdating(false);
     });
   };
     return (
         <PacientePage>
             <Loading loading={loading} message="Carregando dados do perfil..." />
-            <div className="content-header">
-                <h2>Meus Dados</h2>
-            </div>
+            <div className="content-header"><h2>Meus Dados</h2></div>
 
             <div className="flex flex-col lg:flex-row">
-
                 <form id="formInformacoesPessoais" onSubmit={handleSave}>
                     <div className="meus-dados-grid">
                         <div className="info-section"
@@ -150,9 +154,7 @@ export default function Perfil() {
                                     )}
                                     {editMode && (
                                         <>
-                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>
-                                                {updating ? 'Salvando...' : 'Salvar'}
-                                            </button>
+                                            <button id="saveProfileButton" className="btn btn-primary cursor-pointer" type="submit" form="formInformacoesPessoais" disabled={updating}>{updating ? 'Salvando...' : 'Salvar'}</button>
                                             <button id="cancelEditButton" className="btn cursor-pointer hover:bg-red-200" type="button" onClick={handleCancel} disabled={updating}>Cancelar</button>
                                         </>
                                     )}
@@ -179,6 +181,12 @@ export default function Perfil() {
                                 <strong>Telefone:</strong>
                                 <input type="tel" id="userTelefone" name="telefone" value={editTelefone} onChange={(e) => setEditTelefone(e.target.value)} disabled={!editMode} title="Telefone" placeholder="(XX) XXXXX-XXXX" />
                             </div>
+
+                            {statusMessage && (
+                                <div className={`status-message ${statusMessage.includes('sucesso') ? 'success' : 'error'}`}>
+                                    {statusMessage}
+                                </div>
+                            )}
 
                             {/* Seção de Vinculação para Cuidadores */}
                             {usuarioApi?.tipoUsuario === 'CUIDADOR' && (

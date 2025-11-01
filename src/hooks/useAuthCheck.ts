@@ -68,5 +68,10 @@ export const useAuthCheck = () => {
         }
     };
 
- return { usuarioApi, setUsuarioApi: setUsuarioApiAndStorage };
+    const logout = () => {
+        setUsuarioApiAndStorage(null);
+        navigate('/entrar');
+    };
+
+    return { usuarioApi, setUsuarioApi: setUsuarioApiAndStorage, logout };
 };
