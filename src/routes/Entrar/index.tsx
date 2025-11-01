@@ -2,8 +2,9 @@ import { useState, useCallback } from "react";
 import { loginSchema, cadastroSchema } from "../../schemas/validationSchemas";
 import type { LoginFormData, CadastroFormData } from "../../schemas/validationSchemas";
 import { useInputMasks, useApiUsuarios, useZodForm } from "../../hooks";
-import { convertToISODate } from "../../utils/dateUtils";
 import { LoginForm, CadastroForm } from "../../components/forms";
+import { convertToISODate } from "../../utils/dateUtils";
+import { cleanCpf } from "../../utils/stringUtils";
 
 
 export default function Entrar() {
@@ -68,9 +69,11 @@ export default function Entrar() {
     // Handlers de submissão
     const handleLoginSubmit = useCallback(async (data: LoginFormData) => {
         setStatus('info', 'Verificando credenciais...');
-        const usuario = await getUsuarioPorCpf(data.loginCpf);
+        // Limpar CPF para busca (remover pontos e traços)
+        const cpfLimpo = cleanCpf(data.loginCpf);
+        const usuario = await getUsuarioPorCpf(cpfLimpo);
         if (usuario && usuario.senha === data.loginSenha) {
-            localStorage.setItem('cpfLogado', data.loginCpf);
+            localStorage.setItem('cpfLogado', cpfLimpo); // Salvar CPF limpo no localStorage
             setStatus('success', 'Login bem-sucedido! Redirecionando...');
             setTimeout(() => {
                 window.location.href = '/perfil';
@@ -82,7 +85,9 @@ export default function Entrar() {
 
     const handleCadastroSubmit = useCallback(async (data: CadastroFormData) => {
         setStatus('info', 'Verificando disponibilidade...');
-        const jaExiste = await getUsuarioPorCpf(data.cadastroCpf);
+        // Limpar CPF para busca (remover pontos e traços)
+        const cpfLimpo = cleanCpf(data.cadastroCpf);
+        const jaExiste = await getUsuarioPorCpf(cpfLimpo);
         if (jaExiste) {
             setStatus('error', 'Já existe um cadastro com este CPF.');
             return;
@@ -90,11 +95,11 @@ export default function Entrar() {
 
         const novoUsuario = {
             nome: data.cadastroNomeCompleto,
-            cpf: data.cadastroCpf,
-            dataNascimento: convertToISODate(data.dataNascimento),
+            cpf: cpfLimpo, // Enviar CPF sem máscara
+            dataNascimento: convertToISODate(data.dataNascimento), // Converter para yyyy-mm-dd
             tipoUsuario: data.tipoUsuario,
             email: data.cadastroEmail,
-            telefone: data.cadastroTelefone || '',
+            telefone: data.cadastroTelefone,
             senha: data.cadastroSenha,
         };
 

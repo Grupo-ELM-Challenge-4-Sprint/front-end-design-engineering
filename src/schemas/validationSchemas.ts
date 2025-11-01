@@ -41,12 +41,12 @@ const validateDate = (dateString: string) => {
 export const loginSchema = z.object({
   loginCpf: z
     .string()
-    .min(1, 'CPF é obrigatório.')
-    .refine((cpf) => cpfRegex.test(cpf), 'CPF deve estar no formato 000.000.000-00.')
-    .refine(validateCpf, 'CPF inválido.'),
+    .min(1, { message: 'CPF é obrigatório.' })
+    .refine((cpf) => cpfRegex.test(cpf), { message: 'CPF deve estar no formato 000.000.000-00.' })
+    .refine(validateCpf, { message: 'CPF inválido.' }),
   loginSenha: z
     .string()
-    .min(1, 'Senha é obrigatória.'),
+    .min(1, { message: 'Senha é obrigatória.' }),
 });
 
 // Esquema para Cadastro
@@ -54,37 +54,36 @@ export const cadastroSchema = z
   .object({
     cadastroNomeCompleto: z
       .string()
-      .min(1, 'Nome completo é obrigatório.')
-      .min(3, 'Nome deve ter pelo menos 3 caracteres.'),
+      .min(1, { message: 'Nome completo é obrigatório.' })
+      .min(3, { message: 'Nome deve ter pelo menos 3 caracteres.' }),
     cadastroCpf: z
       .string()
-      .min(1, 'CPF é obrigatório.')
-      .refine((cpf) => cpfRegex.test(cpf), 'CPF deve estar no formato 000.000.000-00.')
-      .refine(validateCpf, 'CPF inválido.'),
+      .min(1, { message: 'CPF é obrigatório.' })
+      .refine((cpf) => cpfRegex.test(cpf), { message: 'CPF deve estar no formato 000.000.000-00.' })
+      .refine(validateCpf, { message: 'CPF inválido.' }),
     dataNascimento: z
       .string()
-      .min(1, 'Data de nascimento é obrigatória.')
-      .refine((date) => dateRegex.test(date), 'Data deve estar no formato dd/mm/yyyy.')
-      .refine(validateDate, 'Data inválida.'),
-    tipoUsuario: z
-      .string()
-      .min(1, 'Tipo de usuário é obrigatório.')
-      .refine((val) => val === 'PACIENTE' || val === 'CUIDADOR', 'Tipo de usuário deve ser PACIENTE ou CUIDADOR.'),
+      .min(1, { message: 'Data de nascimento é obrigatória.' })
+      .refine((date) => dateRegex.test(date), { message: 'Data deve estar no formato dd/mm/yyyy.' })
+      .refine(validateDate, { message: 'Data inválida.' }),
+    tipoUsuario: z.enum(['PACIENTE', 'CUIDADOR'], {
+      message: 'Tipo de usuário deve ser PACIENTE ou CUIDADOR.',
+    }),
     cadastroEmail: z
       .string()
-      .min(1, 'Email é obrigatório.')
-      .email('Email inválido.'),
+      .min(1, { message: 'Email é obrigatório.' })
+      .email({ message: 'Email inválido.' }),
     cadastroTelefone: z
       .string()
-      .optional(),
+      .min(1, { message: 'Telefone é obrigatório.' }),
     cadastroSenha: z
       .string()
-      .min(1, 'Senha é obrigatória.')
-      .min(8, 'Senha deve ter no mínimo 8 caracteres.')
-      .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter letras maiúsculas, minúsculas e números.'),
+      .min(1, { message: 'Senha é obrigatória.' })
+      .max(10, { message: 'Senha deve ter no máximo 10 caracteres.' })
+      .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, { message: 'Senha deve conter letras maiúsculas, minúsculas e números.' }),
     confirmarSenha: z
       .string()
-      .min(1, 'Confirmação de senha é obrigatória.'),
+      .min(1, { message: 'Confirmação de senha é obrigatória.' }),
   })
   .refine((data) => data.cadastroSenha === data.confirmarSenha, {
     message: 'As senhas não coincidem.',
