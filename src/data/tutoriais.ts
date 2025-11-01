@@ -170,7 +170,7 @@ export const tutorialDetails: TutorialDetail[] = [
     id: 'resultados-exames',
     heading: 'Como acessar os meus resultados de exames?',
     videoTitle: 'Tutorial em vídeo de como acessar seus resultados de Exames do App HC',
-    videoUrl: 'https://www.youtube.com/embed/cjJ9VXAIiy4?si=6Vi5FCQMw021xuWD"',
+    videoUrl: 'https://www.youtube.com/embed/cjJ9VXAIiy4?si=6Vi5FCQMw021xuWD',
     intro: 'Veja como visualizar seus resultados de exames de forma rápida e segura.',
     steps: [
       { 

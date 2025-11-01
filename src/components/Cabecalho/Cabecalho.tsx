@@ -1,11 +1,11 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useAuth } from '../../hooks/useAuth';
+import { useAuthCheck } from '../../hooks/useAuthCheck';
 import imagemLogo from '/img/imagem-index/imagem-logo.jpeg';
 
 export default function Cabecalho() {
     const [menuOpen, setMenuOpen] = useState(false);
-    const { isLoggedIn, handleLogout } = useAuth();
+    const { logout, usuarioApi } = useAuthCheck();
     const location = useLocation();
 
     const userAreaPaths = ['/perfil', '/receitas', '/consultas'];
@@ -40,8 +40,8 @@ export default function Cabecalho() {
                     <li><NavLink to={'/faq'} className="linksHeader">FAQ</NavLink></li>
                     <li><NavLink to={'/contato'} className="linksHeader">Contato</NavLink></li>
                     <li>
-                        {isLoggedIn && isUserArea ? (
-                            <button onClick={handleLogout} className="botao-sair">Sair</button>
+                        {usuarioApi && isUserArea ? (
+                            <button onClick={logout} className="botao-sair">Sair</button>
                         ) : (
                             <NavLink to={'/perfil'} className="botao-entrar">Entrar</NavLink>
                         )}

@@ -100,12 +100,10 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
 
       setPacienteVinculado(pacienteComLembretes);
       setUsuarioApi({ ...usuarioApi!, cpfPaciente: cpfLimpo });
-
       setLinkMessage('Vinculação realizada com sucesso!');
       } catch {
         setLinkMessage('Erro ao vincular paciente.');
       } finally {
-        setLinkMessage('Vinculação realizada com sucesso!');
         setLinkingLoading(false);
     }
   };

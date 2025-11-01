@@ -1,19 +1,8 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
 
 export default function PacienteSidebar() {
-  const navigate = useNavigate();
-  const { usuarioApi } = useAuthCheck();
-
-  const handleLogout = () => {
-    // Remove os dados de autenticação do localStorage
-    localStorage.removeItem('cpfLogado');
-    localStorage.removeItem('usuarioApi');
-    localStorage.removeItem('tipoUsuario');
-
-    // Redireciona para a página inicial
-    navigate('/');
-  };
+  const { usuarioApi, logout } = useAuthCheck();
 
   return (
     <aside className="paciente-sidebar"
@@ -29,7 +18,7 @@ export default function PacienteSidebar() {
           <li><NavLink to="/perfil"><span className="nav-icon">👤</span> Meus Dados </NavLink></li>
           <li><NavLink to="/receitas"><span className="nav-icon">💊</span> Receitas </NavLink></li>
           <li><NavLink to="/consultas"><span className="nav-icon">📅</span> Consultas </NavLink></li>
-          <li><button onClick={handleLogout} className="botao-logout"><span className="nav-icon">🚪</span>Sair</button></li>
+          <li><button onClick={logout} className="botao-logout"><span className="nav-icon">🚪</span>Sair</button></li>
         </ul>
       </nav>
     </aside>
