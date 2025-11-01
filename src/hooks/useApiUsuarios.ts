@@ -45,20 +45,7 @@ export const useApiUsuarios = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsuarios = useCallback(async (): Promise<Usuario[]> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_URL}/usuario`);
-      if (!response.ok) throw new Error('Erro ao buscar usuários');
-      return await response.json();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+
 
   const getUsuarioPorCpf = useCallback(async (cpf: string): Promise<Usuario | null> => {
     setLoading(true);
@@ -273,7 +260,6 @@ export const useApiUsuarios = () => {
   return {
     loading,
     error,
-    fetchUsuarios,
     getUsuarioPorCpf,
     criarUsuario,
     atualizarUsuario,
