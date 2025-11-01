@@ -119,7 +119,6 @@ export default function Perfil() {
         if (usuarioAtualizado) {
         setUsuarioApi(usuarioAtualizado);
         setEditMode(false);
-        setStatusMessage("Perfil atualizado com sucesso!");
         } else {
         setStatusMessage("Falha ao atualizar o perfil. Tente novamente.");
         }
