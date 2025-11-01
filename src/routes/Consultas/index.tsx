@@ -2,37 +2,19 @@ import { useState, useEffect } from 'react';
 import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteConsulta } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
-import type { Usuario } from '../../hooks/useApiUsuarios';
 import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useLembretes } from '../../hooks/useLembretes';
 import { useUser } from '../../hooks/useUser';
 
 export default function Consultas() {
     useAuthCheck();
-    const { listarConsultas, adicionarConsulta, atualizarConsulta, removerConsulta, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { adicionarConsulta, atualizarConsulta, removerConsulta } = useApiUsuarios();
+    const { lembretesConsultas: lembretes, loading, error, refreshLembretes, paciente } = useLembretes();
     const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [paciente, setPaciente] = useState<Usuario | null>(null);
-    const [lembretes, setLembretes] = useState<LembreteConsulta[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
-
-    // Buscar lembretes ao carregar
-    useEffect(() => {
-        if (usuarioApi) {
-            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
-            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
-                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
-                    if (paciente) {
-                        setPaciente(paciente);
-                        listarConsultas(paciente.id).then(setLembretes);
-                    }
-                });
-            } else {
-                listarConsultas(usuarioApi.id).then(setLembretes);
-            }
-        }
-    }, [usuarioApi, getUsuarioPorCpf, listarConsultas]);
 
     const [formData, setFormData] = useState<{
         tipoConsulta: 'Presencial' | 'Teleconsulta';
@@ -111,7 +93,7 @@ export default function Consultas() {
         }
 
         // Recarregar lembretes
-        listarConsultas(usuarioId).then(setLembretes);
+        refreshLembretes();
 
         setIsModalOpen(false);
         setEditingLembrete(null);
@@ -119,26 +101,17 @@ export default function Consultas() {
 
     const handleRemoveLembrete = async (id: number) => {
         await removerConsulta(id);
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarConsultas(usuarioId).then(setLembretes);
-        }
+        refreshLembretes();
     };
 
     const handleConcluirLembrete = async (id: number) => {
         await atualizarConsulta(id, { status: 'Concluída' });
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarConsultas(usuarioId).then(setLembretes);
-        }
+        refreshLembretes();
     };
 
     const handleReverterLembrete = async (id: number) => {
         await atualizarConsulta(id, { status: 'Agendada' });
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarConsultas(usuarioId).then(setLembretes);
-        }
+        refreshLembretes();
     };
 
     const handleOpenAddModal = () => {

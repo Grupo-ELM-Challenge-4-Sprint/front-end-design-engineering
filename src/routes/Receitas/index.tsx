@@ -1,40 +1,22 @@
 import { useState, useEffect } from 'react';
 import PacientePage from '../../components/Painel/PacientePage';
-import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
-import type { Usuario } from '../../hooks/useApiUsuarios';
 import { ReceitaCard } from '../../components/LembreteCard/LembreteCard';
 import { useAuthCheck } from '../../hooks/useAuthCheck';
+import { useLembretes } from '../../hooks/useLembretes';
 import { useUser } from '../../hooks/useUser';
+import type { LembreteReceita } from '../../hooks/useApiUsuarios';
 
 export default function Receitas() {
     useAuthCheck();
-    const { listarReceitas, adicionarReceita, atualizarReceita, removerReceita, loading, error, getUsuarioPorCpf } = useApiUsuarios();
+    const { adicionarReceita, atualizarReceita, removerReceita } = useApiUsuarios();
+    const { lembretesReceitas: lembretes, loading, error, refreshLembretes, paciente } = useLembretes();
     const { usuarioApi } = useUser();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [paciente, setPaciente] = useState<Usuario | null>(null);
-    const [lembretes, setLembretes] = useState<LembreteReceita[]>([]);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
     const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
-
-    // Buscar lembretes ao carregar
-    useEffect(() => {
-        if (usuarioApi) {
-            // Se for cuidador e tiver paciente vinculado, buscar lembretes do paciente
-            if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
-                getUsuarioPorCpf(usuarioApi.cpfPaciente).then((paciente) => {
-                    if (paciente) {
-                        setPaciente(paciente);
-                        listarReceitas(paciente.id).then(setLembretes);
-                    }
-                });
-            } else {
-                listarReceitas(usuarioApi.id).then(setLembretes);
-            }
-        }
-    }, [usuarioApi, getUsuarioPorCpf, listarReceitas]);
     const [formData, setFormData] = useState<{
         nome: string;
         frequencia: number;
@@ -131,7 +113,7 @@ export default function Receitas() {
          }
 
         // Recarregar lembretes
-        listarReceitas(usuarioId).then(setLembretes);
+        refreshLembretes();
 
         setIsModalOpen(false);
         setEditingLembrete(null);
@@ -139,26 +121,17 @@ export default function Receitas() {
 
     const handleRemoveLembrete = async (id: number) => {
         await removerReceita(id);
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarReceitas(usuarioId).then(setLembretes);
-        }
+        refreshLembretes();
     };
 
     const handleConcluirLembrete = async (id: number) => {
         await atualizarReceita(id, { status: 'Inativo' });
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarReceitas(usuarioId).then(setLembretes);
-        }
+        refreshLembretes();
     };
 
     const handleReativarLembrete = async (id: number) => {
         await atualizarReceita(id, { status: 'Ativo' });
-        if (usuarioApi) {
-            const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.id : usuarioApi.id;
-            listarReceitas(usuarioId).then(setLembretes);
-        }
+        refreshLembretes();
     };
 
     const handleOpenAddModal = () => {
