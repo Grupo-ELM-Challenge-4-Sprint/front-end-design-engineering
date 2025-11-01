@@ -21,9 +21,14 @@ export const useApiUsuarios = () => {
           ...options?.headers,
         },
       });
+      if (response.status === 404 && endpoint.includes('/usuario/cpf/')) {
+        return null;
+      }
       if (!response.ok) {
         const errorBody = await response.text();
-        console.error(`Erro ${response.status} em ${endpoint}: ${errorBody}`);
+        if (!(response.status === 404 && endpoint.includes('/usuario/cpf/'))) {
+          console.error(`Erro ${response.status} em ${endpoint}: ${errorBody}`);
+        }
         throw new Error(`Erro ${response.status} ao ${options?.method || 'buscar'} dados.`);
       }
       // Se a resposta for 204 No Content (DELETE), retorna null ou true
@@ -38,7 +43,7 @@ export const useApiUsuarios = () => {
       // Retornar um valor padrão apropriado para o tipo de retorno esperado
       if (endpoint.includes('usuario')) return null;
       if (options?.method === 'DELETE') return false;
-      return []; // Para listas
+      return [];
     } finally {
       setLoading(false);
     }
