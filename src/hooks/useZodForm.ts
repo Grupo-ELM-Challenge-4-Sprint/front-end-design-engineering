@@ -4,7 +4,6 @@ import { z } from 'zod';
 export function useZodForm<T extends z.ZodSchema>(schema: T) {
   type FormData = z.infer<T>;
 
-  // Initialize with empty strings for all fields to avoid controlled/uncontrolled issues
   const getInitialData = useCallback((): Partial<FormData> => {
     try {
       if (schema instanceof z.ZodObject) {
@@ -16,7 +15,7 @@ export function useZodForm<T extends z.ZodSchema>(schema: T) {
         return initial;
       }
     } catch (e) {
-      // Fallback if schema introspection fails
+      console.error('Erro ao obter dados iniciais do schema:', e);
     }
     return {};
   }, [schema]);
@@ -27,7 +26,6 @@ export function useZodForm<T extends z.ZodSchema>(schema: T) {
 
   const setValue = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
     setData(prev => ({ ...prev, [key]: value }));
-    // Clear error when user starts typing
     if (errors[key]) {
       setErrors(prev => {
         const newErrors = { ...prev };

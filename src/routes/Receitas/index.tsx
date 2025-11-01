@@ -9,7 +9,7 @@ import Loading from '../../components/Loading/Loading';
 
 export default function Receitas() {
     const { adicionarReceita, atualizarReceita, removerReceita } = useApiReceitas();
-    const { lembretesReceitas, loading, error, refreshReceitas, usuarioApi } = useReceitas();
+    const { lembretesReceitas, loading, error, refreshReceitas, usuarioApi, paciente } = useReceitas();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteReceita | null>(null);
@@ -17,14 +17,14 @@ export default function Receitas() {
     const handleFormSubmit = async (formData: any) => {
         if (!usuarioApi) return;
 
-        // ## Ajuste 5: Usa idUser do backend ##
-        const usuarioId = usuarioApi.idUser;
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente)
+                          ? paciente.idUser
+                          : usuarioApi.idUser;
 
-        // ## Ajuste 6: Payload com nomes corretos ##
         const receitaData = {
             nomeMedicamento: formData.nomeMedicamento,
-            frequenciaHoras: Number(formData.frequenciaHoras), // Garante que é número
-            dias: formData.dias, // A API (useApiUsuarios) converte para string
+            frequenciaHoras: Number(formData.frequenciaHoras),
+            dias: formData.dias,
             numeroDiasTratamento: Number(formData.numeroDiasTratamento),
             dataInicio: formData.dataInicio,
             horaInicio: formData.horaInicio,
@@ -33,16 +33,15 @@ export default function Receitas() {
 
         try {
             if (editingLembrete) {
-                // ## Ajuste 7: Usa idReceita ##
                 await atualizarReceita(editingLembrete.idReceita, {
                     ...receitaData,
-                    idUser: usuarioId, // Inclui idUser na atualização
-                    status: editingLembrete.status, // Preserva status
+                    idUser: usuarioId,
+                    status: editingLembrete.status,
                 });
             } else {
                 await adicionarReceita(usuarioId, {
                     ...receitaData,
-                    status: 'Ativo', // Status padrão para novo
+                    status: 'Ativo',
                 });
             }
             refreshReceitas();
@@ -51,38 +50,29 @@ export default function Receitas() {
         }
     };
 
-    // ## Ajuste 8: Handlers usam idReceita ##
     const handleRemoveLembrete = async (id: number) => {
-        await removerReceita(id); // id aqui é idReceita
+        await removerReceita(id);
         refreshReceitas();
     };
 
     const handleConcluirLembrete = async (id: number) => {
-        if (!usuarioApi) return;
-        // Buscar o lembrete atual para obter todos os dados necessários
         const lembreteAtual = lembretesReceitas.find(l => l.idReceita === id);
         if (!lembreteAtual) return;
-        // Usa a mesma lógica de idUser que em handleFormSubmit
-        const usuarioId = usuarioApi.idUser;
+        
         await atualizarReceita(id, {
             ...lembreteAtual,
             status: 'Inativo',
-            idUser: usuarioId
         });
         refreshReceitas();
     };
 
     const handleReativarLembrete = async (id: number) => {
-        if (!usuarioApi) return;
-        // Buscar o lembrete atual para obter todos os dados necessários
         const lembreteAtual = lembretesReceitas.find(l => l.idReceita === id);
         if (!lembreteAtual) return;
-        // Usa a mesma lógica de idUser que em handleFormSubmit
-        const usuarioId = usuarioApi.idUser;
+
         await atualizarReceita(id, {
             ...lembreteAtual,
             status: 'Ativo',
-            idUser: usuarioId
         });
         refreshReceitas();
     };

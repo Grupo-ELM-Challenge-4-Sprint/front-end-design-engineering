@@ -1,87 +1,92 @@
-import { useState, useCallback } from 'react';
-import type { LembreteConsulta } from '../types/lembretes';
+import { useState, useEffect, useCallback } from 'react';
+import { useApiConsultas } from './useApiConsultas';
+import { useAuthCheck } from './useAuthCheck';
+import type { LembreteConsulta, Usuario } from '../types/lembretes';
+import { useApiUsuarios } from './useApiUsuarios';
 
-const API_URL = '/api';
+export const useConsultas = () => {
+    const { listarConsultas } = useApiConsultas();
+    const { usuarioApi } = useAuthCheck();
+    const { getUsuarioPorCpf } = useApiUsuarios();
 
-export const useApiConsultas = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const [lembretesConsultas, setLembretesConsultas] = useState<LembreteConsulta[]>([]);
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [hasFetched, setHasFetched] = useState(false);
 
-  const fetchApi = useCallback(async (endpoint: string, options?: RequestInit) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...options?.headers,
-        },
-      });
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`Erro ${response.status} em ${endpoint}: ${errorBody}`);
-        throw new Error(`Erro ${response.status} ao ${options?.method || 'buscar'} dados.`);
-      }
-      // Se a resposta for 204 No Content (DELETE), retorna null ou true
-       if (response.status === 204) {
-           return options?.method === 'DELETE' ? true : null;
-       }
-      return await response.json();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro desconhecido na API';
-      setError(message);
-      console.error(message, err);
-      // Retornar um valor padrão apropriado para o tipo de retorno esperado
-      if (endpoint.includes('consulta')) return null;
-      if (options?.method === 'DELETE') return false;
-      return []; // Para listas
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    useEffect(() => {
+        if (usuarioApi && !hasFetched) {
+            setHasFetched(true);
+            setLoading(true);
+            setError(null);
+            setPaciente(null); // Reseta o paciente
 
-  // --- Funções CONSULTA ---
-  const listarConsultas = useCallback(async (usuarioId: number): Promise<LembreteConsulta[]> => {
-      // Usa o endpoint /consulta/usuario/{userId} criado no Java
-      const consultasDoUsuario = await fetchApi(`/consulta/usuario/${usuarioId}`) as LembreteConsulta[] | null;
-      return consultasDoUsuario || []; // Retorna a lista filtrada pela API ou um array vazio
+            const fetchDados = async () => {
+                try {
+                    if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                        // É CUIDADOR, buscar dados do paciente
+                        const pacienteEncontrado = await getUsuarioPorCpf(usuarioApi.cpfPaciente);
+                        if (pacienteEncontrado) {
+                            setPaciente(pacienteEncontrado);
+                            const consultasData = await listarConsultas(pacienteEncontrado.idUser);
+                            setLembretesConsultas(consultasData || []);
+                        } else {
+                            setError('Paciente vinculado não encontrado.');
+                        }
+                    } else if (usuarioApi.tipoUsuario === 'PACIENTE') {
+                        // É PACIENTE, buscar próprios dados
+                        const consultasData = await listarConsultas(usuarioApi.idUser);
+                        setLembretesConsultas(consultasData || []);
+                    }
+                    // Se for cuidador sem paciente, não faz nada, listas ficam vazias
+                } catch (err) {
+                    console.error('Erro ao buscar consultas:', err);
+                    setError('Erro ao carregar consultas');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            fetchDados();
+        } else if (!usuarioApi) {
+             // Se o usuário não estiver carregado, pare o loading
+             const cpfLogado = localStorage.getItem('cpfLogado');
+             if (!cpfLogado) {
+                  setLoading(false);
+             }
+        }
+    }, [usuarioApi, hasFetched, getUsuarioPorCpf, listarConsultas]);
 
-  }, [fetchApi]);
+    const refreshConsultas = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        // Determina qual ID usar (paciente se existir, senão o próprio usuário)
+        const idParaBuscar = (usuarioApi?.tipoUsuario === 'CUIDADOR' && paciente) 
+                             ? paciente.idUser 
+                             : usuarioApi?.idUser;
 
+        if (idParaBuscar) {
+            try {
+                const consultasData = await listarConsultas(idParaBuscar);
+                setLembretesConsultas(consultasData || []);
+            } catch (err) {
+                setError('Erro ao atualizar consultas');
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setLembretesConsultas([]);
+            setLoading(false);
+        }
+    }, [usuarioApi, paciente, listarConsultas]);
 
-   const adicionarConsulta = useCallback(async (usuarioId: number, novaConsulta: Omit<LembreteConsulta, 'idConsulta' | 'idUser'>): Promise<LembreteConsulta | null> => {
-        const payload = {
-            ...novaConsulta,
-            idUser: usuarioId,
-        };
-        return fetchApi('/consulta', {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        });
-    }, [fetchApi]);
-
-
-    const atualizarConsulta = useCallback(async (consultaId: number, dadosAtualizados: Omit<LembreteConsulta, 'idConsulta'>): Promise<LembreteConsulta | null> => {
-        const payload = { ...dadosAtualizados };
-        // Ajustar formato de hora se necessário
-        return fetchApi(`/consulta/${consultaId}`, {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-        });
-    }, [fetchApi]);
-
-  const removerConsulta = useCallback(async (consultaId: number): Promise<boolean> => {
-      return fetchApi(`/consulta/${consultaId}`, { method: 'DELETE' }) as Promise<boolean>;
-  }, [fetchApi]);
-
-  return {
-    loading,
-    error,
-    listarConsultas,
-    adicionarConsulta,
-    atualizarConsulta,
-    removerConsulta,
-  };
+    return {
+        usuarioApi,
+        paciente,
+        lembretesConsultas,
+        loading,
+        error,
+        refreshConsultas
+    };
 };

@@ -3,14 +3,12 @@ import PacientePage from '../../components/Painel/PacientePage';
 import type { LembreteConsulta } from '../../types/lembretes';
 import { useApiConsultas } from '../../hooks/useApiConsultas';
 import { ConsultaCard } from '../../components/LembreteCard/LembreteCard';
-//import { useAuthCheck } from '../../hooks/useAuthCheck';
 import { useConsultas } from '../../hooks/useConsultas';
 import ModalLembrete from '../../components/LembreteCard/ModalLembrete';
 import Loading from '../../components/Loading/Loading';
 export default function Consultas() {
-    //useAuthCheck();
     const { adicionarConsulta, atualizarConsulta, removerConsulta } = useApiConsultas();
-    const { lembretesConsultas, loading, error, refreshConsultas, usuarioApi } = useConsultas();
+    const { lembretesConsultas, loading, error, refreshConsultas, usuarioApi, paciente } = useConsultas();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
@@ -18,10 +16,10 @@ export default function Consultas() {
     const handleFormSubmit = async (formData: any) => {
         if (!usuarioApi) return;
 
-        // ## Ajuste 4: Usa idUser do backend ##
-        const usuarioId = usuarioApi.idUser;
+        const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente)
+                          ? paciente.idUser
+                          : usuarioApi.idUser;
 
-        // ## Ajuste 5: Payload alinhado com a API (campo 'hora' recebe a string ISO) ##
         const consultaData = {
             especialidade: formData.especialidadeConsulta,
             medico: formData.medicoConsulta || 'Não especificado',
@@ -34,10 +32,9 @@ export default function Consultas() {
 
 
         if (editingLembrete) {
-            // ## Ajuste 6: Usa idConsulta ##
             await atualizarConsulta(editingLembrete.idConsulta, {
                 ...consultaData,
-                idUser: usuarioId, // Inclui idUser na atualização
+                idUser: usuarioId,
                 status: editingLembrete.status,
             });
         } else {
@@ -46,13 +43,11 @@ export default function Consultas() {
                 status: 'Agendada',
             });
         }
-
         refreshConsultas();
     };
 
-    // ## Ajuste 7: Funções de manipulação usam idConsulta ##
     const handleRemoveLembrete = async (id: number) => {
-        await removerConsulta(id); // id aqui é idConsulta
+        await removerConsulta(id);
         refreshConsultas();
     };
 
@@ -64,7 +59,6 @@ export default function Consultas() {
         await atualizarConsulta(id, {
             ...lembreteAtual,
             status: 'Concluída',
-            idUser: usuarioApi.idUser
         });
         refreshConsultas();
     };
@@ -77,7 +71,6 @@ export default function Consultas() {
         await atualizarConsulta(id, {
             ...lembreteAtual,
             status: 'Agendada',
-            idUser: usuarioApi.idUser
         });
         refreshConsultas();
     };
@@ -119,7 +112,7 @@ export default function Consultas() {
                 <div id="lembretes-consultas-content" className="space-y-6">
                     {loading && <Loading loading={loading} message="Carregando lembretes de consultas..." />}
                     {error && <p className="text-center text-red-600">Erro ao carregar lembretes: {error}</p>}
-                    {/* ## Ajuste 8: Usa lembretesConsultas e idConsulta ## */}
+
                     {!loading && !error && lembretesConsultas.length > 0 ? (
                         lembretesConsultas.map((lembrete) => (
                             <ConsultaCard

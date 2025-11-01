@@ -26,49 +26,53 @@ export default function Perfil() {
 
     // Buscar lembretes quando o usuário estiver disponível
     useEffect(() => {
-        if (usuarioApi) {
+        const buscarDadosDoPerfil = async (usuario: Usuario) => {
             setLoading(true);
 
             // Se for paciente, buscar seus próprios lembretes
-            if (usuarioApi.tipoUsuario === 'PACIENTE') {
-                Promise.all([
-                    listarConsultas(usuarioApi.idUser),
-                    listarReceitas(usuarioApi.idUser)
-                ]).then(([consultas, receitas]) => {
+            if (usuario.tipoUsuario === 'PACIENTE') {
+                try {
+                    const consultas = await listarConsultas(usuario.idUser);
+                    const receitas = await listarReceitas(usuario.idUser);
+                    
                     setMeusLembretes({
-                        lembretesConsulta: consultas,
-                        lembretesReceita: receitas,
+                        lembretesConsulta: consultas || [],
+                        lembretesReceita: receitas || [],
                     });
-                    setLoading(false);
-                }).catch((error) => {
+                } catch (error) {
                     console.error('Erro ao buscar lembretes do paciente:', error);
+                } finally {
                     setLoading(false);
-                });
+                }
             }
 
             // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
-            else if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
-                getUsuarioPorCpf(usuarioApi.cpfPaciente).then(async (paciente) => {
+            else if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
+                try {
+                    const paciente = await getUsuarioPorCpf(usuario.cpfPaciente);
                     if (paciente) {
-                        const [consultasPaciente, receitasPaciente] = await Promise.all([
-                            listarConsultas(paciente.idUser),
-                            listarReceitas(paciente.idUser)
-                        ]);
+                        const consultasPaciente = await listarConsultas(paciente.idUser);
+                        const receitasPaciente = await listarReceitas(paciente.idUser);
+                        
                         const pacienteComLembretes = {
                             ...paciente,
-                            lembretesConsulta: consultasPaciente,
-                            lembretesReceita: receitasPaciente,
+                            lembretesConsulta: consultasPaciente || [],
+                            lembretesReceita: receitasPaciente || [],
                         };
                         setPacienteVinculado(pacienteComLembretes);
                     }
-                    setLoading(false);
-                }).catch((error) => {
+                } catch (error) {
                     console.error('Erro ao buscar dados do paciente:', error);
+                } finally {
                     setLoading(false);
-                });
+                }
             } else {
                 setLoading(false);
             }
+        };
+
+        if (usuarioApi) {
+            buscarDadosDoPerfil(usuarioApi);
         }
     }, [usuarioApi, getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
@@ -98,20 +102,25 @@ export default function Perfil() {
         e.preventDefault();
         if (!usuarioApi) return;
         setUpdating(true);
-        atualizarUsuario(usuarioApi.idUser, {
+
+        const payloadCompleto = {
+            ...usuarioApi,
             email: editEmail,
             telefone: editTelefone
-        }).then((sucesso) => {
-            if (sucesso) {
-                setUsuarioApi({ ...usuarioApi, email: editEmail, telefone: editTelefone });
-                setEditMode(false);
-            }
-            setUpdating(false);
-        }).catch(() => {
-            setUpdating(false);
-        });
-    };
+        };
 
+        // Envia o objeto completo para o hook
+        atualizarUsuario(usuarioApi.idUser, payloadCompleto)
+            .then((usuarioAtualizado) => { 
+        if (usuarioAtualizado) { 
+        setUsuarioApi(usuarioAtualizado); 
+        setEditMode(false);
+        }
+        setUpdating(false);
+    }).catch(() => {
+        setUpdating(false);
+    });
+  };
     return (
         <PacientePage>
             <Loading loading={loading} message="Carregando dados do perfil..." />

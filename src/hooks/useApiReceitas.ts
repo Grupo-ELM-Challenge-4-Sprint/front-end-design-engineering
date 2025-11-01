@@ -1,88 +1,89 @@
-import { useState, useCallback } from 'react';
-import type { LembreteReceita } from '../types/lembretes';
+import { useState, useEffect, useCallback } from 'react';
+import { useApiReceitas } from './useApiReceitas';
+import { useAuthCheck } from './useAuthCheck';
+import type { LembreteReceita, Usuario } from '../types/lembretes';
+import { useApiUsuarios } from './useApiUsuarios';
 
-const API_URL = '/api';
+export const useReceitas = () => {
+    const { listarReceitas } = useApiReceitas();
+    const { usuarioApi } = useAuthCheck();
+    const { getUsuarioPorCpf } = useApiUsuarios();
 
-export const useApiReceitas = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    const [lembretesReceitas, setLembretesReceitas] = useState<LembreteReceita[]>([]);
+    const [paciente, setPaciente] = useState<Usuario | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [hasFetched, setHasFetched] = useState(false);
 
-  const fetchApi = useCallback(async (endpoint: string, options?: RequestInit) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          ...options?.headers,
-        },
-      });
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`Erro ${response.status} em ${endpoint}: ${errorBody}`);
-        throw new Error(`Erro ${response.status} ao ${options?.method || 'buscar'} dados.`);
-      }
-      // Se a resposta for 204 No Content (DELETE), retorna null ou true
-       if (response.status === 204) {
-           return options?.method === 'DELETE' ? true : null;
-       }
-      return await response.json();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro desconhecido na API';
-      setError(message);
-      console.error(message, err);
-      // Retornar um valor padrão apropriado para o tipo de retorno esperado
-      if (endpoint.includes('receita')) return null;
-      if (options?.method === 'DELETE') return false;
-      return []; // Para listas
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    useEffect(() => {
+        if (usuarioApi && !hasFetched) {
+            setHasFetched(true);
+            setLoading(true);
+            setError(null);
+            setPaciente(null);
 
-  // --- Funções RECEITA ---
-  const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
-      // Usa o endpoint /receita/usuario/{userId} criado no Java
-      const receitasDoUsuario = await fetchApi(`/receita/usuario/${usuarioId}`) as LembreteReceita[] | null;
-      return receitasDoUsuario || [];
+            const fetchDados = async () => {
+                try {
+                    if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                        // É CUIDADOR, buscar dados do paciente
+                        const pacienteEncontrado = await getUsuarioPorCpf(usuarioApi.cpfPaciente);
+                        if (pacienteEncontrado) {
+                            setPaciente(pacienteEncontrado);
+                            const receitasData = await listarReceitas(pacienteEncontrado.idUser);
+                            setLembretesReceitas(receitasData || []);
+                        } else {
+                            setError('Paciente vinculado não encontrado.');
+                        }
+                    } else if (usuarioApi.tipoUsuario === 'PACIENTE') {
+                        // É PACIENTE, buscar próprios dados
+                        const receitasData = await listarReceitas(usuarioApi.idUser);
+                        setLembretesReceitas(receitasData || []);
+                    }
+                } catch (err) {
+                    console.error('Erro ao buscar receitas:', err);
+                    setError('Erro ao carregar receitas');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            fetchDados();
+        } else if (!usuarioApi) {
+             const cpfLogado = localStorage.getItem('cpfLogado');
+             if (!cpfLogado) {
+                  setLoading(false);
+             }
+        }
+    }, [usuarioApi, hasFetched, getUsuarioPorCpf, listarReceitas]);
 
-  }, [fetchApi]);
+    const refreshReceitas = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        const idParaBuscar = (usuarioApi?.tipoUsuario === 'CUIDADOR' && paciente) 
+                             ? paciente.idUser 
+                             : usuarioApi?.idUser;
 
+        if (idParaBuscar) {
+            try {
+                const receitasData = await listarReceitas(idParaBuscar);
+                setLembretesReceitas(receitasData || []);
+            } catch (err) {
+                setError('Erro ao atualizar receitas');
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setLembretesReceitas([]);
+            setLoading(false);
+        }
+    }, [usuarioApi, paciente, listarReceitas]);
 
-    const adicionarReceita = useCallback(async (usuarioId: number, novaReceita: Omit<LembreteReceita, 'idReceita' | 'idUser'>): Promise<LembreteReceita | null> => {
-        const payload = {
-            ...novaReceita,
-            idUser: usuarioId,
-        };
-        return fetchApi('/receita', {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        });
-    }, [fetchApi]);
-
-
-    const atualizarReceita = useCallback(async (receitaId: number, dadosAtualizados: Partial<Omit<LembreteReceita, 'idReceita'>>): Promise<LembreteReceita | null> => {
-        const payload = {
-            ...dadosAtualizados,
-        };
-         return fetchApi(`/receita/${receitaId}`, {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-        });
-    }, [fetchApi]);
-
-  const removerReceita = useCallback(async (receitaId: number): Promise<boolean> => {
-      return fetchApi(`/receita/${receitaId}`, { method: 'DELETE' }) as Promise<boolean>;
-  }, [fetchApi]);
-
-  return {
-    loading,
-    error,
-    listarReceitas,
-    adicionarReceita,
-    atualizarReceita,
-    removerReceita,
-  };
+    return {
+        usuarioApi,
+        paciente,
+        lembretesReceitas,
+        loading,
+        error,
+        refreshReceitas
+    };
 };

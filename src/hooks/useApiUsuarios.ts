@@ -59,8 +59,6 @@ export const useApiUsuarios = () => {
       // Ajustar o payload para corresponder ao backend
       const payload = {
           ...usuarioData,
-          // Não precisa enviar idUser
-          // dataNascimento já está YYYY-MM-DD
       };
       return fetchApi('/usuario', {
           method: 'POST',
@@ -69,16 +67,9 @@ export const useApiUsuarios = () => {
   }, [fetchApi]);
 
   const atualizarUsuario = useCallback(async (idUser: number, usuarioData: Partial<Omit<Usuario, 'idUser' | 'senha'>>): Promise<Usuario | null> => {
-      // Ajustar o payload
       const payload = { ...usuarioData };
-      // Remover campos não editáveis se existirem
-      delete payload.cpf;
-      delete payload.nome;
-      delete payload.tipoUsuario;
-      // dataNascimento precisa estar no formato YYYY-MM-DD se for alterável
-
       return fetchApi(`/usuario/${idUser}`, {
-          method: 'PUT', // Java Resource usa PUT para update
+          method: 'PUT',
           body: JSON.stringify(payload),
       });
   }, [fetchApi]);
