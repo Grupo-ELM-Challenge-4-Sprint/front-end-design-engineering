@@ -1,67 +1,76 @@
 import { useEffect, useState } from "react";
 import PacientePage from "../../components/Painel/PacientePage";
 import { useApiUsuarios } from "../../hooks/useApiUsuarios";
-import type { Usuario, LembreteConsulta, LembreteReceita } from "../../hooks/useApiUsuarios";
+import { useApiConsultas } from "../../hooks/useApiConsultas";
+import { useApiReceitas } from "../../hooks/useApiReceitas";
+import type { Usuario, LembreteConsulta, LembreteReceita } from "../../types/lembretes";
 import { useAuthCheck } from "../../hooks/useAuthCheck";
-import { useUser } from "../../hooks/useUser";
 import { formatDate } from "../../utils/dateUtils";
 import { useInputMasks } from "../../hooks/useInputMasks";
 import Loading from "../../components/Loading/Loading";
+import { ProximosLembretes } from "../../components/LembreteCard/LembreteCard";
 import VinculacaoCuidador from "../../components/VinculacaoCuidador/VinculacaoCuidador";
-import ProximosLembretes from "../../components/ProximosLembretes/ProximosLembretes";
+ 
 
 export default function Perfil() {
     useAuthCheck();
-    const { atualizarUsuario, listarConsultas, listarReceitas, getUsuarioPorCpf } = useApiUsuarios();
-    const { usuarioApi, setUsuarioApi } = useUser();
+    const { atualizarUsuario, getUsuarioPorCpf } = useApiUsuarios();
+    const { listarConsultas } = useApiConsultas();
+    const { listarReceitas } = useApiReceitas();
+    const { usuarioApi, setUsuarioApi } = useAuthCheck();
     const { applyMask } = useInputMasks();
     const [pacienteVinculado, setPacienteVinculado] = useState<(Usuario & { lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] }) | null>(null);
     const [meusLembretes, setMeusLembretes] = useState<{ lembretesConsulta: LembreteConsulta[]; lembretesReceita: LembreteReceita[] } | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
 
-    // Buscar usuário da API ao carregar (apenas se não estiver carregado)
+    // Buscar lembretes quando o usuário estiver disponível
     useEffect(() => {
-        const cpfLogado = localStorage.getItem('cpfLogado');
-        if (cpfLogado && !usuarioApi) {
+        if (usuarioApi) {
             setLoading(true);
-            getUsuarioPorCpf(cpfLogado).then(async (usuario) => {
-                if (usuario) {
-                    setUsuarioApi(usuario);
 
-                    // Se for paciente, buscar seus próprios lembretes
-                    if (usuario.tipoUsuario === 'PACIENTE') {
-                        const consultas = await listarConsultas(usuario.idUser);
-                        const receitas = await listarReceitas(usuario.idUser);
-                        setMeusLembretes({
-                            lembretesConsulta: consultas,
-                            lembretesReceita: receitas,
-                        });
-                    }
+            // Se for paciente, buscar seus próprios lembretes
+            if (usuarioApi.tipoUsuario === 'PACIENTE') {
+                Promise.all([
+                    listarConsultas(usuarioApi.idUser),
+                    listarReceitas(usuarioApi.idUser)
+                ]).then(([consultas, receitas]) => {
+                    setMeusLembretes({
+                        lembretesConsulta: consultas,
+                        lembretesReceita: receitas,
+                    });
+                    setLoading(false);
+                }).catch((error) => {
+                    console.error('Erro ao buscar lembretes do paciente:', error);
+                    setLoading(false);
+                });
+            }
 
-                    // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
-                    if (usuario.tipoUsuario === 'CUIDADOR' && usuario.cpfPaciente) {
-                        const paciente = await getUsuarioPorCpf(usuario.cpfPaciente);
-                        if (paciente) {
-                            const consultasPaciente = await listarConsultas(paciente.idUser);
-                            const receitasPaciente = await listarReceitas(paciente.idUser);
-                            const pacienteComLembretes = {
-                                ...paciente,
-                                lembretesConsulta: consultasPaciente,
-                                lembretesReceita: receitasPaciente,
-                            };
-                            setPacienteVinculado(pacienteComLembretes);
-                        }
+            // Se for cuidador e tiver paciente vinculado, buscar dados do paciente
+            else if (usuarioApi.tipoUsuario === 'CUIDADOR' && usuarioApi.cpfPaciente) {
+                getUsuarioPorCpf(usuarioApi.cpfPaciente).then(async (paciente) => {
+                    if (paciente) {
+                        const [consultasPaciente, receitasPaciente] = await Promise.all([
+                            listarConsultas(paciente.idUser),
+                            listarReceitas(paciente.idUser)
+                        ]);
+                        const pacienteComLembretes = {
+                            ...paciente,
+                            lembretesConsulta: consultasPaciente,
+                            lembretesReceita: receitasPaciente,
+                        };
+                        setPacienteVinculado(pacienteComLembretes);
                     }
-                }
+                    setLoading(false);
+                }).catch((error) => {
+                    console.error('Erro ao buscar dados do paciente:', error);
+                    setLoading(false);
+                });
+            } else {
                 setLoading(false);
-            }).catch(() => {
-                setLoading(false);
-            });
-        } else if (!cpfLogado) {
-            setLoading(false);
+            }
         }
-    }, [getUsuarioPorCpf, listarConsultas, listarReceitas, usuarioApi]);
+    }, [usuarioApi, getUsuarioPorCpf, listarConsultas, listarReceitas]);
 
     const [editMode, setEditMode] = useState(false);
     const [editEmail, setEditEmail] = useState('');
@@ -170,12 +179,14 @@ export default function Perfil() {
                     </div>
                 </form>
 
-                <ProximosLembretes
-                    lembretesConsultas={pacienteVinculado?.lembretesConsulta || meusLembretes?.lembretesConsulta || []}
-                    lembretesReceitas={pacienteVinculado?.lembretesReceita || meusLembretes?.lembretesReceita || []}
-                    usuarioApi={usuarioApi}
-                    pacienteVinculado={pacienteVinculado}
-                />
+                {!loading && (
+                    <ProximosLembretes
+                        lembretesConsultas={pacienteVinculado?.lembretesConsulta || meusLembretes?.lembretesConsulta || []}
+                        lembretesReceitas={pacienteVinculado?.lembretesReceita || meusLembretes?.lembretesReceita || []}
+                        usuarioApi={usuarioApi}
+                        pacienteVinculado={pacienteVinculado}
+                    />
+                )}
             </div>
         </PacientePage>
     );

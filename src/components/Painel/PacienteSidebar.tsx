@@ -10,18 +10,31 @@ export default function PacienteSidebar() {
 
   useEffect(() => {
     const cpfLogado = localStorage.getItem('cpfLogado');
-    if (cpfLogado) {
+    const tipoUsuarioStorage = localStorage.getItem('tipoUsuario');
+    if (tipoUsuarioStorage) {
+      setTipoUsuario(tipoUsuarioStorage as 'PACIENTE' | 'CUIDADOR');
+    } else if (cpfLogado) {
+      // Fallback: tentar buscar via API se não estiver no localStorage
       getUsuarioPorCpf(cpfLogado).then((usuario) => {
         if (usuario) {
           setTipoUsuario(usuario.tipoUsuario);
+          // Salvar no localStorage para próximas vezes
+          localStorage.setItem('tipoUsuario', usuario.tipoUsuario);
         }
+      }).catch(() => {
+        // Silenciar erro e usar fallback
+        setTipoUsuario('PACIENTE');
       });
+    } else {
+      setTipoUsuario('PACIENTE'); // fallback
     }
   }, [getUsuarioPorCpf]);
 
   const handleLogout = () => {
     // Remove os dados de autenticação do localStorage
     localStorage.removeItem('cpfLogado');
+    localStorage.removeItem('usuarioApi');
+    localStorage.removeItem('tipoUsuario');
 
     // Redireciona para a página inicial
     navigate('/');
@@ -47,5 +60,3 @@ export default function PacienteSidebar() {
     </aside>
   );
 }
-
-

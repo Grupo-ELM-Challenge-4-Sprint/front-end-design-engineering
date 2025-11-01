@@ -105,9 +105,17 @@ export const formatLocalDateForInput = (dateString: string): string => {
 };
 
 export const formatLocalTimeForInput = (dateTimeString: string): string => {
-   // Extrai HH:mm de YYYY-MM-DDTHH:mm:ss
-   if (!dateTimeString || dateTimeString.length < 16) return '';
-   return dateTimeString.substring(11, 16);
+   // Extrai HH:mm de YYYY-MM-DDTHH:mm:ss ou HH:mm diretamente
+   if (!dateTimeString) return '';
+   if (dateTimeString.length === 5 && dateTimeString.includes(':')) {
+       // Já está no formato HH:mm
+       return dateTimeString;
+   }
+   if (dateTimeString.length >= 16) {
+       // Formato completo, extrai HH:mm
+       return dateTimeString.substring(11, 16);
+   }
+   return '';
 };
 
 export const combineDateAndTime = (date: string, time: string): string => {
