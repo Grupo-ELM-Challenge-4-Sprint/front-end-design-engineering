@@ -136,7 +136,7 @@ export default function ModalLembrete({
         <h3 id="modalTitle" className="text-2xl font-bold text-slate-900 mb-4">
           {editingLembrete ? 'Alterar Lembrete' : 'Adicionar Lembrete'}
         </h3>
-        <form onSubmit={handleFormSubmit} className="space-y-4">
+        <form key={editingLembrete ? 'edit-' + (type === 'consulta' ? (editingLembrete as LembreteConsulta).idConsulta : (editingLembrete as LembreteReceita).idReceita) : 'new'} onSubmit={handleFormSubmit} className="space-y-4">
           {type === 'consulta' ? (
             <>
               <div>

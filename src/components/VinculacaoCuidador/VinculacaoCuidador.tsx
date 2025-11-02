@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApiUsuarios } from '../../hooks/useApiUsuarios';
 import { useApiConsultas } from '../../hooks/useApiConsultas';
 import { useApiReceitas } from '../../hooks/useApiReceitas';
@@ -21,6 +21,14 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
   const { usuarioApi, setUsuarioApi } = useAuthCheck();
   const [linkMessage, setLinkMessage] = useState<string>('');
   const [linkingLoading, setLinkingLoading] = useState(false);
+  const [cpfPacienteInput, setCpfPacienteInput] = useState<string>('');
+  const [pacienteEditar, setPacienteEditar] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (pacienteVinculado) {
+      setPacienteEditar(pacienteVinculado.pacienteEditar);
+    }
+  }, [pacienteVinculado]);
 
   const handleDesvincular = async () => {
     if (usuarioApi && pacienteVinculado) {
@@ -45,10 +53,25 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
     }
   };
 
+  const handleTogglePacienteEditar = async () => {
+    if (pacienteVinculado) {
+      const newValue = !pacienteEditar;
+      setPacienteEditar(newValue);
+      try {
+        const { lembretesConsulta, lembretesReceita, idUser, ...userData } = pacienteVinculado;
+        await atualizarUsuario(pacienteVinculado.idUser, { ...userData, pacienteEditar: newValue });
+        setPacienteVinculado({ ...pacienteVinculado, pacienteEditar: newValue });
+      } catch (error) {
+        console.error('Erro ao atualizar pacienteEditar:', error);
+        setPacienteEditar(!newValue); 
+      }
+    }
+  };
+
+
+
   const handleVincular = async () => {
-    const cpfInput = document.getElementById('cpfPacienteInput') as HTMLInputElement;
-    if (!cpfInput) return;
-    const cpfPaciente = cpfInput.value;
+    const cpfPaciente = cpfPacienteInput;
     setLinkMessage('Carregando dados do usuário...');
     setLinkingLoading(true);
 
@@ -116,6 +139,21 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
           <p className="text-green-800 font-medium">✅ Vinculado com: {pacienteVinculado.nome}</p>
           <p className="text-green-600 text-sm mt-1">CPF: {applyMask(pacienteVinculado.cpf, 'cpf')}</p>
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <label htmlFor="pacienteEditar" className="text-sm font-medium text-gray-700">
+                Habilitar / Desabilitar OPÇÕES do PACIENTE
+              </label>
+              <input
+                type="checkbox"
+                id="pacienteEditar"
+                checked={pacienteEditar}
+                onChange={handleTogglePacienteEditar}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+              />
+            </div>
+
+          </div>
           <button type="button" className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer" onClick={handleDesvincular}>
             Desvincular
           </button>
@@ -124,10 +162,15 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p className="text-gray-700 mb-3">Você não está vinculado a nenhum paciente.</p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input type="text" placeholder="Digite o CPF do paciente" className="flex-1 px-3 py-2 border border-gray-300 rounded-md" id="cpfPacienteInput"
+            <input
+              type="text"
+              placeholder="Digite o CPF do paciente"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+              id="cpfPacienteInput"
+              value={cpfPacienteInput}
               onChange={(e) => {
                 const value = applyMask(e.target.value, 'cpf');
-                e.target.value = value;
+                setCpfPacienteInput(value);
               }}
             />
             <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap cursor-pointer" onClick={handleVincular}>
