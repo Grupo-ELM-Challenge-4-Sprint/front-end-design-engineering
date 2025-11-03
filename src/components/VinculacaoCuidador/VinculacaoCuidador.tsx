@@ -58,7 +58,7 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
       const newValue = !pacienteEditar;
       setPacienteEditar(newValue);
       try {
-        const { lembretesConsulta, lembretesReceita, idUser, ...userData } = pacienteVinculado;
+        const { ...userData } = pacienteVinculado;
         await atualizarUsuario(pacienteVinculado.idUser, { ...userData, pacienteEditar: newValue });
         setPacienteVinculado({ ...pacienteVinculado, pacienteEditar: newValue });
       } catch (error) {
