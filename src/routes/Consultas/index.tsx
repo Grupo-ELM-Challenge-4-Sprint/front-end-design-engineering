@@ -14,8 +14,10 @@ export default function Consultas() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLembrete, setEditingLembrete] = useState<LembreteConsulta | null>(null);
 
+    const canEdit = usuarioApi?.tipoUsuario === 'CUIDADOR' || usuarioApi?.pacienteEditar !== false;
+
     const handleFormSubmit = async (formData: FormDataConsulta | FormDataReceita) => {
-        if (!usuarioApi) return;
+        if (!usuarioApi || !canEdit) return;
 
         const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
 
@@ -97,14 +99,16 @@ export default function Consultas() {
 
                 <div className="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 text-left">Meus Lembretes de Consulta</h1>
-                    <button onClick={handleOpenAddModal}
-                            className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer"
-                            data-guide-step="2"
-                            data-guide-title="Adicionar Consulta"
-                            data-guide-text="Clique aqui para agendar uma nova consulta ou teleconsulta."
-                            data-guide-arrow="up">
-                        Adicionar Lembrete
-                    </button>
+                    {canEdit && (
+                        <button onClick={handleOpenAddModal}
+                                className="px-4 py-2 text-sm font-medium text-center text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full md:w-auto cursor-pointer"
+                                data-guide-step="2"
+                                data-guide-title="Adicionar Consulta"
+                                data-guide-text="Clique aqui para agendar uma nova consulta ou teleconsulta."
+                                data-guide-arrow="up">
+                            Adicionar Lembrete
+                        </button>
+                    )}
                 </div>
 
                 <div id="lembretes-consultas-content" className="space-y-6">
@@ -116,11 +120,12 @@ export default function Consultas() {
                             <ConsultaCard
                                 key={lembrete.idConsulta} // Usa idConsulta como key
                                 lembrete={lembrete}
-                                handleOpenEditModal={handleOpenEditModal}
+                                handleOpenEditModal={canEdit ? handleOpenEditModal : () => {}}
                                 // Passa idConsulta para as funções handler
-                                handleConcluirLembrete={() => handleConcluirLembrete(lembrete.idConsulta)}
-                                handleReverterLembrete={() => handleReverterLembrete(lembrete.idConsulta)}
-                                handleRemoveLembrete={() => handleRemoveLembrete(lembrete.idConsulta)}
+                                handleConcluirLembrete={canEdit ? () => handleConcluirLembrete(lembrete.idConsulta) : () => {}}
+                                handleReverterLembrete={canEdit ? () => handleReverterLembrete(lembrete.idConsulta) : () => {}}
+                                handleRemoveLembrete={canEdit ? () => handleRemoveLembrete(lembrete.idConsulta) : () => {}}
+                                readOnly={!canEdit}
                             />
                         ))
                     ) : (

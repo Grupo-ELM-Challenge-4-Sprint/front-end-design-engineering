@@ -34,7 +34,7 @@ export const LoginForm = ({
         <form onSubmit={onSubmit}>
           <div className="form-group-auth">
             <label htmlFor="loginCpf">CPF</label>
-            <input className={`form-input ${errors.loginCpf ? 'border-red-500' : ''}`} type="text" id="loginCpf" placeholder="000.000.000-00" value={formData.loginCpf} onChange={(e) => onInputChange('loginCpf', e.target.value)} required />
+            <input className={`form-input ${errors.loginCpf ? 'border-red-500' : ''}`} type="text" id="loginCpf" placeholder="000.000.000-00" value={formData.loginCpf || ''} onChange={(e) => onInputChange('loginCpf', e.target.value)} required />
             {errors.loginCpf && <small className="error-message text-red-500">{errors.loginCpf}</small>}
           </div>
           <PasswordField

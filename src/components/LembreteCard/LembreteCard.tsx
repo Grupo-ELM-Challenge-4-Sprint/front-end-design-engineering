@@ -176,13 +176,15 @@ export const ReceitaCard = ({
   handleOpenEditModal,
   handleConcluirLembrete,
   handleReativarLembrete,
-  handleRemoveLembrete
+  handleRemoveLembrete,
+  readOnly = false
 }: {
   lembrete: LembreteReceita;
   handleOpenEditModal: (lembrete: LembreteReceita) => void;
   handleConcluirLembrete: (id: number) => void;
   handleReativarLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
+  readOnly?: boolean;
 }) => {
   const [year, month, day] = parseDate(lembrete.dataInicio);
   const horaFormatada = lembrete.horaInicio.substring(0, 5);
@@ -225,6 +227,7 @@ export const ReceitaCard = ({
       activeStatus="Ativo"
       concluirButtonText="Desativar"
       reverterButtonText="Reativar"
+      readOnly={readOnly}
     />
   );
 };
@@ -234,13 +237,15 @@ export const ConsultaCard = ({
   handleOpenEditModal,
   handleConcluirLembrete,
   handleReverterLembrete,
-  handleRemoveLembrete
+  handleRemoveLembrete,
+  readOnly = false
 }: {
   lembrete: LembreteConsulta;
   handleOpenEditModal: (lembrete: LembreteConsulta) => void;
   handleConcluirLembrete: (id: number) => void;
   handleReverterLembrete: (id: number) => void;
   handleRemoveLembrete: (id: number) => void;
+  readOnly?: boolean;
 }) => {
   const bodyContent = (
     <>
@@ -267,6 +272,7 @@ export const ConsultaCard = ({
       activeStatus="Agendada"
       concluirButtonText="Marcar como Concluída"
       reverterButtonText="Reverter"
+      readOnly={readOnly}
     />
   );
 };
