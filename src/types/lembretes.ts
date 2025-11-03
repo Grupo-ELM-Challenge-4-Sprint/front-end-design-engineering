@@ -9,6 +9,7 @@ export interface Usuario {
   tipoUsuario: 'PACIENTE' | 'CUIDADOR';
   cpfPaciente?: string | null;
   cpfCuidador?: string | null;
+  pacienteEditar: boolean;
 }
 
 export type LembreteConsulta = {

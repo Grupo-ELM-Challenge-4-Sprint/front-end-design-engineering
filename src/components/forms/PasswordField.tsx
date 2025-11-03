@@ -27,12 +27,12 @@ export const PasswordField = ({
     <div className="form-group-auth">
       <label htmlFor={id}>{label}</label>
       <div className="relative">
-        <input 
+        <input
           className={`form-input pr-10 ${error ? 'border-red-500' : ''}`}
-          type={showPassword ? "text" : "password"} 
-          id={id} 
+          type={showPassword ? "text" : "password"}
+          id={id}
           placeholder={placeholder}
-          value={value}
+          value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           required={required}
         />
