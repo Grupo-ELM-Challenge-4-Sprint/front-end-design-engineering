@@ -111,6 +111,7 @@ export default function Entrar() {
             email: data.cadastroEmail,
             telefone: data.cadastroTelefone,
             senha: data.cadastroSenha,
+            pacienteEditar: true,
         };
 
         setStatus('info', 'Criando conta...');
