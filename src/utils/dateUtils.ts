@@ -48,14 +48,7 @@ export const getNextDose = (lembrete: {
 
   // 3. Calcula a próxima dose válida a partir de agora
   const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-  const selectedDayIndices = lembrete.dias.flatMap(d => {
-    // Handle both comma-separated strings and arrays
-    const daysArray = typeof d === 'string' ? d.split(',').map(day => day.trim()) : [d];
-    return daysArray.map(day => {
-      const normalizedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
-      return daysOfWeek.indexOf(normalizedDay);
-    });
-  }).filter(i => i >= 0 && i <= 6);
+  const selectedDayIndices = lembrete.dias.map(d => daysOfWeek.indexOf(d)).filter(i => i >= 0 && i <= 6);
   const freqHours = lembrete.frequencia;
 
   if (freqHours <= 0) {
