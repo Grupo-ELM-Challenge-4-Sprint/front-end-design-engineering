@@ -21,12 +21,12 @@ export default function Receitas() {
 
         const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
 
-        if ('nome' in formData) {
+        if ('nomeMedicamento' in formData) {
             const receitaData = {
-                nome: formData.nome,
-                frequencia: Number(formData.frequencia),
+                nomeMedicamento: formData.nomeMedicamento,
+                frequenciaHoras: Number(formData.frequenciaHoras),
                 dias: formData.dias,
-                numeroDias: Number(formData.numeroDias),
+                numeroDiasTratamento: Number(formData.numeroDiasTratamento),
                 dataInicio: formData.dataInicio,
                 horaInicio: formData.horaInicio,
                 observacoes: formData.observacoes,
