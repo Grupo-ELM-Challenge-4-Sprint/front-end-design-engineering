@@ -2,7 +2,7 @@
 
 ## Sobre o Projeto
 
-O [SimplesHC](https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering) é uma plataforma web desenvolvida como parte da disciplina de Front-End Design Engineering. Seu principal objetivo é oferecer uma interface digital intuitiva e acessível para os serviços do Hospital das Clínicas, com foco especial em pacientes idosos ou com baixa familiaridade com tecnologia.
+O [SimplesHC](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering) é uma plataforma web desenvolvida como parte da disciplina de Front-End Design Engineering. Seu principal objetivo é oferecer uma interface digital intuitiva e acessível para os serviços do Hospital das Clínicas, com foco especial em pacientes idosos ou com baixa familiaridade com tecnologia.
 
 A solução busca simplificar processos como agendamento de consultas, acesso a resultados de exames, visualização de receitas médicas e participação em teleconsultas. Tudo isso é feito com base em uma abordagem centrada no usuário, prezando por clareza, simplicidade e inclusão digital.
 
@@ -39,7 +39,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="sprint-3/public/img/imagens-integrantes/foto-enzo.jpeg" width="100px" alt="Foto de Enzo"/>
+      <img src="public/img/imagens-integrantes/foto-enzo.jpeg" width="100px" alt="Foto de Enzo"/>
     </td>
     <td>Enzo Okuizumi</td>
     <td>561432</td>
@@ -49,7 +49,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="sprint-3/public/img/imagens-integrantes/foto-lucas.jpg" width="100px" alt="Foto de Lucas"/>
+      <img src="public/img/imagens-integrantes/foto-lucas.jpg" width="100px" alt="Foto de Lucas"/>
     </td>
     <td>Lucas Barros Gouveia</td>
     <td>566422</td>
@@ -59,7 +59,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="sprint-3/public/img/imagens-integrantes/foto-milton.jpeg" width="100px" alt="Foto de Milton"/>
+      <img src="public/img/imagens-integrantes/foto-milton.jpeg" width="100px" alt="Foto de Milton"/>
     </td>
     <td>Milton Marcelino</td>
     <td>564836</td>
@@ -443,9 +443,25 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 
 ---
 
+## Credenciais para Teste
+
+Para testar o sistema, utilize as seguintes credenciais de login:
+
+### Logar como CUIDADOR:
+- **CPF:** 98181573030
+- **Senha:** 123@Mudar
+
+### Logar como PACIENTE:
+- **CPF:** 89399370070
+- **Senha:** 123@Mudar
+
+Após o login, você poderá explorar as funcionalidades da área do paciente, como perfil, tutoriais, consultas e receitas.
+
+--- 
+
 ## Links Importantes
 
-- Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering)
+- Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering)
 
 - Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://www.youtube.com/watch?v=9jOQ2IKvZqk)
 
@@ -455,7 +471,7 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 Para rodar o projeto localmente, siga os passos abaixo:
 
 1. Clone o repositório:
-   `git clone https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering.git`
+   `git clone https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering.git`
 
 2. Instale as dependências:
    `npm install`
@@ -465,5 +481,3 @@ Para rodar o projeto localmente, siga os passos abaixo:
 
 4. Abra o navegador e acesse:
    `http://localhost:5173`
-
----
