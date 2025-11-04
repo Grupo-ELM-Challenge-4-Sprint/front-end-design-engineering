@@ -7,7 +7,7 @@ export const useApiReceitas = () => {
 
   // --- Funções RECEITA ---
   const listarReceitas = useCallback(async (usuarioId: number): Promise<LembreteReceita[]> => {
-      // Usa o endpoint /receita/usuario/{userId} criado no Java
+      // Usa o endpoint /receita/usuario/{idUser} criado no Java
       const receitasDoUsuario = await fetchApi(`/receita/usuario/${usuarioId}`) as LembreteReceita[] | null;
       return receitasDoUsuario || [];
 
