@@ -172,13 +172,6 @@ public/img/
   - Informações gerais sobre atendimento, documentos e agendamento.
 - **Exemplo de uso:** Página para consulta das unidades hospitalares.
 
-#### `Servicos/index.tsx`
-- **Função:** Página que apresenta os serviços oferecidos pelo Hospital das Clínicas.
-- **Principais funcionalidades:**
-  - Introdução aos serviços.
-  - Grid com serviços em destaque.
-  - Seção para acessar conta ou contato.
-- **Exemplo de uso:** Página para conhecer os serviços disponíveis.
 
 #### `Integrantes/index.tsx`
 - **Função:** Página que apresenta os integrantes da equipe de desenvolvimento.
@@ -229,13 +222,6 @@ public/img/
   - Integração com dados de localização.
 - **Exemplo de uso:** Utilizado na página de Hospitais para listar as unidades.
 
-#### `ServiceCard.tsx`
-- **Função:** Componente para exibir serviços oferecidos pelo hospital.
-- **Principais funcionalidades:**
-  - Apresentação visual dos serviços disponíveis.
-  - Ícones e descrições dos serviços.
-  - Links para mais informações ou acesso.
-- **Exemplo de uso:** Utilizado na página de Serviços para apresentar os serviços.
 
 ---
 
@@ -375,30 +361,13 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 
 ### Seção 6: Hooks Customizados de Autenticação e Formulários e Hooks auxiliares
 
-#### `useAuth.ts`
+#### `useAuthCheck.ts`
 - **Função:** Hook para gerenciar estado de autenticação do usuário.
 - **Principais funcionalidades:**
   - Verifica se o usuário está logado via localStorage.
   - Fornece função para logout que limpa dados e redireciona para login.
   - Função para checar autenticação e redirecionar se não autenticado.
 - **Exemplo de uso:** Usado em componentes que precisam controlar acesso e logout.
-
-#### `useFormState.ts`
-- **Função:** Hook para gerenciar estado dos formulários de login e cadastro.
-- **Principais funcionalidades:**
-  - Armazena dados dos formulários.
-  - Controla mensagens de status e visibilidade de senhas.
-  - Fornece funções para atualizar campos, resetar formulário, alterar status e alternar visibilidade de senha.
-- **Exemplo de uso:** Usado em formulários para controlar estado e interações.
-
-#### `useFormValidation.ts`
-- **Função:** Hook para validação de formulários com regras customizáveis.
-- **Principais funcionalidades:**
-  - Valida campos individualmente e o formulário completo.
-  - Suporta regras de obrigatoriedade, tamanho mínimo, padrões regex e validações customizadas.
-  - Inclui validadores para email, CPF, data, senha e nome.
-  - Permite limpar erros específicos ou todos.
-- **Exemplo de uso:** Usado em formulários para validar dados antes do envio.
 
 ---
 
@@ -462,6 +431,8 @@ Após o login, você poderá explorar as funcionalidades da área do paciente, c
 ## Links Importantes
 
 - Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering)
+
+- Link Vercel: [https://front-end-design-engineering-one.vercel.app/](https://front-end-design-engineering-one.vercel.app/)
 
 - Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://www.youtube.com/watch?v=9jOQ2IKvZqk)
 
