@@ -14,19 +14,19 @@ export default function ModalLembrete({
   const [formData, setFormData] = useState<FormDataConsulta | FormDataReceita>(
     type === 'consulta'
       ? {
-          tipoConsulta: 'Presencial',
-          especialidadeConsulta: '',
-          medicoConsulta: '',
-          dataConsulta: '',
-          horaConsulta: '',
-          localConsulta: '',
-          observacoesConsulta: '',
+          tipo: 'Presencial',
+          especialidade: '',
+          medico: '',
+          data: '',
+          hora: '',
+          local: '',
+          observacoes: '',
         }
       : {
-          nomeMedicamento: '',
-          frequenciaHoras: 24,
+          nome: '',
+          frequencia: 24,
           dias: [...diasDaSemana],
-          numeroDiasTratamento: 7,
+          numeroDias: 7,
           dataInicio: new Date().toISOString().split('T')[0],
           horaInicio: new Date().toTimeString().substring(0, 5),
           observacoes: '',
@@ -38,21 +38,21 @@ export default function ModalLembrete({
       if (type === 'consulta') {
         const lem = editingLembrete as LembreteConsulta;
         setFormData({
-          tipoConsulta: lem.tipo,
-          especialidadeConsulta: lem.especialidade,
-          medicoConsulta: lem.medico,
-          dataConsulta: lem.data,
-          horaConsulta: lem.hora,
-          localConsulta: lem.local,
-          observacoesConsulta: lem.observacoes,
+          tipo: lem.tipo,
+          especialidade: lem.especialidade,
+          medico: lem.medico,
+          data: lem.data,
+          hora: lem.hora,
+          local: lem.local,
+          observacoes: lem.observacoes,
         });
       } else {
         const lem = editingLembrete as LembreteReceita;
         setFormData({
-          nomeMedicamento: lem.nomeMedicamento,
-          frequenciaHoras: lem.frequenciaHoras,
+          nome: lem.nome,
+          frequencia: lem.frequencia,
           dias: lem.dias.sort((a: string, b: string) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
-          numeroDiasTratamento: lem.numeroDiasTratamento,
+          numeroDias: lem.numeroDias,
           dataInicio: lem.dataInicio,
           horaInicio: lem.horaInicio,
           observacoes: lem.observacoes,
@@ -63,19 +63,19 @@ export default function ModalLembrete({
       setFormData(
         type === 'consulta'
           ? {
-              tipoConsulta: 'Presencial',
-              especialidadeConsulta: '',
-              medicoConsulta: '',
-              dataConsulta: '',
-              horaConsulta: '',
-              localConsulta: '',
-              observacoesConsulta: '',
+              tipo: 'Presencial',
+              especialidade: '',
+              medico: '',
+              data: '',
+              hora: '',
+              local: '',
+              observacoes: '',
             }
           : {
-              nomeMedicamento: '',
-              frequenciaHoras: 24,
+              nome: '',
+              frequencia: 24,
               dias: [...diasDaSemana],
-              numeroDiasTratamento: 7,
+              numeroDias: 7,
               dataInicio: new Date().toISOString().split('T')[0],
               horaInicio: new Date().toTimeString().substring(0, 5),
               observacoes: '',
@@ -101,7 +101,7 @@ export default function ModalLembrete({
         return prev;
       });
     } else {
-      const newValue = (name === 'frequenciaHoras' || name === 'numeroDiasTratamento')
+      const newValue = (name === 'frequencia' || name === 'numeroDias')
         ? parseInt(value) || 0
         : value;
       setFormData((prev) => ({
@@ -140,46 +140,46 @@ export default function ModalLembrete({
           {type === 'consulta' ? (
             <>
               <div>
-                <label htmlFor="tipoConsulta" className="form-consultas">Tipo de Consulta*:</label>
-                <select id="tipoConsulta" name="tipoConsulta" value={(formData as FormDataConsulta).tipoConsulta} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
+                <label htmlFor="tipo" className="form-consultas">Tipo de Consulta*:</label>
+                <select id="tipo" name="tipo" value={(formData as FormDataConsulta).tipo} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
                   <option value="Presencial">Presencial</option>
                   <option value="Teleconsulta">Teleconsulta</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="especialidadeConsulta" className="form-consultas">Especialidade*:</label>
-                <input type="text" id="especialidadeConsulta" name="especialidadeConsulta" value={(formData as FormDataConsulta).especialidadeConsulta} onChange={handleInputChange} placeholder="Ex: Cardiologia" required className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="especialidade" className="form-consultas">Especialidade*:</label>
+                <input type="text" id="especialidade" name="especialidade" value={(formData as FormDataConsulta).especialidade} onChange={handleInputChange} placeholder="Ex: Cardiologia" required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="medicoConsulta" className="form-consultas">Médico (Opcional):</label>
-                <input type="text" id="medicoConsulta" name="medicoConsulta" value={(formData as FormDataConsulta).medicoConsulta} onChange={handleInputChange} placeholder="Nome do médico" className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="medico" className="form-consultas">Médico (Opcional):</label>
+                <input type="text" id="medico" name="medico" value={(formData as FormDataConsulta).medico} onChange={handleInputChange} placeholder="Nome do médico" className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="dataConsulta" className="form-consultas">Data*:</label>
-                <input type="date" id="dataConsulta" name="dataConsulta" value={(formData as FormDataConsulta).dataConsulta} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="data" className="form-consultas">Data*:</label>
+                <input type="date" id="data" name="data" value={(formData as FormDataConsulta).data} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="horaConsulta" className="form-consultas">Hora*:</label>
-                <input type="time" id="horaConsulta" name="horaConsulta" value={(formData as FormDataConsulta).horaConsulta} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="hora" className="form-consultas">Hora*:</label>
+                <input type="time" id="hora" name="hora" value={(formData as FormDataConsulta).hora} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="localConsulta" className="form-consultas">Local/Link*:</label>
-                <input type="text" id="localConsulta" name="localConsulta" value={(formData as FormDataConsulta).localConsulta} onChange={handleInputChange} placeholder="Ex: Unidade Paulista ou link da sala" required className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="local" className="form-consultas">Local/Link*:</label>
+                <input type="text" id="local" name="local" value={(formData as FormDataConsulta).local} onChange={handleInputChange} placeholder="Ex: Unidade Paulista ou link da sala" required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="observacoesConsulta" className="form-consultas">Observações:</label>
-                <textarea id="observacoesConsulta" name="observacoesConsulta" value={(formData as FormDataConsulta).observacoesConsulta} onChange={handleInputChange} rows={3} placeholder="Ex: Trazer exames anteriores" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
+                <label htmlFor="observacoes" className="form-consultas">Observações:</label>
+                <textarea id="observacoes" name="observacoes" value={(formData as FormDataConsulta).observacoes} onChange={handleInputChange} rows={3} placeholder="Ex: Trazer exames anteriores" className="w-full p-2 border border-slate-300 rounded-md"></textarea>
               </div>
             </>
           ) : (
             <>
               <div>
-                <label htmlFor="nomeMedicamento" className="block text-sm font-medium text-slate-700 mb-1">Nome do Medicamento*</label>
-                <input type="text" id="nomeMedicamento" name="nomeMedicamento" value={(formData as FormDataReceita).nomeMedicamento} onChange={handleInputChange} placeholder="Ex: Paracetamol 750mg" required className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="nome" className="block text-sm font-medium text-slate-700 mb-1">Nome do Medicamento*</label>
+                <input type="text" id="nome" name="nome" value={(formData as FormDataReceita).nome} onChange={handleInputChange} placeholder="Ex: Paracetamol 750mg" required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="frequenciaHoras" className="block text-sm font-medium text-slate-700 mb-1">Frequência (em horas)*</label>
-                <select id="frequenciaHoras" name="frequenciaHoras" value={(formData as FormDataReceita).frequenciaHoras} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
+                <label htmlFor="frequencia" className="block text-sm font-medium text-slate-700 mb-1">Frequência (em horas)*</label>
+                <select id="frequencia" name="frequencia" value={(formData as FormDataReceita).frequencia} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md">
                   <option value={4}>A cada 4 horas</option>
                   <option value={6}>A cada 6 horas</option>
                   <option value={8}>A cada 8 horas</option>
@@ -213,8 +213,8 @@ export default function ModalLembrete({
                 <input type="time" id="horaInicio" name="horaInicio" value={(formData as FormDataReceita).horaInicio} onChange={handleInputChange} required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
-                <label htmlFor="numeroDiasTratamento" className="block text-sm font-medium text-slate-700 mb-1">Duração (dias)*</label>
-                <input type="number" id="numeroDiasTratamento" name="numeroDiasTratamento" value={(formData as FormDataReceita).numeroDiasTratamento} onChange={handleInputChange} min="1" required className="w-full p-2 border border-slate-300 rounded-md" />
+                <label htmlFor="numeroDias" className="block text-sm font-medium text-slate-700 mb-1">Duração (dias)*</label>
+                <input type="number" id="numeroDias" name="numeroDias" value={(formData as FormDataReceita).numeroDias} onChange={handleInputChange} min="1" required className="w-full p-2 border border-slate-300 rounded-md" />
               </div>
               <div>
                 <label htmlFor="observacoes" className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
