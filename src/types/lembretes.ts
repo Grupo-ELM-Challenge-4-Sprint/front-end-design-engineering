@@ -27,10 +27,10 @@ export type LembreteConsulta = {
 
 export type LembreteReceita = {
   idReceita: number;
-  nomeMedicamento: string;
-  frequenciaHoras: number;
+  nome: string;
+  frequencia: number;
   dias: string[];
-  numeroDiasTratamento: number;
+  numeroDias: number;
   dataInicio: string;
   horaInicio: string;
   observacoes: string;
@@ -39,20 +39,20 @@ export type LembreteReceita = {
 };
 
 export interface FormDataConsulta {
-  tipoConsulta: string;
-  especialidadeConsulta: string;
-  medicoConsulta: string;
-  dataConsulta: string;
-  horaConsulta: string;
-  localConsulta: string;
-  observacoesConsulta: string;
+  tipo: string;
+  especialidade: string;
+  medico: string;
+  data: string;
+  hora: string;
+  local: string;
+  observacoes: string;
 };
 
 export interface FormDataReceita {
-  nomeMedicamento: string;
-  frequenciaHoras: number;
+  nome: string;
+  frequencia: number;
   dias: string[];
-  numeroDiasTratamento: number;
+  numeroDias: number;
   dataInicio: string;
   horaInicio: string;
   observacoes: string;

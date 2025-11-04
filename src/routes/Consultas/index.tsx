@@ -21,15 +21,15 @@ export default function Consultas() {
 
         const usuarioId = (usuarioApi.tipoUsuario === 'CUIDADOR' && paciente) ? paciente.idUser : usuarioApi.idUser;
 
-        if ('especialidadeConsulta' in formData) {
+        if ('especialidade' in formData) {
             const consultaData = {
-                especialidade: formData.especialidadeConsulta,
-                medico: formData.medicoConsulta || 'Não especificado',
-                data: formData.dataConsulta,
-                hora: formData.horaConsulta,
-                tipo: formData.tipoConsulta as 'Presencial' | 'Teleconsulta',
-                local: formData.localConsulta,
-                observacoes: formData.observacoesConsulta,
+                especialidade: formData.especialidade,
+                medico: formData.medico || 'Não especificado',
+                data: formData.data,
+                hora: formData.hora,
+                tipo: formData.tipo as 'Presencial' | 'Teleconsulta',
+                local: formData.local,
+                observacoes: formData.observacoes,
             };
 
             if (editingLembrete) {

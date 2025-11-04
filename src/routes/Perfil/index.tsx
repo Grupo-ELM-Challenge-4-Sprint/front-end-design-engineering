@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import PacientePage from "../../components/Painel/PacientePage";
 import { useApiUsuarios } from "../../hooks/useApiUsuarios";
 import { useApiConsultas } from "../../hooks/useApiConsultas";
@@ -64,7 +64,7 @@ export default function Perfil() {
             // Limpa o ref se for cuidador sem paciente
             lembretesRef.current = { consultas: [], receitas: [] };
         }
-    }, [usuarioApi?.idUser, usuarioApi?.tipoUsuario, listarConsultas, listarReceitas]);
+    }, [usuarioApi?.idUser, usuarioApi?.tipoUsuario, usuarioApi?.cpfPaciente, listarConsultas, listarReceitas]);
 
     // Buscar dados do paciente vinculado (cuidador)
     useEffect(() => {
@@ -158,10 +158,10 @@ export default function Perfil() {
   };
  
     // FUNÇÃO DE ENVIO DE NOTIFICAÇÃO
-    const sendNotification = (title: string, body: string) => {
+    const sendNotification = useCallback((title: string, body: string) => {
         // Verificar se o usuário permitiu notificações
         const notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
- 
+
         if (notificationEnabled && 'Notification' in window && Notification.permission === 'granted') {
             new Notification(title, {
                 body,
@@ -169,76 +169,13 @@ export default function Perfil() {
                 tag: 'healthcare-reminder'
             });
         }
-    };
+    }, []);
  
-    // HANDLER DO TOGGLE TOTALMENTE REFEITO
-    const handleNotificationToggle = async () => {
-        const isEnabling = !notificationEnabled; // O usuário está tentando ATIVAR?
- 
-        if (isEnabling) {
-            // --- Caso 1: Tentando ATIVAR ---
-            if (!('Notification' in window)) {
-                alert('Este navegador não suporta notificações.');
-                return;
-            }
- 
-            if (notificationPermission === 'granted') {
-                // Permissão já concedida, apenas ative
-                setNotificationEnabled(true);
-                localStorage.setItem('notificationEnabled', 'true');
-                startNotificationSystem();
-            } else if (notificationPermission === 'denied') {
-                // Permissão negada, informe o usuário
-                alert('As notificações estão bloqueadas nas configurações do navegador. Você precisa ativá-las manualmente.');
-            } else {
-                // Permissão 'default', Pede a permissão
-                const permission = await Notification.requestPermission();
- 
-                // Atualiza o estado da permissão
-                setNotificationPermission(permission); 
- 
-                if (permission === 'granted') {
-                    // Concedido! Ativa o toggle.
-                    setNotificationEnabled(true);
-                    localStorage.setItem('notificationEnabled', 'true');
-                    startNotificationSystem();
-                } else {
-                    // Negado. O toggle permanece desligado.
-                    alert('Permissão para notificações negada.');
-                }
-            }
-        } else {
-            // --- Caso 2: Tentando DESATIVAR ---
-            // Não precisa de permissão, apenas desative.
-            setNotificationEnabled(false);
-            localStorage.setItem('notificationEnabled', 'false');
-            stopNotificationSystem();
-        }
-    };
- 
-    // Iniciar sistema de notificações
-    const startNotificationSystem = () => {
-        if (notificationIntervalRef.current) return; // Já está rodando
- 
-        notificationIntervalRef.current = setInterval(checkReminders, 60000); // A cada 1 minuto
-        console.log('🔔 Notification system started');
-    };
- 
-    // Parar sistema de notificações
-    const stopNotificationSystem = () => {
-        if (notificationIntervalRef.current) {
-            clearInterval(notificationIntervalRef.current);
-            notificationIntervalRef.current = null;
-            console.log('🔕 Notification system stopped');
-        }
-    };
-
-
     // FUNÇÃO DE VERIFICAÇÃO DE LEMBRETES
-    const checkReminders = () => {
+    const checkReminders = useCallback(() => {
         const notificationEnabled = localStorage.getItem('notificationEnabled') === 'true';
         if (!notificationEnabled || Notification.permission !== 'granted') {
-            return; 
+            return;
         }
 
         checkCounterRef.current += 1;
@@ -273,20 +210,82 @@ export default function Perfil() {
                 const nextDose = getNextDose({
                     data: receita.dataInicio,
                     hora: receita.horaInicio,
-                    frequencia: receita.frequenciaHoras,
+                    frequencia: receita.frequencia,
                     dias: receita.dias,
-                    numeroDias: receita.numeroDiasTratamento
+                    numeroDias: receita.numeroDias
                 });
                 console.log('Receita next dose:', nextDose?.time, 'vs', currentTime);
                 if (nextDose && nextDose.time === currentTime) {
                     console.log('🎯 MATCH! Sending notification for receita');
                     sendNotification(
                         'Lembrete de Medicamento',
-                        `Hora de tomar ${receita.nomeMedicamento}. Próxima dose em ${receita.frequenciaHoras} horas.`
+                        `Hora de tomar ${receita.nome}. Próxima dose em ${receita.frequencia} horas.`
                     );
                 }
             }
         });
+    }, [sendNotification]);
+
+    // Iniciar sistema de notificações
+    const startNotificationSystem = useCallback(() => {
+        if (notificationIntervalRef.current) return; // Já está rodando
+
+        notificationIntervalRef.current = setInterval(checkReminders, 60000); // A cada 1 minuto
+        console.log('🔔 Notification system started');
+    }, [checkReminders]);
+
+    // Parar sistema de notificações
+    const stopNotificationSystem = useCallback(() => {
+        if (notificationIntervalRef.current) {
+            clearInterval(notificationIntervalRef.current);
+            notificationIntervalRef.current = null;
+            console.log('🔕 Notification system stopped');
+        }
+    }, []);
+
+    // HANDLER DO TOGGLE TOTALMENTE REFEITO
+    const handleNotificationToggle = async () => {
+        const isEnabling = !notificationEnabled; // O usuário está tentando ATIVAR?
+
+        if (isEnabling) {
+            // --- Caso 1: Tentando ATIVAR ---
+            if (!('Notification' in window)) {
+                alert('Este navegador não suporta notificações.');
+                return;
+            }
+
+            if (notificationPermission === 'granted') {
+                // Permissão já concedida, apenas ative
+                setNotificationEnabled(true);
+                localStorage.setItem('notificationEnabled', 'true');
+                startNotificationSystem();
+            } else if (notificationPermission === 'denied') {
+                // Permissão negada, informe o usuário
+                alert('As notificações estão bloqueadas nas configurações do navegador. Você precisa ativá-las manualmente.');
+            } else {
+                // Permissão 'default', Pede a permissão
+                const permission = await Notification.requestPermission();
+
+                // Atualiza o estado da permissão
+                setNotificationPermission(permission);
+
+                if (permission === 'granted') {
+                    // Concedido! Ativa o toggle.
+                    setNotificationEnabled(true);
+                    localStorage.setItem('notificationEnabled', 'true');
+                    startNotificationSystem();
+                } else {
+                    // Negado. O toggle permanece desligado.
+                    alert('Permissão para notificações negada.');
+                }
+            }
+        } else {
+            // --- Caso 2: Tentando DESATIVAR ---
+            // Não precisa de permissão, apenas desative.
+            setNotificationEnabled(false);
+            localStorage.setItem('notificationEnabled', 'false');
+            stopNotificationSystem();
+        }
     };
 
     // Iniciar/verificar o intervalo de notificações quando o componente monta

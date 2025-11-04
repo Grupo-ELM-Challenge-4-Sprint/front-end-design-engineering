@@ -141,16 +141,8 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
           <p className="text-green-600 text-sm mt-1">CPF: {applyMask(pacienteVinculado.cpf, 'cpf')}</p>
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between">
-              <label htmlFor="pacienteEditar" className="text-sm font-medium text-gray-700">
-                Habilitar / Desabilitar OPÇÕES do PACIENTE
-              </label>
-              <input
-                type="checkbox"
-                id="pacienteEditar"
-                checked={pacienteEditar}
-                onChange={handleTogglePacienteEditar}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-              />
+              <label htmlFor="pacienteEditar" className="text-sm font-medium text-gray-700">Habilitar / Desabilitar OPÇÕES do PACIENTE</label>
+              <input type="checkbox" id="pacienteEditar" checked={pacienteEditar} onChange={handleTogglePacienteEditar} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" />
             </div>
 
           </div>
@@ -162,12 +154,7 @@ export default function VinculacaoCuidador({ pacienteVinculado, setPacienteVincu
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
           <p className="text-gray-700 mb-3">Você não está vinculado a nenhum paciente.</p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Digite o CPF do paciente"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-              id="cpfPacienteInput"
-              value={cpfPacienteInput}
+            <input type="text" placeholder="Digite o CPF do paciente" className="flex-1 px-3 py-2 border border-gray-300 rounded-md" id="cpfPacienteInput" value={cpfPacienteInput}
               onChange={(e) => {
                 const value = applyMask(e.target.value, 'cpf');
                 setCpfPacienteInput(value);

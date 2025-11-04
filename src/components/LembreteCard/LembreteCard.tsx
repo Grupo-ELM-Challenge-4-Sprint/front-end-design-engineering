@@ -26,19 +26,19 @@ export const CardReceita = ({ lembrete }: { lembrete: LembreteReceita }) => {
   const nextDose = getNextDose({
     data: lembrete.dataInicio,
     hora: lembrete.horaInicio,
-    frequencia: lembrete.frequenciaHoras,
+    frequencia: lembrete.frequencia,
     dias: lembrete.dias,
-    numeroDias: lembrete.numeroDiasTratamento
+    numeroDias: lembrete.numeroDias
   });
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center mb-3">
         <img src="https://www.svgrepo.com/show/527687/document-add.svg" alt="ícone receita" className="w-6 h-6 mr-3 text-green-600" />
-        <h4 className="text-lg font-semibold text-green-800">{lembrete.nomeMedicamento}</h4>
+        <h4 className="text-lg font-semibold text-green-800">{lembrete.nome}</h4>
       </div>
       <div className="space-y-2 text-sm text-slate-700">
-        <p><strong>Frequência:</strong> {lembrete.frequenciaHoras} horas</p>
+        <p><strong>Frequência:</strong> {lembrete.frequencia} horas</p>
         <p><strong>Próxima Dose:</strong> {nextDose.date === 'Concluído' ? 'Tratamento Concluído' : `${nextDose.date} às ${nextDose.time}`}</p>
         {lembrete.observacoes && <p><strong>Obs:</strong> {lembrete.observacoes}</p>}
       </div>
@@ -193,10 +193,10 @@ export const ReceitaCard = ({
 
   const bodyContent = (
     <>
-      <p><strong className="card-body">Frequência:</strong> A cada {lembrete.frequenciaHoras} horas</p>
+      <p><strong className="card-body">Frequência:</strong> A cada {lembrete.frequencia} horas</p>
       <p><strong className="card-body">Dias:</strong> {lembrete.dias.sort((a: string, b: string) => ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(a) - ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].indexOf(b)).join(', ')}</p>
       <p><strong className="card-body">Data e Hora de Início:</strong> {startDateTime.toLocaleDateString('pt-BR')} às {horaFormatada}</p>
-      <p><strong className="card-body">Duração:</strong> {lembrete.numeroDiasTratamento} dias</p>
+      <p><strong className="card-body">Duração:</strong> {lembrete.numeroDias} dias</p>
       {lembrete.observacoes && (
         <p><strong className="card-body">Observações:</strong> {lembrete.observacoes}</p>
       )}
@@ -204,9 +204,9 @@ export const ReceitaCard = ({
         const nextDose = getNextDose({
           data: lembrete.dataInicio,
           hora: horaFormatada,
-          frequencia: lembrete.frequenciaHoras,
+          frequencia: lembrete.frequencia,
           dias: lembrete.dias,
-          numeroDias: lembrete.numeroDiasTratamento
+          numeroDias: lembrete.numeroDias
         });
         return <p className="text-indigo-600 font-semibold bg-indigo-50 p-2 rounded-md"><strong>Próxima Dose:</strong> {nextDose.date === 'Concluído' ? 'Tratamento Concluído' : `${nextDose.date} às ${nextDose.time}`}</p>;
       })()}
@@ -217,7 +217,7 @@ export const ReceitaCard = ({
     <LembreteCard
       lembrete={lembrete}
       id={lembrete.idReceita}
-      title={lembrete.nomeMedicamento}
+      title={lembrete.nome}
       status={lembrete.status}
       bodyContent={bodyContent}
       handleOpenEditModal={handleOpenEditModal}

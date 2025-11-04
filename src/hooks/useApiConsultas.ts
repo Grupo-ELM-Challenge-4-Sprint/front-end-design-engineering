@@ -7,7 +7,7 @@ export const useApiConsultas = () => {
 
   // --- Funções CONSULTA ---
   const listarConsultas = useCallback(async (usuarioId: number): Promise<LembreteConsulta[]> => {
-      // Usa o endpoint /consulta/usuario/{userId} criado no Java
+      // Usa o endpoint /consulta/usuario/{idUser} criado no Java
       const consultasDoUsuario = await fetchApi(`/consulta/usuario/${usuarioId}`) as LembreteConsulta[] | null;
       return consultasDoUsuario || []; // Retorna a lista filtrada pela API ou um array vazio
 
