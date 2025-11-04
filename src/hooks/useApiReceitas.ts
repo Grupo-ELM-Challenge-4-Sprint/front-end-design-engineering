@@ -29,6 +29,7 @@ export const useApiReceitas = () => {
     const atualizarReceita = useCallback(async (receitaId: number, dadosAtualizados: Partial<Omit<LembreteReceita, 'idReceita'>>): Promise<LembreteReceita | null> => {
         const payload = {
             ...dadosAtualizados,
+            idReceita: receitaId,
         };
          return fetchApi(`/receita/${receitaId}`, {
             method: 'PUT',
