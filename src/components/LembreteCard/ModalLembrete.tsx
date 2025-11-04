@@ -48,14 +48,10 @@ export default function ModalLembrete({
         });
       } else {
         const lem = editingLembrete as LembreteReceita;
-        // Handle dias that might be stored as comma-separated string
-        const diasArray = Array.isArray(lem.dias)
-          ? lem.dias.flatMap(d => typeof d === 'string' ? d.split(',').map(day => day.trim()) : [d])
-          : [];
         setFormData({
           nome: lem.nome,
           frequencia: lem.frequencia,
-          dias: diasArray.sort((a: string, b: string) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
+          dias: lem.dias.sort((a: string, b: string) => diasDaSemana.indexOf(a) - diasDaSemana.indexOf(b)),
           numeroDias: lem.numeroDias,
           dataInicio: lem.dataInicio,
           horaInicio: lem.horaInicio,
