@@ -1,10 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { emailSchema } from "../schemas/validationSchemas";
 
 const contatoSchema = z.object({
   nomeCompleto: z.string().min(1, "Nome completo é obrigatório"),
-  email: z.string().email("E-mail inválido"),
+  email: emailSchema,
   telefone: z.string().optional(),
   assunto: z.string().min(1, "Assunto é obrigatório"),
   mensagem: z.string().min(1, "Mensagem é obrigatória"),

@@ -2,7 +2,7 @@
 
 ## Sobre o Projeto
 
-O [SimplesHC](https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering) é uma plataforma web desenvolvida como parte da disciplina de Front-End Design Engineering. Seu principal objetivo é oferecer uma interface digital intuitiva e acessível para os serviços do Hospital das Clínicas, com foco especial em pacientes idosos ou com baixa familiaridade com tecnologia.
+O [SimplesHC](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering) é uma plataforma web desenvolvida como parte da disciplina de Front-End Design Engineering. Seu principal objetivo é oferecer uma interface digital intuitiva e acessível para os serviços do Hospital das Clínicas, com foco especial em pacientes idosos ou com baixa familiaridade com tecnologia.
 
 A solução busca simplificar processos como agendamento de consultas, acesso a resultados de exames, visualização de receitas médicas e participação em teleconsultas. Tudo isso é feito com base em uma abordagem centrada no usuário, prezando por clareza, simplicidade e inclusão digital.
 
@@ -21,7 +21,6 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
 - Vite 7.1.7
 - TypeScript 5.9.3
 - Zod 4.1.12
-- JSON Server (para simulação de API)
 - ESLint
 
 ---
@@ -39,7 +38,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="sprint-3/public/img/imagens-integrantes/foto-enzo.jpeg" width="100px" alt="Foto de Enzo"/>
+      <img src="public/img/imagens-integrantes/foto-enzo.jpeg" width="100px" alt="Foto de Enzo"/>
     </td>
     <td>Enzo Okuizumi</td>
     <td>561432</td>
@@ -49,7 +48,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="sprint-3/public/img/imagens-integrantes/foto-lucas.jpg" width="100px" alt="Foto de Lucas"/>
+      <img src="public/img/imagens-integrantes/foto-lucas.jpg" width="100px" alt="Foto de Lucas"/>
     </td>
     <td>Lucas Barros Gouveia</td>
     <td>566422</td>
@@ -59,7 +58,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="sprint-3/public/img/imagens-integrantes/foto-milton.jpeg" width="100px" alt="Foto de Milton"/>
+      <img src="public/img/imagens-integrantes/foto-milton.jpeg" width="100px" alt="Foto de Milton"/>
     </td>
     <td>Milton Marcelino</td>
     <td>564836</td>
@@ -172,13 +171,6 @@ public/img/
   - Informações gerais sobre atendimento, documentos e agendamento.
 - **Exemplo de uso:** Página para consulta das unidades hospitalares.
 
-#### `Servicos/index.tsx`
-- **Função:** Página que apresenta os serviços oferecidos pelo Hospital das Clínicas.
-- **Principais funcionalidades:**
-  - Introdução aos serviços.
-  - Grid com serviços em destaque.
-  - Seção para acessar conta ou contato.
-- **Exemplo de uso:** Página para conhecer os serviços disponíveis.
 
 #### `Integrantes/index.tsx`
 - **Função:** Página que apresenta os integrantes da equipe de desenvolvimento.
@@ -197,7 +189,7 @@ public/img/
 #### `Contato/index.tsx`
 - **Função:** Página de contato para envio de mensagens e informações institucionais.
 - **Principais funcionalidades:**
-  - Formulário de contato com validação usando hook customizado `useContatoForm`.
+  - Formulário de contato com validação usando hook customizado `useContatoForm` e esquemas reutilizáveis de `validationSchemas.ts`.
   - Informações de endereço, telefones, email, horário e redes sociais.
 - **Exemplo de uso:** Página para contato direto com a equipe.
 
@@ -229,13 +221,6 @@ public/img/
   - Integração com dados de localização.
 - **Exemplo de uso:** Utilizado na página de Hospitais para listar as unidades.
 
-#### `ServiceCard.tsx`
-- **Função:** Componente para exibir serviços oferecidos pelo hospital.
-- **Principais funcionalidades:**
-  - Apresentação visual dos serviços disponíveis.
-  - Ícones e descrições dos serviços.
-  - Links para mais informações ou acesso.
-- **Exemplo de uso:** Utilizado na página de Serviços para apresentar os serviços.
 
 ---
 
@@ -246,7 +231,7 @@ public/img/
 - **Função:** Página que gerencia os formulários de login e cadastro.
 - **Principais funcionalidades:**
   - Alterna entre formulários de login e cadastro.
-  - Valida dados de entrada com regras customizadas.
+  - Valida dados de entrada com regras customizadas usando esquemas reutilizáveis de `validationSchemas.ts`.
   - Gerencia estado dos formulários e mensagens de status.
   - Realiza autenticação e cadastro de pacientes.
 - **Exemplo de uso:** Página para autenticação e criação de conta.
@@ -255,7 +240,7 @@ public/img/
 - **Função:** Componente de formulário de login.
 - **Principais funcionalidades:**
   - Campos para CPF e senha.
-  - Validação e mensagens de erro.
+  - Validação usando esquemas reutilizáveis de `validationSchemas.ts` e mensagens de erro.
   - Botão para alternar visibilidade da senha.
   - Navegação para cadastro.
 - **Exemplo de uso:** Usado na página de login.
@@ -264,7 +249,7 @@ public/img/
 - **Função:** Componente de formulário de cadastro de pacientes.
 - **Principais funcionalidades:**
   - Campos para dados pessoais (nome, CPF, email, telefone).
-  - Validação de dados em tempo real.
+  - Validação de dados em tempo real usando esquemas reutilizáveis de `validationSchemas.ts`.
   - Integração com sistema de autenticação.
 - **Exemplo de uso:** Utilizado na página de cadastro/login.
 
@@ -375,30 +360,13 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 
 ### Seção 6: Hooks Customizados de Autenticação e Formulários e Hooks auxiliares
 
-#### `useAuth.ts`
+#### `useAuthCheck.ts`
 - **Função:** Hook para gerenciar estado de autenticação do usuário.
 - **Principais funcionalidades:**
   - Verifica se o usuário está logado via localStorage.
   - Fornece função para logout que limpa dados e redireciona para login.
   - Função para checar autenticação e redirecionar se não autenticado.
 - **Exemplo de uso:** Usado em componentes que precisam controlar acesso e logout.
-
-#### `useFormState.ts`
-- **Função:** Hook para gerenciar estado dos formulários de login e cadastro.
-- **Principais funcionalidades:**
-  - Armazena dados dos formulários.
-  - Controla mensagens de status e visibilidade de senhas.
-  - Fornece funções para atualizar campos, resetar formulário, alterar status e alternar visibilidade de senha.
-- **Exemplo de uso:** Usado em formulários para controlar estado e interações.
-
-#### `useFormValidation.ts`
-- **Função:** Hook para validação de formulários com regras customizáveis.
-- **Principais funcionalidades:**
-  - Valida campos individualmente e o formulário completo.
-  - Suporta regras de obrigatoriedade, tamanho mínimo, padrões regex e validações customizadas.
-  - Inclui validadores para email, CPF, data, senha e nome.
-  - Permite limpar erros específicos ou todos.
-- **Exemplo de uso:** Usado em formulários para validar dados antes do envio.
 
 ---
 
@@ -415,7 +383,7 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 - **Principais funcionalidades:**
   - Centraliza toda lógica do formulário de contato (validações, submissão, estados).
   - Exporta tipo `ContatoFormInputs` para tipagem consistente.
-  - Implementa validações específicas para cada campo (nome, email, telefone, assunto, mensagem).
+  - Implementa validações específicas para cada campo (nome, email, telefone, assunto, mensagem) usando esquemas reutilizáveis de `validationSchemas.ts`.
   - Gerencia estados de loading (`isSubmitting`) e sucesso (`isSubmitSuccessful`).
   - Função `onSubmit` com simulação de envio e reset automático do formulário.
 - **Exemplo de uso:** Usado no componente `Contato/index.tsx` para gerenciar o formulário.
@@ -443,9 +411,27 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 
 ---
 
+## Credenciais para Teste
+
+Para testar o sistema, utilize as seguintes credenciais de login:
+
+### Logar como CUIDADOR:
+- **CPF:** 98181573030
+- **Senha:** 123@Mudar
+
+### Logar como PACIENTE:
+- **CPF:** 89399370070
+- **Senha:** 123@Mudar
+
+Após o login, você poderá explorar as funcionalidades da área do paciente, como perfil, tutoriais, consultas e receitas.
+
+--- 
+
 ## Links Importantes
 
-- Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering)
+- Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering)
+
+- Link Vercel: [https://front-end-design-engineering-one.vercel.app/](https://front-end-design-engineering-one.vercel.app/)
 
 - Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://www.youtube.com/watch?v=9jOQ2IKvZqk)
 
@@ -455,7 +441,7 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 Para rodar o projeto localmente, siga os passos abaixo:
 
 1. Clone o repositório:
-   `git clone https://github.com/Grupo-ELM-Challenge-3-Sprint/front-end-design-engineering.git`
+   `git clone https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering.git`
 
 2. Instale as dependências:
    `npm install`
@@ -465,5 +451,3 @@ Para rodar o projeto localmente, siga os passos abaixo:
 
 4. Abra o navegador e acesse:
    `http://localhost:5173`
-
----
