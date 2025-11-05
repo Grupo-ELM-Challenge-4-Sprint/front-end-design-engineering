@@ -2,7 +2,7 @@ export interface Usuario {
   idUser: number;
   cpf: string;
   nome: string;
-  senha?: string;
+  senha: string;
   email: string;
   telefone: string;
   dataNascimento: string;
