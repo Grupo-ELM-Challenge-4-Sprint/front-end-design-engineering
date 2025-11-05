@@ -189,7 +189,7 @@ public/img/
 #### `Contato/index.tsx`
 - **Função:** Página de contato para envio de mensagens e informações institucionais.
 - **Principais funcionalidades:**
-  - Formulário de contato com validação usando hook customizado `useContatoForm`.
+  - Formulário de contato com validação usando hook customizado `useContatoForm` e esquemas reutilizáveis de `validationSchemas.ts`.
   - Informações de endereço, telefones, email, horário e redes sociais.
 - **Exemplo de uso:** Página para contato direto com a equipe.
 
@@ -231,7 +231,7 @@ public/img/
 - **Função:** Página que gerencia os formulários de login e cadastro.
 - **Principais funcionalidades:**
   - Alterna entre formulários de login e cadastro.
-  - Valida dados de entrada com regras customizadas.
+  - Valida dados de entrada com regras customizadas usando esquemas reutilizáveis de `validationSchemas.ts`.
   - Gerencia estado dos formulários e mensagens de status.
   - Realiza autenticação e cadastro de pacientes.
 - **Exemplo de uso:** Página para autenticação e criação de conta.
@@ -240,7 +240,7 @@ public/img/
 - **Função:** Componente de formulário de login.
 - **Principais funcionalidades:**
   - Campos para CPF e senha.
-  - Validação e mensagens de erro.
+  - Validação usando esquemas reutilizáveis de `validationSchemas.ts` e mensagens de erro.
   - Botão para alternar visibilidade da senha.
   - Navegação para cadastro.
 - **Exemplo de uso:** Usado na página de login.
@@ -249,7 +249,7 @@ public/img/
 - **Função:** Componente de formulário de cadastro de pacientes.
 - **Principais funcionalidades:**
   - Campos para dados pessoais (nome, CPF, email, telefone).
-  - Validação de dados em tempo real.
+  - Validação de dados em tempo real usando esquemas reutilizáveis de `validationSchemas.ts`.
   - Integração com sistema de autenticação.
 - **Exemplo de uso:** Utilizado na página de cadastro/login.
 
@@ -383,7 +383,7 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 - **Principais funcionalidades:**
   - Centraliza toda lógica do formulário de contato (validações, submissão, estados).
   - Exporta tipo `ContatoFormInputs` para tipagem consistente.
-  - Implementa validações específicas para cada campo (nome, email, telefone, assunto, mensagem).
+  - Implementa validações específicas para cada campo (nome, email, telefone, assunto, mensagem) usando esquemas reutilizáveis de `validationSchemas.ts`.
   - Gerencia estados de loading (`isSubmitting`) e sucesso (`isSubmitSuccessful`).
   - Função `onSubmit` com simulação de envio e reset automático do formulário.
 - **Exemplo de uso:** Usado no componente `Contato/index.tsx` para gerenciar o formulário.
