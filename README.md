@@ -21,7 +21,6 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
 - Vite 7.1.7
 - TypeScript 5.9.3
 - Zod 4.1.12
-- JSON Server (para simulação de API)
 - ESLint
 
 ---
