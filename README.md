@@ -431,6 +431,8 @@ Após o login, você poderá explorar as funcionalidades da área do paciente, c
 
 - Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering)
 
+- Repositório Java: [https://github.com/Grupo-ELM-Challenge-4-Sprint/Java](https://github.com/Grupo-ELM-Challenge-4-Sprint/Java)
+
 - Link Vercel: [https://front-end-design-engineering-one.vercel.app/](https://front-end-design-engineering-one.vercel.app/)
 
 - Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://youtu.be/M4-xU4W9nk4)
