@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuthCheck } from '../../hooks/useAuthCheck';
-import imagemLogo from '/img/imagem-index/imagem-logo.jpeg';
+import imagemLogo from '/img/imagem-index/imagem-logo.png';
 
 export default function Cabecalho() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -20,8 +20,7 @@ export default function Cabecalho() {
     <header className="bg-white py-2.5 border-b border-[#eee] relative z-10">
         <div className="w-[90%] flex justify-between items-center relative m-5">
             <Link to="/" className="font-bold flex items-center">
-                <img src={imagemLogo} alt="Logo SimplesHC" className="w-24 h-auto mr-2" />
-                <span className="text-2xl text-[#005c99]">SimplesHC</span>
+                <img src={imagemLogo} alt="Logo SimplesHC" className="w-40 h-auto" />
             </Link>
 
             <button className="hidden max-[951px]:block" type="button" aria-label="Abrir menu" onClick={() => setMenuOpen(!menuOpen)}>
