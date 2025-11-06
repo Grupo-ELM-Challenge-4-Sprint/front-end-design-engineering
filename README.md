@@ -433,7 +433,7 @@ Após o login, você poderá explorar as funcionalidades da área do paciente, c
 
 - Link Vercel: [https://front-end-design-engineering-one.vercel.app/](https://front-end-design-engineering-one.vercel.app/)
 
-- Vídeo no YouTube: [[https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://youtu.be/M4-xU4W9nk4)]
+- Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://youtu.be/M4-xU4W9nk4)
 
 ---
 ## Como instalar / rodar o SimplesHC?
