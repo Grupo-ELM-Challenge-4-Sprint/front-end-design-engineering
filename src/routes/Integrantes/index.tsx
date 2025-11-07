@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import fotoEnzo from '/img/imagens-integrantes/foto-enzo.jpeg';
-import fotoLucas from '/img/imagens-integrantes/foto-lucas.jpg';
+import fotoLucas from '/img/imagens-integrantes/foto-lucas.jpeg';
 import fotoMilton from '/img/imagens-integrantes/foto-milton.jpeg';
 
 export default function Integrantes(){

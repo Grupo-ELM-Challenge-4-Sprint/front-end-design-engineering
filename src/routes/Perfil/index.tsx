@@ -10,6 +10,7 @@ import { useInputMasks } from "../../hooks/useInputMasks";
 import Loading from "../../components/Loading/Loading";
 import { ProximosLembretes } from "../../components/LembreteCard/LembreteCard";
 import VinculacaoCuidador from "../../components/VinculacaoCuidador/VinculacaoCuidador";
+import DiagnosticoDispositivo from "../../components/DiagnosticoDispositivo/DiagnosticoDispositivo";
 
 
 export default function Perfil() {
@@ -26,6 +27,7 @@ export default function Perfil() {
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
     const [notificationEnabled, setNotificationEnabled] = useState(false);
     const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+    const [isDeviceDiagnosisModalOpen, setIsDeviceDiagnosisModalOpen] = useState(false);
     const notificationIntervalRef = useRef<number | null>(null);
     const checkCounterRef = useRef(0);
 
@@ -398,14 +400,27 @@ export default function Perfil() {
                     </label>
                 </div>
 
-                {/* Botão de teste temporário */}
+                {/* Botão de teste notificação*/}
                 {notificationEnabled && notificationPermission === 'granted' && (
                     <div className="mt-4">
                         <button className="btn btn-secondary cursor-pointer" onClick={() => sendNotification('Teste de Notificação', 'Esta é uma notificação de teste para verificar se o sistema está funcionando!')}>Testar Notificação</button>
                     </div>
                 )}
+
+                {/* Diagnóstico de Dispositivos */}
+                <div className="mt-4">
+                    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg shadow-sm">
+                        <div>
+                            <p className="text-sm text-slate-700">Diagnóstico de Dispositivos</p>
+                            <p className="text-xs text-slate-500 mt-1">Teste sua câmera, microfone e conexão com a internet antes da teleconsulta.</p>
+                        </div>
+                        <button onClick={() => setIsDeviceDiagnosisModalOpen(true)} className="btn btn-primary cursor-pointer">Abrir Diagnóstico</button>
+                    </div>
+                </div>
             </div>
 
+            {/* Modal de Diagnóstico de Dispositivos */}
+            <DiagnosticoDispositivo isOpen={isDeviceDiagnosisModalOpen} onClose={() => setIsDeviceDiagnosisModalOpen(false)} />
         </PacientePage>
     );
 }
