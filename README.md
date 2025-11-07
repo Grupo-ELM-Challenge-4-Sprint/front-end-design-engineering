@@ -437,7 +437,7 @@ Após o login, você poderá explorar as funcionalidades da área do paciente, c
 
 - Repositório Java: [https://github.com/Grupo-ELM-Challenge-4-Sprint/Java](https://github.com/Grupo-ELM-Challenge-4-Sprint/Java)
 
-- Repositório Banco de Dados: [https://github.com/Grupo-ELM-Challenge-4-Sprint/Building-Relational-Database](https://github.com/Grupo-ELM-Challenge-4-Sprint/Building-Relational-Database)/
+- Repositório Banco de Dados: [https://github.com/Grupo-ELM-Challenge-4-Sprint/Building-Relational-Database](https://github.com/Grupo-ELM-Challenge-4-Sprint/Building-Relational-Database)
 
 - Link Vercel: [https://front-end-design-engineering-one.vercel.app/](https://front-end-design-engineering-one.vercel.app/)
 
