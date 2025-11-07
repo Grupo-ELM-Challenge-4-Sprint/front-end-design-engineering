@@ -171,6 +171,14 @@ public/img/
   - Informações gerais sobre atendimento, documentos e agendamento.
 - **Exemplo de uso:** Página para consulta das unidades hospitalares.
 
+#### `Tutoriais/index.tsx`
+- **Função:** Página que exibe a lista de tutoriais para o usuário.
+- **Principais funcionalidades:**
+  - Verifica autenticação do usuário.
+  - Exibe uma grade de cards de tutoriais.
+  - Utiliza o layout PacientePage.
+  - Inclui atributos para guia interativo.
+- **Exemplo de uso:** Acessível na área do paciente para consulta de tutoriais.
 
 #### `Integrantes/index.tsx`
 - **Função:** Página que apresenta os integrantes da equipe de desenvolvimento.
@@ -221,9 +229,24 @@ public/img/
   - Integração com dados de localização.
 - **Exemplo de uso:** Utilizado na página de Hospitais para listar as unidades.
 
+#### `TutorialCard.tsx`
+- **Função:** Componente de apresentação para exibir um card de tutorial.
+- **Principais funcionalidades:**
+  - Exibe título do tutorial.
+  - Link para acessar o tutorial.
+  - Estilização com efeitos de hover e responsividade.
+- **Exemplo de uso:** Usado na página de tutoriais para listar os tutoriais disponíveis.
+
+#### `DiagnosticoDispositivo.tsx`
+- **Função:** Componente modal para diagnóstico de dispositivos antes de teleconsultas.
+- **Principais funcionalidades:**
+  - Testa conexão com internet e qualidade.
+  - Testa câmera e exibe preview ao vivo.
+  - Testa microfone e detecta níveis de áudio.
+  - Interface intuitiva com indicadores visuais de status.
+- **Exemplo de uso:** Utilizado para verificar dispositivos antes de iniciar uma teleconsulta.
 
 ---
-
 
 ### Seção 3: Login e Cadastro
 
@@ -268,7 +291,6 @@ public/img/
 O sistema possui as seguintes rotas principais, acessíveis na área do paciente após login:
 
 - `/perfil`: Página para visualização e edição dos dados pessoais do paciente.
-- `/tutoriais`: Lista de tutoriais para auxiliar o uso do portal.
 - `/consultas`: Gerenciamento de lembretes de consultas, com funcionalidades para adicionar, editar, remover e marcar consultas como concluídas.
 - `/receitas`: Gerenciamento de lembretes de medicamentos e receitas médicas, com funcionalidades para adicionar, editar e remover lembretes.
 
@@ -290,7 +312,7 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 #### `PacienteSidebar.tsx`
 - **Função:** Barra lateral de navegação da área do paciente.
 - **Principais funcionalidades:**
-  - Links para seções como Meus Dados, Tutoriais, Receitas e Consultas.
+  - Links para seções como Meus Dados, Receitas e Consultas.
   - Botão de logout que limpa autenticação e redireciona para a página inicial.
   - Inclui atributos para guia interativo.
 - **Exemplo de uso:** Usado em PacientePage para navegação do usuário.
@@ -311,26 +333,8 @@ Cada rota utiliza o layout `PacientePage` para manter a consistência visual e i
 
 ---
 
-### Seção 5: Rotas de Tutoriais, Consultas e Receitas
+### Seção 5: Rotas de Consultas e Receitas
 
-#### `Tutoriais/index.tsx`
-- **Função:** Página que exibe a lista de tutoriais para o usuário.
-- **Principais funcionalidades:**
-  - Verifica autenticação do usuário.
-  - Exibe uma grade de cards de tutoriais.
-  - Utiliza o layout PacientePage.
-  - Inclui atributos para guia interativo.
-- **Exemplo de uso:** Acessível na área do paciente para consulta de tutoriais.
-
-#### `TutorialCard.tsx`
-- **Função:** Componente de apresentação para exibir um card de tutorial.
-- **Principais funcionalidades:**
-  - Exibe título do tutorial.
-  - Link para acessar o tutorial.
-  - Estilização com efeitos de hover e responsividade.
-- **Exemplo de uso:** Usado na página de tutoriais para listar os tutoriais disponíveis.
-
----
 
 #### `Consultas/index.tsx`
 - **Função:** Página para gerenciamento de lembretes de consultas.
@@ -423,7 +427,7 @@ Para testar o sistema, utilize as seguintes credenciais de login:
 - **CPF:** 89399370070
 - **Senha:** 123@Mudar
 
-Após o login, você poderá explorar as funcionalidades da área do paciente, como perfil, tutoriais, consultas e receitas.
+Após o login, você poderá explorar as funcionalidades da área do paciente, como perfil, consultas e receitas.
 
 --- 
 
