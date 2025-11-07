@@ -48,7 +48,7 @@ Mais do que uma atividade acadêmica, o SimplesHC tem como missão promover impa
   </tr>
   <tr>
     <td align="center">
-      <img src="public/img/imagens-integrantes/foto-lucas.jpg" width="100px" alt="Foto de Lucas"/>
+      <img src="public/img/imagens-integrantes/foto-lucas.jpeg" width="100px" alt="Foto de Lucas"/>
     </td>
     <td>Lucas Barros Gouveia</td>
     <td>566422</td>
@@ -431,9 +431,13 @@ Após o login, você poderá explorar as funcionalidades da área do paciente, c
 
 - Repositório GitHub: [https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering](https://github.com/Grupo-ELM-Challenge-4-Sprint/front-end-design-engineering)
 
+- Repositório Java: [https://github.com/Grupo-ELM-Challenge-4-Sprint/Java](https://github.com/Grupo-ELM-Challenge-4-Sprint/Java)
+
+- Repositório Banco de Dados: [https://github.com/Grupo-ELM-Challenge-4-Sprint/Building-Relational-Database](https://github.com/Grupo-ELM-Challenge-4-Sprint/Building-Relational-Database)/
+
 - Link Vercel: [https://front-end-design-engineering-one.vercel.app/](https://front-end-design-engineering-one.vercel.app/)
 
-- Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://www.youtube.com/watch?v=9jOQ2IKvZqk)
+- Vídeo no YouTube: [https://www.youtube.com/watch?v=9jOQ2IKvZqk](https://youtu.be/M4-xU4W9nk4)
 
 ---
 ## Como instalar / rodar o SimplesHC?
